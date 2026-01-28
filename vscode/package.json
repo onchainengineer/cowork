@@ -1,0 +1,114 @@
+{
+  "name": "unix",
+  "displayName": "unix",
+  "description": "Open unix workspaces directly from VS Code",
+  "version": "0.1.0",
+  "publisher": "devos",
+  "icon": "icon.png",
+  "extensionKind": [
+    "ui"
+  ],
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "unix",
+    "workspace",
+    "remote",
+    "ssh",
+    "development"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:unix.chatView",
+    "onCommand:unix.openWorkspace",
+    "onCommand:unix.configureConnection",
+    "onCommand:unix.debugConnection"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "unix.openWorkspace",
+        "title": "unix: Open Workspace"
+      },
+      {
+        "command": "unix.configureConnection",
+        "title": "unix: Configure Connection"
+      },
+      {
+        "command": "unix.debugConnection",
+        "title": "unix: Debug Connection"
+      },
+      {
+        "command": "unix.toggleLmProxy",
+        "title": "unix: Toggle Copilot LM Proxy"
+      }
+    ],
+    "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "unixSecondary",
+          "title": "unix",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "unixSecondary": [
+        {
+          "id": "unix.chatView",
+          "name": "Chat (Preview)",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "unix",
+      "properties": {
+        "unix.connectionMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "server-only",
+            "file-only"
+          ],
+          "default": "auto",
+          "scope": "machine",
+          "description": "How the unix VS Code extension connects to unix (prefer server, require server, or use local files)."
+        },
+        "unix.serverUrl": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Override the unix server URL (leave empty to auto-discover). Example: http://127.0.0.1:3000"
+        },
+        "unix.lmProxyPort": {
+          "type": "number",
+          "default": 3941,
+          "scope": "machine",
+          "description": "Port for the Copilot LM Proxy (OpenAI-compatible endpoint bridging VS Code Language Model API). Configure backend with baseURL: http://127.0.0.1:<port>/v1"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "bun run compile",
+    "compile": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.106.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.3.0"
+  },
+  "license": "MIT",
+  "packageManager": "bun@1.1.42"
+}
+

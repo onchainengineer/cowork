@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildAskUserQuestionSummary = buildAskUserQuestionSummary;
+function buildAskUserQuestionSummary(answers) {
+    const pairs = Object.entries(answers)
+        .map(([question, answer]) => `"${question}"="${answer}"`)
+        .join(", ");
+    return pairs.length > 0
+        ? `User has answered your questions: ${pairs}. You can now continue with the user's answers in mind.`
+        : "User has answered your questions. You can now continue with the user's answers in mind.";
+}
+//# sourceMappingURL=askUserQuestionSummary.js.map

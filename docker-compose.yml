@@ -1,0 +1,22 @@
+# unix server docker-compose configuration
+#
+# Quick start:
+#   docker compose up -d
+#
+# Add a project:
+#   docker compose run --rm unix-server --add-project /projects/my-repo
+
+services:
+  unix-server:
+    build: .
+    container_name: unix-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - unix-data:/root/.unix
+      # Mount project directories as needed:
+      # - ~/projects:/projects:rw
+    restart: unless-stopped
+
+volumes:
+  unix-data:

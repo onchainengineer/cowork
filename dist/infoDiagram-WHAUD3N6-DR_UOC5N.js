@@ -1,0 +1,3 @@
+import{i as e,w as s,Y as n,x as i,Z as p}from"./main-D0Ooo9fF.js";import{p as g}from"./treemap-KMMF4GRG-DRSqr0fD.js";import"./__vite-browser-external-2447137e-CirRYW17.js";import"./min-Dy4kcp3C.js";import"./_baseUniq-DPkn1jUH.js";var v={parse:e(async r=>{const a=await g("info",r);s.debug(a)},"parse")},d={version:p.version+""},m=e(()=>d.version,"getVersion"),c={getVersion:m},f=e((r,a,o)=>{s.debug(`rendering info diagram
+`+r);const t=n(a);i(t,100,400,!0),t.append("g").append("text").attr("x",100).attr("y",40).attr("class","version").attr("font-size",32).style("text-anchor","middle").text(`v${o}`)},"draw"),l={draw:f},S={parser:v,db:c,renderer:l};export{S as diagram};
+//# sourceMappingURL=infoDiagram-WHAUD3N6-DR_UOC5N.js.map

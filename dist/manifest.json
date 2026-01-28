@@ -1,0 +1,28 @@
+{
+  "name": "DEV OS",
+  "short_name": "DEV OS",
+  "description": "Parallel agentic workspace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e1e",
+  "theme_color": "#1e1e1e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["development", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "New Workspace",
+      "short_name": "New",
+      "description": "Create a new workspace",
+      "url": "/?action=new",
+      "icons": []
+    }
+  ]
+}
