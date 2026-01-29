@@ -216,7 +216,7 @@ async function revealChatView(): Promise<void> {
   }
 
   try {
-    await vscode.commands.executeCommand("unix.chatView.focus");
+    await vscode.commands.executeCommand("lattice.chatView.focus");
   } catch {
     // Ignore - focus command may not exist for webview views.
   }
@@ -235,11 +235,11 @@ function formatError(error: unknown): string {
 function describeFailure(failure: ApiConnectionFailure): string {
   switch (failure.kind) {
     case "unreachable":
-      return `unix server is not reachable at ${failure.baseUrl}`;
+      return `Lattice server is not reachable at ${failure.baseUrl}`;
     case "unauthorized":
-      return `unix server rejected the auth token at ${failure.baseUrl}`;
+      return `Lattice server rejected the auth token at ${failure.baseUrl}`;
     case "error":
-      return `unix server connection failed at ${failure.baseUrl}`;
+      return `Lattice server connection failed at ${failure.baseUrl}`;
   }
 }
 
@@ -369,7 +369,7 @@ async function getWorkspacesForCommand(
   if (didShowFallbackPrompt) {
     sessionPreferredMode = "file";
     void vscode.window.showWarningMessage(
-      `unix: ${describeFailure(failure)}. Falling back to local file access. Run "unix: Configure Connection" to fix.`
+      `unix: ${describeFailure(failure)}. Falling back to local file access. Run "Lattice: Configure Connection" to fix.`
     );
     return getAllWorkspacesFromFiles();
   }
@@ -519,13 +519,13 @@ async function openWorkspaceCommand(
 
   if (workspaces.length === 0) {
     const selection = await vscode.window.showInformationMessage(
-      "No unix workspaces found. Create a workspace in unix first.",
-      "Open unix"
+      "No Lattice workspaces found. Create a workspace in Lattice first.",
+      "Open Lattice"
     );
 
     // User can't easily open unix from VS Code, so just inform them
-    if (selection === "Open unix") {
-      vscode.window.showInformationMessage("Please open the unix application to create workspaces.");
+    if (selection === "Open Lattice") {
+      vscode.window.showInformationMessage("Please open the Lattice application to create workspaces.");
     }
     return;
   }
@@ -537,7 +537,7 @@ async function openWorkspaceCommand(
   const quickPick = vscode.window.createQuickPick<
     vscode.QuickPickItem & { workspace: WorkspaceWithContext }
   >();
-  quickPick.placeholder = "Select a unix workspace to open";
+  quickPick.placeholder = "Select a Lattice workspace to open";
   quickPick.matchOnDescription = true;
   quickPick.matchOnDetail = false;
   quickPick.items = allItems;
@@ -590,7 +590,7 @@ async function openWorkspaceCommand(
 }
 
 async function configureConnectionCommand(context: vscode.ExtensionContext): Promise<void> {
-  const config = vscode.workspace.getConfiguration("unix");
+  const config = vscode.workspace.getConfiguration("lattice");
 
   // Small loop so users can set/clear both URL + token in one command.
   // Keep UX minimal: no nested quick picks or extra commands.
@@ -616,7 +616,7 @@ async function configureConnectionCommand(context: vscode.ExtensionContext): Pro
         ...(hasToken ? ([{ label: "Clear auth token" }] as const) : ([] as const)),
         { label: "Done" },
       ],
-      { placeHolder: "Configure unix server connection" }
+      { placeHolder: "Configure Lattice server connection" }
     );
 
     if (!pick || pick.label === "Done") {
@@ -625,7 +625,7 @@ async function configureConnectionCommand(context: vscode.ExtensionContext): Pro
 
     if (pick.label === "Set server URL") {
       const value = await vscode.window.showInputBox({
-        title: "unix server URL",
+        title: "Lattice server URL",
         value: currentUrl,
         prompt: "Example: http://127.0.0.1:3000 (leave blank for auto-discovery)",
         validateInput(input) {
@@ -665,8 +665,8 @@ async function configureConnectionCommand(context: vscode.ExtensionContext): Pro
 
     if (pick.label === "Set auth token") {
       const token = await vscode.window.showInputBox({
-        title: "unix server auth token",
-        prompt: "Paste the unix server auth token",
+        title: "Lattice server auth token",
+        prompt: "Paste the Lattice server auth token",
         password: true,
         validateInput(input) {
           return input.trim().length > 0 ? null : "Token cannot be empty";
@@ -732,7 +732,7 @@ async function debugConnectionCommand(context: vscode.ExtensionContext): Promise
   if (auth.status !== "ok") {
     const hint =
       auth.status === "unauthorized"
-        ? ' Run "unix: Configure Connection" to update the auth token.'
+        ? ' Run "Lattice: Configure Connection" to update the auth token.'
         : "";
 
     void vscode.window.showErrorMessage(
@@ -899,7 +899,7 @@ function renderChatViewHtml(
     `script-src ${webview.cspSource} 'nonce-${nonce}'`,
     `font-src ${webview.cspSource} https: data:`,
     // Allow webview to fetch additional local assets (e.g. source maps, wasm) without
-    // enabling arbitrary network access to the unix server.
+    // enabling arbitrary network access to the Lattice server.
     `connect-src ${webview.cspSource}`,
     // Shiki uses a Web Worker when available.
     `worker-src ${webview.cspSource} blob:`,
@@ -1577,7 +1577,7 @@ class UnixChatViewProvider implements vscode.WebviewViewProvider, vscode.Disposa
           type: "orpcResponse",
           requestId: args.requestId,
           ok: false,
-          error: "unix server connection required",
+          error: "Lattice server connection required",
         });
         return;
       }
@@ -1710,7 +1710,7 @@ class UnixChatViewProvider implements vscode.WebviewViewProvider, vscode.Disposa
       this.postMessage({
         type: "uiNotice",
         level: "error",
-        message: this.connectionStatus.error ?? "unix server unavailable",
+        message: this.connectionStatus.error ?? "Lattice server unavailable",
       });
 
       controller.abort();
@@ -1811,7 +1811,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(chatViewProvider);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("unix.chatView", chatViewProvider, {
+    vscode.window.registerWebviewViewProvider("lattice.chatView", chatViewProvider, {
       webviewOptions: {
         retainContextWhenHidden: true,
       },
@@ -1819,23 +1819,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("unix.openWorkspace", () =>
+    vscode.commands.registerCommand("lattice.openWorkspace", () =>
       openWorkspaceCommand(context, { chatViewProvider: chatViewProvider })
     )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("unix.configureConnection", () =>
+    vscode.commands.registerCommand("lattice.configureConnection", () =>
       configureConnectionCommand(context)
     )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("unix.debugConnection", () => debugConnectionCommand(context))
+    vscode.commands.registerCommand("lattice.debugConnection", () => debugConnectionCommand(context))
   );
 
   // Start the Copilot LM Proxy (OpenAI-compatible bridge to VS Code Language Model API)
-  const proxyPort = vscode.workspace.getConfiguration("unix").get<number>("lmProxyPort") ?? 3941;
+  const proxyPort = vscode.workspace.getConfiguration("lattice").get<number>("lmProxyPort") ?? 3941;
   lmProxy = new CopilotLmProxy(proxyPort, getMuxLogChannel());
   try {
     const actualPort = await lmProxy.start();
@@ -1844,8 +1844,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Show status bar item with proxy info
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.text = `$(plug) LM Proxy :${actualPort}`;
-    statusBarItem.tooltip = `DEV OS LM Proxy running on http://127.0.0.1:${actualPort}\nConfigure providers.jsonc with baseURL: "http://127.0.0.1:${actualPort}/v1"`;
-    statusBarItem.command = "unix.toggleLmProxy";
+    statusBarItem.tooltip = `Lattice LM Proxy running on http://127.0.0.1:${actualPort}\nConfigure providers.jsonc with baseURL: "http://127.0.0.1:${actualPort}/v1"`;
+    statusBarItem.command = "lattice.toggleLmProxy";
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
   } catch (err) {
@@ -1854,10 +1854,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Register LM Proxy toggle command
   context.subscriptions.push(
-    vscode.commands.registerCommand("unix.toggleLmProxy", async () => {
+    vscode.commands.registerCommand("lattice.toggleLmProxy", async () => {
       if (lmProxy?.isRunning()) {
         lmProxy.stop();
-        vscode.window.showInformationMessage("DEV OS LM Proxy stopped.");
+        vscode.window.showInformationMessage("Lattice LM Proxy stopped.");
       } else {
         if (!lmProxy) {
           lmProxy = new CopilotLmProxy(proxyPort, getMuxLogChannel());

@@ -1,9 +1,9 @@
 {
-  "name": "unix",
-  "displayName": "unix",
-  "description": "Open unix workspaces directly from VS Code",
+  "name": "lattice",
+  "displayName": "Lattice",
+  "description": "Open Lattice workspaces directly from VS Code",
   "version": "0.1.0",
-  "publisher": "devos",
+  "publisher": "lattice",
   "icon": "icon.png",
   "extensionKind": [
     "ui"
@@ -15,7 +15,7 @@
     "Other"
   ],
   "keywords": [
-    "unix",
+    "lattice",
     "workspace",
     "remote",
     "ssh",
@@ -23,53 +23,53 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onView:unix.chatView",
-    "onCommand:unix.openWorkspace",
-    "onCommand:unix.configureConnection",
-    "onCommand:unix.debugConnection"
+    "onView:lattice.chatView",
+    "onCommand:lattice.openWorkspace",
+    "onCommand:lattice.configureConnection",
+    "onCommand:lattice.debugConnection"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "unix.openWorkspace",
-        "title": "unix: Open Workspace"
+        "command": "lattice.openWorkspace",
+        "title": "Lattice: Open Workspace"
       },
       {
-        "command": "unix.configureConnection",
-        "title": "unix: Configure Connection"
+        "command": "lattice.configureConnection",
+        "title": "Lattice: Configure Connection"
       },
       {
-        "command": "unix.debugConnection",
-        "title": "unix: Debug Connection"
+        "command": "lattice.debugConnection",
+        "title": "Lattice: Debug Connection"
       },
       {
-        "command": "unix.toggleLmProxy",
-        "title": "unix: Toggle Copilot LM Proxy"
+        "command": "lattice.toggleLmProxy",
+        "title": "Lattice: Toggle Copilot LM Proxy"
       }
     ],
     "viewsContainers": {
       "secondarySidebar": [
         {
-          "id": "unixSecondary",
-          "title": "unix",
+          "id": "latticeSecondary",
+          "title": "Lattice",
           "icon": "icon.png"
         }
       ]
     },
     "views": {
-      "unixSecondary": [
+      "latticeSecondary": [
         {
-          "id": "unix.chatView",
+          "id": "lattice.chatView",
           "name": "Chat (Preview)",
           "type": "webview"
         }
       ]
     },
     "configuration": {
-      "title": "unix",
+      "title": "Lattice",
       "properties": {
-        "unix.connectionMode": {
+        "lattice.connectionMode": {
           "type": "string",
           "enum": [
             "auto",
@@ -78,15 +78,15 @@
           ],
           "default": "auto",
           "scope": "machine",
-          "description": "How the unix VS Code extension connects to unix (prefer server, require server, or use local files)."
+          "description": "How the Lattice VS Code extension connects to Lattice (prefer server, require server, or use local files)."
         },
-        "unix.serverUrl": {
+        "lattice.serverUrl": {
           "type": "string",
           "default": "",
           "scope": "machine",
-          "description": "Override the unix server URL (leave empty to auto-discover). Example: http://127.0.0.1:3000"
+          "description": "Override the Lattice server URL (leave empty to auto-discover). Example: http://127.0.0.1:3000"
         },
-        "unix.lmProxyPort": {
+        "lattice.lmProxyPort": {
           "type": "number",
           "default": 3941,
           "scope": "machine",

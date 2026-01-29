@@ -31,7 +31,7 @@ function normalizeBaseUrl(baseUrl: string): string {
 }
 
 export function getConnectionModeSetting(): ConnectionMode {
-  const config = vscode.workspace.getConfiguration("unix");
+  const config = vscode.workspace.getConfiguration("lattice");
   const value = config.get<unknown>("connectionMode");
 
   if (value === "auto" || value === "server-only" || value === "file-only") {
@@ -44,7 +44,7 @@ export function getConnectionModeSetting(): ConnectionMode {
 export async function discoverServerConfig(
   context: vscode.ExtensionContext
 ): Promise<DiscoveredServerConfig> {
-  const config = vscode.workspace.getConfiguration("unix");
+  const config = vscode.workspace.getConfiguration("lattice");
   const serverUrlOverrideRaw = config.get<string>("serverUrl")?.trim();
 
   let lockfileData: { baseUrl: string; token: string } | null = null;

@@ -1,11 +1,11 @@
 {
-  "name": "unix",
+  "name": "lattice",
   "version": "0.14.1",
-  "description": "DEV OS - parallel agentic workspace",
-  "author": "DEV OS",
+  "description": "Lattice - parallel agentic workspace",
+  "author": "Lattice",
   "main": "dist/cli/index.js",
   "bin": {
-    "unix": "dist/cli/index.js"
+    "lattice-app": "dist/cli/index.js"
   },
   "license": "MIT",
   "private": true,
@@ -241,8 +241,8 @@
     "LICENSE"
   ],
   "build": {
-    "appId": "com.unix.app",
-    "productName": "unix",
+    "appId": "com.lattice.app",
+    "productName": "Lattice",
     "publish": {
       "provider": "github",
       "releaseType": "release"

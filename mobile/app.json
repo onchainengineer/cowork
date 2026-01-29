@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "unix-mobile",
-    "slug": "unix-mobile",
+    "name": "Lattice",
+    "slug": "lattice",
     "version": "0.0.1",
-    "scheme": "unix",
+    "scheme": "lattice",
     "orientation": "portrait",
     "platforms": ["ios", "android"],
     "newArchEnabled": true,
@@ -12,19 +12,19 @@
       "typedRoutes": true
     },
     "extra": {
-      "unix": {},
+      "lattice": {},
       "router": {},
       "eas": {
-        "projectId": "6e2245c1-ec09-44ef-9b08-a6ba165d8496"
+        "projectId": "263dd3d7-ac12-491c-b530-73286b1f3b59"
       }
     },
     "plugins": ["expo-router", "expo-secure-store"],
     "ios": {
-      "bundleIdentifier": "com.devos.unix-mobile"
+      "bundleIdentifier": "com.lattice.mobile"
     },
-    "owner": "devos",
+    "owner": "latticeruntime",
     "android": {
-      "package": "com.devos.unixmobile"
+      "package": "com.lattice.mobile"
     }
   }
 }

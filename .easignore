@@ -1,0 +1,7 @@
+# Exclude everything except mobile directory
+*
+!mobile
+!mobile/**
+
+# But still exclude mobile's node_modules (EAS installs fresh)
+mobile/node_modules
