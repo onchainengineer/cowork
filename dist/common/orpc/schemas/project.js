@@ -87,7 +87,7 @@ exports.WorkspaceConfigSchema = zod_1.z.object({
         description: "Trunk branch used to create/init this agent task workspace (used for restart-safe init on queued tasks).",
     }),
     mcp: mcp_1.WorkspaceMCPOverridesSchema.optional().meta({
-        description: "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.unix/mcp.local.jsonc)",
+        description: "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.lattice/mcp.local.jsonc)",
     }),
     archivedAt: zod_1.z.string().optional().meta({
         description: "ISO 8601 timestamp when workspace was last archived. Workspace is considered archived if archivedAt > unarchivedAt (or unarchivedAt is absent).",

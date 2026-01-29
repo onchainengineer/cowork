@@ -13,15 +13,15 @@ exports.getMuxExtensionMetadataPath = getMuxExtensionMetadataPath;
 const fs_1 = require("fs");
 const os_1 = require("os");
 const path_1 = require("path");
-const LEGACY_UNIX_DIR_NAME = ".cmux";
-const UNIX_DIR_NAME = ".unix";
+const LEGACY_UNIX_DIR_NAME = ".unix";
+const UNIX_DIR_NAME = ".lattice";
 /**
- * Migrate from the legacy ~/.cmux directory into ~/.unix for rebranded installs.
+ * Migrate from the legacy ~/.unix directory into ~/.lattice for rebranded installs.
  * Called on startup to preserve data created by earlier releases.
  *
- * If .unix exists, nothing happens (already migrated).
- * If .cmux exists but .unix doesn't, moves .cmux → .unix and creates symlink.
- * This ensures old scripts/tools referencing ~/.cmux continue working.
+ * If .lattice exists, nothing happens (already migrated).
+ * If .unix exists but .lattice doesn't, moves .unix → .lattice and creates symlink.
+ * This ensures old scripts/tools referencing ~/.unix continue working.
  */
 function migrateLegacyUnixHome() {
     const oldPath = (0, path_1.join)((0, os_1.homedir)(), LEGACY_UNIX_DIR_NAME);
@@ -30,7 +30,7 @@ function migrateLegacyUnixHome() {
     if ((0, fs_1.existsSync)(newPath)) {
         return;
     }
-    // If .cmux exists, move it and create symlink for backward compatibility
+    // If .unix exists, move it and create symlink for backward compatibility
     if ((0, fs_1.existsSync)(oldPath)) {
         (0, fs_1.renameSync)(oldPath, newPath);
         (0, fs_1.symlinkSync)(newPath, oldPath, "dir");
@@ -38,8 +38,8 @@ function migrateLegacyUnixHome() {
     // If neither exists, nothing to do (will be created on first use)
 }
 /**
- * Get the root directory for all unix configuration and data.
- * Can be overridden with UNIX_ROOT environment variable.
+ * Get the root directory for all Lattice configuration and data.
+ * Can be overridden with LATTICE_ROOT (preferred) or UNIX_ROOT (legacy) env var.
  * Appends '-dev' suffix when NODE_ENV=development (explicit dev mode).
  *
  * This is a getter function to support test mocking of os.homedir().
@@ -48,6 +48,11 @@ function migrateLegacyUnixHome() {
  * for organizational purposes. The process.env access is safe.
  */
 function getUnixHome() {
+    // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
+    if (process.env.LATTICE_ROOT) {
+        // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
+        return process.env.LATTICE_ROOT;
+    }
     // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
     if (process.env.UNIX_ROOT) {
         // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
@@ -61,7 +66,7 @@ function getUnixHome() {
 }
 /**
  * Get the directory where workspace git worktrees are stored.
- * Example: ~/.unix/src/my-project/feature-branch
+ * Example: ~/.lattice/src/my-project/feature-branch
  *
  * @param rootDir - Optional root directory (defaults to getUnixHome())
  */
@@ -71,7 +76,7 @@ function getUnixSrcDir(rootDir) {
 }
 /**
  * Get the directory where session chat histories are stored.
- * Example: ~/.unix/sessions/workspace-id/chat.jsonl
+ * Example: ~/.lattice/sessions/workspace-id/chat.jsonl
  *
  * @param rootDir - Optional root directory (defaults to getUnixHome())
  */
@@ -81,7 +86,7 @@ function getUnixSessionsDir(rootDir) {
 }
 /**
  * Get the directory where plan files are stored.
- * Example: ~/.unix/plans/workspace-id.md
+ * Example: ~/.lattice/plans/workspace-id.md
  *
  * @param rootDir - Optional root directory (defaults to getUnixHome())
  */
@@ -118,7 +123,7 @@ function getMuxSecretsFile(rootDir) {
 }
 /**
  * Get the default directory for new projects created with bare names.
- * Example: ~/.unix/projects/my-project
+ * Example: ~/.lattice/projects/my-project
  *
  * @param rootDir - Optional root directory (defaults to getUnixHome())
  */

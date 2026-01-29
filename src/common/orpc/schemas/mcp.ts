@@ -3,9 +3,9 @@ import { z } from "zod";
 /**
  * Per-workspace MCP overrides.
  *
- * Stored per-workspace in <workspace>/.unix/mcp.local.jsonc (workspace-local, intended to be gitignored).
+ * Stored per-workspace in <workspace>/.lattice/mcp.local.jsonc (workspace-local, intended to be gitignored).
  * Allows workspaces to disable servers or restrict tool allowlists
- * without modifying the project-level .unix/mcp.jsonc.
+ * without modifying the project-level .lattice/mcp.jsonc.
  */
 export const WorkspaceMCPOverridesSchema = z.object({
   /** Server names to explicitly disable for this workspace. */
@@ -15,7 +15,7 @@ export const WorkspaceMCPOverridesSchema = z.object({
 
   /**
    * Per-server tool allowlist.
-   * Key: server name (from .unix/mcp.jsonc)
+   * Key: server name (from .lattice/mcp.jsonc)
    * Value: raw MCP tool names (NOT namespaced)
    *
    * If omitted for a server => expose all tools from that server.

@@ -73,7 +73,7 @@ exports.SessionUsageTokenStatsCacheSchema = zod_1.z.object({
 });
 /**
  * Cumulative session usage file format.
- * Stored in ~/.unix/sessions/{workspaceId}/session-usage.json
+ * Stored in ~/.lattice/sessions/{workspaceId}/session-usage.json
  */
 exports.SessionUsageFileSchema = zod_1.z.object({
     byModel: zod_1.z.record(zod_1.z.string(), exports.ChatUsageDisplaySchema),

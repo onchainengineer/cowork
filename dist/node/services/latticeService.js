@@ -279,7 +279,7 @@ class LatticeService {
         try {
             const env_1 = { stack: [], error: void 0, hasError: false };
             try {
-                const proc = __addDisposableResource(env_1, (0, disposableExec_1.execAsync)("lattice version --output=json"), false);
+                const proc = __addDisposableResource(env_1, (0, disposableExec_1.execAsync)("lattice version -o json"), false);
                 const { stdout } = await proc.result;
                 // Parse JSON output
                 const data = JSON.parse(stdout);
@@ -344,18 +344,20 @@ class LatticeService {
     }
     /**
      * Get the Lattice deployment URL via `lattice whoami`.
+     * Parses text output like: "Lattice is running at http://127.0.0.1:7080, You're authenticated as admin !"
      * Throws if Lattice CLI is not configured/logged in.
      */
     async getDeploymentUrl() {
         const env_2 = { stack: [], error: void 0, hasError: false };
         try {
-            const proc = __addDisposableResource(env_2, (0, disposableExec_1.execAsync)("lattice whoami --output json"), false);
+            const proc = __addDisposableResource(env_2, (0, disposableExec_1.execAsync)("lattice whoami"), false);
             const { stdout } = await proc.result;
-            const data = JSON.parse(stdout);
-            if (!data[0]?.url) {
-                throw new Error("Could not determine Lattice deployment URL from `lattice whoami`");
+            // Parse URL from output like: "Lattice is running at http://127.0.0.1:7080, You're authenticated..."
+            const urlMatch = stdout.match(/running at (https?:\/\/[^\s,]+)/i);
+            if (!urlMatch?.[1]) {
+                throw new Error(`Could not determine Lattice deployment URL from whoami output: ${stdout}`);
             }
-            return data[0].url;
+            return urlMatch[1];
         }
         catch (e_2) {
             env_2.error = e_2;
@@ -373,7 +375,7 @@ class LatticeService {
         const env_3 = { stack: [], error: void 0, hasError: false };
         try {
             // Note: `lattice templates list` doesn't support --org flag, so we filter client-side
-            const proc = __addDisposableResource(env_3, (0, disposableExec_1.execAsync)("lattice templates list --output=json"), false);
+            const proc = __addDisposableResource(env_3, (0, disposableExec_1.execAsync)("lattice templates list -o json"), false);
             const { stdout } = await proc.result;
             if (!stdout.trim()) {
                 throw new Error(`Template "${templateName}" not found (no templates exist)`);
@@ -398,36 +400,15 @@ class LatticeService {
     /**
      * Get parameter names covered by a preset.
      * Returns empty set if preset not found (allows creation to proceed without preset params).
+     *
+     * Note: Lattice CLI doesn't have a `templates presets list` command.
+     * Presets are fetched via API in listPresets(). This method uses the cached
+     * preset data when available.
      */
-    async getPresetParamNames(templateName, presetName, org) {
-        try {
-            const env_4 = { stack: [], error: void 0, hasError: false };
-            try {
-                const orgFlag = org ? ` --org ${streamUtils_1.shescape.quote(org)}` : "";
-                const proc = __addDisposableResource(env_4, (0, disposableExec_1.execAsync)(`lattice templates presets list ${streamUtils_1.shescape.quote(templateName)}${orgFlag} --output=json`), false);
-                const { stdout } = await proc.result;
-                if (!stdout.trim()) {
-                    return new Set();
-                }
-                const raw = JSON.parse(stdout);
-                const preset = raw.find((p) => p.TemplatePreset.Name === presetName);
-                if (!preset?.TemplatePreset.Parameters) {
-                    return new Set();
-                }
-                return new Set(preset.TemplatePreset.Parameters.map((p) => p.Name));
-            }
-            catch (e_4) {
-                env_4.error = e_4;
-                env_4.hasError = true;
-            }
-            finally {
-                __disposeResources(env_4);
-            }
-        }
-        catch (error) {
-            log_1.log.debug("Failed to get preset param names", { templateName, presetName, error });
-            return new Set();
-        }
+    async getPresetParamNames(_templateName, _presetName, _org) {
+        // Presets are handled via API, not CLI. Return empty set as preset params
+        // are applied by the server during workspace creation when --preset is passed.
+        return new Set();
     }
     /**
      * Parse rich parameter data from the Lattice API.
@@ -457,11 +438,11 @@ class LatticeService {
      * Creates a short-lived token, fetches params, then cleans up the token.
      */
     async getTemplateRichParameters(deploymentUrl, versionId, workspaceName) {
-        const env_5 = { stack: [], error: void 0, hasError: false };
+        const env_4 = { stack: [], error: void 0, hasError: false };
         try {
             // Create short-lived token named after workspace (avoids keychain read issues)
             const tokenName = `unix-${workspaceName}`;
-            const tokenProc = __addDisposableResource(env_5, (0, disposableExec_1.execAsync)(`lattice tokens create --lifetime 5m --name ${streamUtils_1.shescape.quote(tokenName)}`), false);
+            const tokenProc = __addDisposableResource(env_4, (0, disposableExec_1.execAsync)(`lattice tokens create --lifetime 5m --name ${streamUtils_1.shescape.quote(tokenName)}`), false);
             const { stdout: token } = await tokenProc.result;
             try {
                 const url = new URL(`/api/v2/templateversions/${versionId}/rich-parameters`, deploymentUrl).toString();
@@ -479,17 +460,17 @@ class LatticeService {
             finally {
                 // Clean up the token by name
                 try {
-                    const env_6 = { stack: [], error: void 0, hasError: false };
+                    const env_5 = { stack: [], error: void 0, hasError: false };
                     try {
-                        const deleteProc = __addDisposableResource(env_6, (0, disposableExec_1.execAsync)(`lattice tokens delete ${streamUtils_1.shescape.quote(tokenName)}`), false);
+                        const deleteProc = __addDisposableResource(env_5, (0, disposableExec_1.execAsync)(`lattice tokens remove ${streamUtils_1.shescape.quote(tokenName)}`), false);
                         await deleteProc.result;
                     }
-                    catch (e_5) {
-                        env_6.error = e_5;
-                        env_6.hasError = true;
+                    catch (e_4) {
+                        env_5.error = e_4;
+                        env_5.hasError = true;
                     }
                     finally {
-                        __disposeResources(env_6);
+                        __disposeResources(env_5);
                     }
                 }
                 catch {
@@ -498,12 +479,12 @@ class LatticeService {
                 }
             }
         }
-        catch (e_6) {
-            env_5.error = e_6;
-            env_5.hasError = true;
+        catch (e_5) {
+            env_4.error = e_5;
+            env_4.hasError = true;
         }
         finally {
-            __disposeResources(env_5);
+            __disposeResources(env_4);
         }
     }
     /**
@@ -562,9 +543,9 @@ class LatticeService {
      */
     async listTemplates() {
         try {
-            const env_7 = { stack: [], error: void 0, hasError: false };
+            const env_6 = { stack: [], error: void 0, hasError: false };
             try {
-                const proc = __addDisposableResource(env_7, (0, disposableExec_1.execAsync)("lattice templates list --output=json"), false);
+                const proc = __addDisposableResource(env_6, (0, disposableExec_1.execAsync)("lattice templates list -o json"), false);
                 const { stdout } = await proc.result;
                 // Handle empty output (no templates)
                 if (!stdout.trim()) {
@@ -578,12 +559,12 @@ class LatticeService {
                     organizationName: entry.Template.organization_name ?? "default",
                 }));
             }
-            catch (e_7) {
-                env_7.error = e_7;
-                env_7.hasError = true;
+            catch (e_6) {
+                env_6.error = e_6;
+                env_6.hasError = true;
             }
             finally {
-                __disposeResources(env_7);
+                __disposeResources(env_6);
             }
         }
         catch (error) {
@@ -594,36 +575,76 @@ class LatticeService {
         }
     }
     /**
-     * List presets for a template.
+     * List presets for a template via Lattice API.
+     *
+     * Note: Lattice CLI doesn't have a `templates presets list` command.
+     * We fetch presets via the REST API using a short-lived token.
+     *
      * @param templateName - Template name
      * @param org - Organization name for disambiguation (optional)
      */
     async listPresets(templateName, org) {
         try {
-            const env_8 = { stack: [], error: void 0, hasError: false };
+            const env_7 = { stack: [], error: void 0, hasError: false };
             try {
-                const orgFlag = org ? ` --org ${streamUtils_1.shescape.quote(org)}` : "";
-                const proc = __addDisposableResource(env_8, (0, disposableExec_1.execAsync)(`lattice templates presets list ${streamUtils_1.shescape.quote(templateName)}${orgFlag} --output=json`), false);
-                const { stdout } = await proc.result;
-                // Handle empty output (no presets)
-                if (!stdout.trim()) {
-                    return [];
+                // Get deployment URL and template version ID
+                const deploymentUrl = await this.getDeploymentUrl();
+                const versionId = await this.getActiveTemplateVersionId(templateName, org);
+                // Create short-lived token for API access
+                const tokenName = `unix-presets-${Date.now()}`;
+                const tokenProc = __addDisposableResource(env_7, (0, disposableExec_1.execAsync)(`lattice tokens create --lifetime 5m --name ${streamUtils_1.shescape.quote(tokenName)}`), false);
+                const { stdout: token } = await tokenProc.result;
+                try {
+                    // Fetch presets via API
+                    const url = new URL(`/api/v2/templateversions/${versionId}/presets`, deploymentUrl).toString();
+                    const response = await fetch(url, {
+                        headers: {
+                            "Lattice-Session-Token": token.trim(),
+                        },
+                    });
+                    if (!response.ok) {
+                        // 404 means no presets for this template - that's okay
+                        if (response.status === 404) {
+                            return [];
+                        }
+                        throw new Error(`Failed to fetch presets: ${response.status} ${response.statusText}`);
+                    }
+                    const data = (await response.json());
+                    return data.map((preset) => ({
+                        id: preset.id,
+                        name: preset.name,
+                        description: preset.description,
+                        isDefault: preset.default ?? false,
+                    }));
                 }
-                // CLI returns [{TemplatePreset: {ID, Name, ...}}, ...] wrapper structure
-                const raw = JSON.parse(stdout);
-                return raw.map((entry) => ({
-                    id: entry.TemplatePreset.ID,
-                    name: entry.TemplatePreset.Name,
-                    description: entry.TemplatePreset.Description,
-                    isDefault: entry.TemplatePreset.Default ?? false,
-                }));
+                finally {
+                    // Clean up the token
+                    try {
+                        const env_8 = { stack: [], error: void 0, hasError: false };
+                        try {
+                            const deleteProc = __addDisposableResource(env_8, (0, disposableExec_1.execAsync)(`lattice tokens remove ${streamUtils_1.shescape.quote(tokenName)}`), false);
+                            await deleteProc.result;
+                        }
+                        catch (e_7) {
+                            env_8.error = e_7;
+                            env_8.hasError = true;
+                        }
+                        finally {
+                            __disposeResources(env_8);
+                        }
+                    }
+                    catch {
+                        // Best-effort cleanup; token will expire in 5 minutes anyway
+                        log_1.log.debug("Failed to delete temporary token", { tokenName });
+                    }
+                }
             }
             catch (e_8) {
-                env_8.error = e_8;
-                env_8.hasError = true;
+                env_7.error = e_8;
+                env_7.hasError = true;
             }
             finally {
-                __disposeResources(env_8);
+                __disposeResources(env_7);
             }
         }
         catch (error) {
@@ -644,7 +665,7 @@ class LatticeService {
         try {
             const env_9 = { stack: [], error: void 0, hasError: false };
             try {
-                const proc = __addDisposableResource(env_9, (0, disposableExec_1.execAsync)(`lattice list --search ${streamUtils_1.shescape.quote(`name:${workspaceName}`)} --output=json`), false);
+                const proc = __addDisposableResource(env_9, (0, disposableExec_1.execAsync)(`lattice list --search ${streamUtils_1.shescape.quote(`name:${workspaceName}`)} -o json`), false);
                 const { stdout } = await proc.result;
                 if (!stdout.trim()) {
                     return false;
@@ -676,7 +697,7 @@ class LatticeService {
         try {
             const env_10 = { stack: [], error: void 0, hasError: false };
             try {
-                const proc = __addDisposableResource(env_10, (0, disposableExec_1.execAsync)("lattice list --output=json"), false);
+                const proc = __addDisposableResource(env_10, (0, disposableExec_1.execAsync)("lattice list -o json"), false);
                 const { stdout } = await proc.result;
                 // Handle empty output (no workspaces)
                 if (!stdout.trim()) {
@@ -791,7 +812,7 @@ class LatticeService {
     async getWorkspaceStatus(workspaceName, options) {
         const timeoutMs = options?.timeoutMs ?? 10_000;
         try {
-            const result = await this.runLatticeCommand(["list", "--search", `name:${workspaceName}`, "--output", "json"], { timeoutMs, signal: options?.signal });
+            const result = await this.runLatticeCommand(["list", "--search", `name:${workspaceName}`, "-o", "json"], { timeoutMs, signal: options?.signal });
             const interpreted = interpretLatticeResult(result);
             if (!interpreted.ok) {
                 return { kind: "error", error: interpreted.error };
@@ -854,56 +875,70 @@ class LatticeService {
         throw new Error(`Timeout waiting for agent "${workspaceName}" to be ready`);
     }
     /**
-     * Create a new Lattice workspace. Yields build log lines as they arrive.
+     * Create a new Lattice agent. Yields build log lines as they arrive.
      *
-     * Pre-fetches template parameters and passes defaults via --parameter flags
-     * to avoid interactive prompts during creation.
+     * Uses `lattice create` with `-y` to bypass interactive prompts.
+     * Fetches template parameters via API and passes them with default values
+     * using `--parameter "name=value"` to avoid interactive parameter prompts.
      *
-     * @param name Workspace name
+     * Note: Lattice CLI does not support a `--preset` flag. Presets are a UI/API
+     * feature - when creating via CLI, template defaults are used. The preset
+     * parameter is kept for API compatibility but logged as informational only.
+     *
+     * @param name Agent name
      * @param template Template name
-     * @param preset Optional preset name
-     * @param abortSignal Optional signal to cancel workspace creation
+     * @param preset Optional preset name (informational only - CLI doesn't support presets)
+     * @param abortSignal Optional signal to cancel agent creation
      * @param org Optional organization name for disambiguation
      */
     async *createWorkspace(name, template, preset, abortSignal, org) {
-        log_1.log.debug("Creating Lattice workspace", { name, template, preset, org });
-        if (abortSignal?.aborted) {
-            throw new Error("Lattice workspace creation aborted");
+        // Log preset for debugging but note it's not used by CLI
+        if (preset) {
+            log_1.log.debug("Creating Lattice agent (preset ignored - CLI uses template defaults)", {
+                name,
+                template,
+                preset,
+                org,
+            });
         }
-        // 1. Get deployment URL
-        const deploymentUrl = await this.getDeploymentUrl();
-        // 2. Get active template version ID
-        const versionId = await this.getActiveTemplateVersionId(template, org);
-        // 3. Get parameter names covered by preset (if any)
-        const coveredByPreset = preset
-            ? await this.getPresetParamNames(template, preset, org)
-            : new Set();
-        // 4. Fetch all template parameters from API
-        const allParams = await this.getTemplateRichParameters(deploymentUrl, versionId, name);
-        // 5. Validate required params have values
-        this.validateRequiredParams(allParams, coveredByPreset);
-        // 6. Compute extra --parameter flags for non-ephemeral params not in preset
-        const extraParams = this.computeExtraParams(allParams, coveredByPreset);
-        log_1.log.debug("Computed extra params for lattice create", {
-            name,
-            template,
-            preset,
-            org,
-            extraParamCount: extraParams.length,
-            extraParamNames: extraParams.map((p) => p.name),
-        });
-        // 7. Build and run single lattice create command
-        const args = ["create", name, "-t", template, "--yes"];
+        else {
+            log_1.log.debug("Creating Lattice agent", { name, template, org });
+        }
+        if (abortSignal?.aborted) {
+            throw new Error("Lattice agent creation aborted");
+        }
+        // Fetch template parameters to pass with default values
+        // This avoids interactive prompts for required parameters
+        yield "Fetching template parameters...";
+        let parameterArgs = [];
+        try {
+            const deploymentUrl = await this.getDeploymentUrl();
+            const versionId = await this.getActiveTemplateVersionId(template, org);
+            const richParams = await this.getTemplateRichParameters(deploymentUrl, versionId, name);
+            // Build --parameter flags for non-ephemeral parameters with default values
+            for (const param of richParams) {
+                if (param.ephemeral)
+                    continue; // Skip ephemeral params
+                // Use default value if available, otherwise skip (let CLI prompt if truly required)
+                if (param.defaultValue !== "") {
+                    const encoded = this.encodeParameterValue(`${param.name}=${param.defaultValue}`);
+                    parameterArgs.push("--parameter", encoded);
+                }
+            }
+            log_1.log.debug("Resolved template parameters", { count: parameterArgs.length / 2 });
+        }
+        catch (error) {
+            // If we can't fetch parameters, try creating anyway - CLI will prompt if needed
+            log_1.log.warn("Failed to fetch template parameters, proceeding without", { error });
+            yield "Warning: Could not fetch template parameters, CLI may prompt for values";
+        }
+        // Build lattice create command with -y to bypass prompts
+        // Note: --preset flag does not exist in Lattice CLI - presets are API/UI only
+        const args = ["create", name, "-t", template, "-y", ...parameterArgs];
         if (org) {
             args.push("--org", org);
         }
-        if (preset) {
-            args.push("--preset", preset);
-        }
-        for (const p of extraParams) {
-            args.push("--parameter", p.encoded);
-        }
-        yield* streamLatticeCommand(args, "lattice create failed", abortSignal, "Lattice workspace creation aborted");
+        yield* streamLatticeCommand(args, "lattice create failed", abortSignal, "Lattice agent creation aborted");
     }
     /**
      * Delete a Lattice workspace.

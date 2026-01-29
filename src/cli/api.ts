@@ -6,7 +6,7 @@
  *
  * Server discovery priority:
  * 1. UNIX_SERVER_URL env var (explicit override)
- * 2. Lockfile at ~/.unix/server.lock (running Electron or unix server)
+ * 2. Lockfile at ~/.lattice/server.lock (running Electron or unix server)
  * 3. Fallback to http://localhost:3000
  */
 

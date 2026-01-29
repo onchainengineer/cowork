@@ -8,6 +8,6 @@ exports.DEFAULT_RUNTIME_CONFIG = void 0;
  */
 exports.DEFAULT_RUNTIME_CONFIG = {
     type: "worktree",
-    srcBaseDir: "~/.unix/src",
+    srcBaseDir: "~/.lattice/src",
 };
 //# sourceMappingURL=workspace.js.map

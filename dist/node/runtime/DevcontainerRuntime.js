@@ -590,8 +590,8 @@ class DevcontainerRuntime extends LocalBaseRuntime_1.LocalBaseRuntime {
             return super.tempDir();
         }
         const tmpPath = this.remoteWorkspaceFolder
-            ? path.posix.join(workspaceRoot, ".unix", "tmp")
-            : path.join(workspaceRoot, ".unix", "tmp");
+            ? path.posix.join(workspaceRoot, ".lattice", "tmp")
+            : path.join(workspaceRoot, ".lattice", "tmp");
         return Promise.resolve(tmpPath);
     }
     /**

@@ -50,7 +50,7 @@ const runtime_1 = require("../../common/types/runtime");
  * @returns true if hook exists and is executable, false otherwise
  */
 async function checkInitHookExists(projectPath) {
-    const hookPath = path.join(projectPath, ".unix", "init");
+    const hookPath = path.join(projectPath, ".lattice", "init");
     try {
         await fsPromises.access(hookPath, fs.constants.X_OK);
         return true;
@@ -63,7 +63,7 @@ async function checkInitHookExists(projectPath) {
  * Get the init hook path for a project
  */
 function getInitHookPath(projectPath) {
-    return path.join(projectPath, ".unix", "init");
+    return path.join(projectPath, ".lattice", "init");
 }
 /**
  * Get UNIX_ environment variables for bash execution.

@@ -61,7 +61,7 @@ export const RUNTIME_UI = {
   },
   worktree: {
     label: "Worktree",
-    description: "Isolated git worktree in ~/.unix/src",
+    description: "Isolated git worktree in ~/.lattice/src",
     docsPath: "/runtime/worktree",
     Icon: WorktreeIcon,
     button: {

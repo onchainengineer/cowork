@@ -9,32 +9,33 @@ const modelDisplay_1 = require("../utils/ai/modelDisplay");
 // Model definitions. Note we avoid listing legacy models here. These represent the focal models
 // of the community.
 const MODEL_DEFINITIONS = {
-    COPILOT_SONNET: {
-        provider: "github-copilot",
-        providerModelId: "claude-sonnet-4.5",
-        aliases: ["copilot", "copilot-sonnet"],
-        warm: true,
-        tokenizerOverride: "anthropic/claude-sonnet-4.5",
-    },
-    COPILOT_GPT: {
-        provider: "github-copilot",
-        providerModelId: "gpt-4o",
-        aliases: ["copilot-gpt"],
-        warm: true,
-        tokenizerOverride: "openai/gpt-5",
-    },
-    // Direct Copilot API (non-airgapped environments)
+    // Direct Copilot API (default - works in most environments)
     COPILOT_DIRECT_SONNET: {
         provider: "github-copilot-direct",
         providerModelId: "claude-sonnet-4.5",
-        aliases: ["copilot-direct", "copilot-direct-sonnet"],
-        warm: false,
+        aliases: ["copilot", "copilot-sonnet", "copilot-direct"],
+        warm: true,
         tokenizerOverride: "anthropic/claude-sonnet-4.5",
     },
     COPILOT_DIRECT_GPT: {
         provider: "github-copilot-direct",
         providerModelId: "gpt-4o",
-        aliases: ["copilot-direct-gpt"],
+        aliases: ["copilot-gpt", "copilot-direct-gpt"],
+        warm: true,
+        tokenizerOverride: "openai/gpt-5",
+    },
+    // VS Code LM Proxy mode (for airgapped environments)
+    COPILOT_PROXY_SONNET: {
+        provider: "github-copilot",
+        providerModelId: "claude-sonnet-4.5",
+        aliases: ["copilot-proxy", "copilot-proxy-sonnet"],
+        warm: false,
+        tokenizerOverride: "anthropic/claude-sonnet-4.5",
+    },
+    COPILOT_PROXY_GPT: {
+        provider: "github-copilot",
+        providerModelId: "gpt-4o",
+        aliases: ["copilot-proxy-gpt"],
         warm: false,
         tokenizerOverride: "openai/gpt-5",
     },
@@ -136,7 +137,7 @@ function getKnownModel(key) {
 // Derived collections
 // ------------------------------------------------------------------------------------
 /** The default model key - change this single line to update the global default */
-exports.DEFAULT_MODEL_KEY = "COPILOT_SONNET";
+exports.DEFAULT_MODEL_KEY = "COPILOT_DIRECT_SONNET";
 exports.DEFAULT_MODEL = exports.KNOWN_MODELS[exports.DEFAULT_MODEL_KEY].id;
 exports.DEFAULT_WARM_MODELS = Object.values(exports.KNOWN_MODELS)
     .filter((model) => model.warm)

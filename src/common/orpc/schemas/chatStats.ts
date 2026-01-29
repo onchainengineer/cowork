@@ -77,7 +77,7 @@ export const SessionUsageTokenStatsCacheSchema = z.object({
 
 /**
  * Cumulative session usage file format.
- * Stored in ~/.unix/sessions/{workspaceId}/session-usage.json
+ * Stored in ~/.lattice/sessions/{workspaceId}/session-usage.json
  */
 export const SessionUsageFileSchema = z.object({
   byModel: z.record(z.string(), ChatUsageDisplaySchema),

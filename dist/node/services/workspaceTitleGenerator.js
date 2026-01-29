@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -14,7 +47,12 @@ const result_1 = require("../../common/types/result");
 const crypto_1 = __importDefault(require("crypto"));
 const knownModels_1 = require("../../common/constants/knownModels");
 /** Small, fast models preferred for name generation (cheap and quick) */
-const DEFAULT_NAME_GENERATION_MODELS = [(0, knownModels_1.getKnownModel)("HAIKU").id, (0, knownModels_1.getKnownModel)("GPT_MINI").id];
+const DEFAULT_NAME_GENERATION_MODELS = [
+    (0, knownModels_1.getKnownModel)("COPILOT_DIRECT_SONNET").id,
+    (0, knownModels_1.getKnownModel)("COPILOT_DIRECT_GPT").id,
+    (0, knownModels_1.getKnownModel)("HAIKU").id,
+    (0, knownModels_1.getKnownModel)("GPT_MINI").id,
+];
 /** Schema for AI-generated workspace identity (area name + descriptive title) */
 const workspaceIdentitySchema = zod_1.z.object({
     name: zod_1.z
@@ -139,25 +177,64 @@ async function generateWorkspaceIdentity(message, modelString, aiService) {
         if (!modelResult.success) {
             return (0, result_1.Err)(modelResult.error);
         }
-        const result = await (0, ai_1.generateObject)({
-            model: modelResult.data,
-            schema: workspaceIdentitySchema,
-            mode: "json",
-            prompt: `Generate a workspace name and title for this development task:
+        // Try structured output first, fall back to text parsing for providers that don't support it well
+        try {
+            const result = await (0, ai_1.generateObject)({
+                model: modelResult.data,
+                schema: workspaceIdentitySchema,
+                mode: "json",
+                prompt: `Generate a workspace name and title for this development task:
 
 "${message}"
 
 Requirements:
 - name: The area of the codebase being worked on (1-2 words, git-safe: lowercase, hyphens only). Random bytes will be appended for uniqueness, so focus on the area not the specific task. Examples: "sidebar", "auth", "config", "api"
 - title: A 2-5 word description in verb-noun format. Examples: "Fix plan mode", "Add user authentication", "Refactor sidebar layout"`,
-        });
-        const suffix = generateNameSuffix();
-        const sanitizedName = sanitizeBranchName(result.object.name, 20);
-        const nameWithSuffix = `${sanitizedName}-${suffix}`;
-        return (0, result_1.Ok)({
-            name: nameWithSuffix,
-            title: result.object.title.trim(),
-        });
+            });
+            const suffix = generateNameSuffix();
+            const sanitizedName = sanitizeBranchName(result.object.name, 20);
+            const nameWithSuffix = `${sanitizedName}-${suffix}`;
+            return (0, result_1.Ok)({
+                name: nameWithSuffix,
+                title: result.object.title.trim(),
+            });
+        }
+        catch (structuredError) {
+            // Fallback: use text generation with manual JSON parsing
+            // This helps with providers like GitHub Copilot that may not support structured output
+            log_1.log.debug("Structured output failed, trying text fallback", { error: structuredError });
+            const { generateText } = await Promise.resolve().then(() => __importStar(require("ai")));
+            const textResult = await generateText({
+                model: modelResult.data,
+                prompt: `Generate a workspace name and title for this development task. Respond ONLY with a JSON object, no other text:
+
+Task: "${message}"
+
+Requirements:
+- name: The area of the codebase being worked on (1-2 words, git-safe: lowercase letters and hyphens only). Examples: "sidebar", "auth", "config", "api"
+- title: A 2-5 word description in verb-noun format. Examples: "Fix plan mode", "Add user authentication"
+
+Respond with ONLY this JSON format:
+{"name": "area-name", "title": "Short Task Title"}`,
+            });
+            // Extract JSON from response (handle markdown code blocks if present)
+            const text = textResult.text.trim();
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("Could not find JSON in response");
+            }
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (!parsed.name || !parsed.title) {
+                throw new Error("Missing name or title in response");
+            }
+            const suffix = generateNameSuffix();
+            const sanitizedName = sanitizeBranchName(parsed.name, 20);
+            const nameWithSuffix = `${sanitizedName}-${suffix}`;
+            return (0, result_1.Ok)({
+                name: nameWithSuffix,
+                title: parsed.title.trim(),
+            });
+        }
     }
     catch (error) {
         const messageText = error instanceof Error ? error.message : String(error);

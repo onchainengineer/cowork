@@ -190,7 +190,7 @@ describe("oRPC Server Endpoints", () => {
       const skillName = `test-skill-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
       try {
-        const skillDir = path.join(projectPath, ".unix", "skills", skillName);
+        const skillDir = path.join(projectPath, ".lattice", "skills", skillName);
         await fs.mkdir(skillDir, { recursive: true });
 
         const skillContent = `---\nname: ${skillName}\ndescription: Test skill\n---\n\nTest body\n`;

@@ -1,6 +1,6 @@
 {
-  "name": "DEV OS",
-  "short_name": "DEV OS",
+  "name": "Lattice",
+  "short_name": "Lattice",
   "description": "Parallel agentic workspace",
   "start_url": "/",
   "display": "standalone",

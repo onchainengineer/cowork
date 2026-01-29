@@ -14,7 +14,7 @@ import type { Result } from "@/common/types/result";
 
 export class MCPConfigService {
   private getConfigPath(projectPath: string): string {
-    return path.join(projectPath, ".unix", "mcp.jsonc");
+    return path.join(projectPath, ".lattice", "mcp.jsonc");
   }
 
   private async pathExists(targetPath: string): Promise<boolean> {
@@ -27,9 +27,9 @@ export class MCPConfigService {
   }
 
   private async ensureProjectDir(projectPath: string): Promise<void> {
-    const unixDir = path.join(projectPath, ".unix");
-    if (!(await this.pathExists(unixDir))) {
-      await fs.promises.mkdir(unixDir, { recursive: true });
+    const latticeDir = path.join(projectPath, ".lattice");
+    if (!(await this.pathExists(latticeDir))) {
+      await fs.promises.mkdir(latticeDir, { recursive: true });
     }
   }
 

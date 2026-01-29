@@ -53,9 +53,9 @@ export interface CachedMCPTestResult {
 /**
  * Per-workspace MCP overrides.
  *
- * Stored per-workspace in <workspace>/.unix/mcp.local.jsonc (workspace-local and intended to be gitignored).
+ * Stored per-workspace in <workspace>/.lattice/mcp.local.jsonc (workspace-local and intended to be gitignored).
  *
- * Legacy note: older unix versions stored these overrides in ~/.unix/config.json under each workspace entry.
+ * Legacy note: older unix versions stored these overrides in ~/.lattice/config.json under each workspace entry.
  * Newer versions migrate those values into the workspace-local file on first read/write.
  */
 export interface WorkspaceMCPOverrides {
@@ -73,7 +73,7 @@ export interface WorkspaceMCPOverrides {
 
   /**
    * Per-server tool allowlist.
-   * Key: server name (from .unix/mcp.jsonc)
+   * Key: server name (from .lattice/mcp.jsonc)
    * Value: raw MCP tool names (NOT namespaced)
    *
    * If omitted for a server => expose all tools from that server.

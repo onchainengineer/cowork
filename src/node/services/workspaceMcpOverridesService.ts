@@ -10,7 +10,7 @@ import { createRuntimeForWorkspace } from "@/node/runtime/runtimeHelpers";
 import { execBuffered, readFileString, writeFileString } from "@/node/utils/runtime/helpers";
 import { log } from "@/node/services/log";
 
-const MCP_OVERRIDES_DIR = ".unix";
+const MCP_OVERRIDES_DIR = ".lattice";
 const MCP_OVERRIDES_JSONC = "mcp.local.jsonc";
 const MCP_OVERRIDES_JSON = "mcp.local.json";
 

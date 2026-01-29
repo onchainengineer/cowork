@@ -54,11 +54,11 @@ export interface ProjectsConfig {
   serverSshHost?: string;
   /** IDs of splash screens that have been viewed */
   viewedSplashScreens?: string[];
-  /** Cross-client feature flag overrides (shared via ~/.unix/config.json). */
+  /** Cross-client feature flag overrides (shared via ~/.lattice/config.json). */
   featureFlagOverrides?: Record<string, FeatureFlagOverride>;
   /** Global task settings (agent sub-workspaces, queue limits, nesting depth) */
   taskSettings?: TaskSettings;
-  /** UI layout presets + hotkeys (shared via ~/.unix/config.json). */
+  /** UI layout presets + hotkeys (shared via ~/.lattice/config.json). */
   layoutPresets?: LayoutPresetsConfig;
   /** Default model + thinking overrides per agentId (applies to UI agents and subagents). */
   agentAiDefaults?: AgentAiDefaults;

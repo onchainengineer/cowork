@@ -628,7 +628,7 @@ if (gotTheLock) {
     try {
       console.log("App ready, creating window...");
 
-      // Migrate from .cmux to .unix directory structure if needed
+      // Migrate from .unix to .lattice directory structure if needed
       migrateLegacyUnixHome();
 
       // Install React DevTools in development

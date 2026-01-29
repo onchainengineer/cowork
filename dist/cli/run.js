@@ -276,7 +276,7 @@ program
     .option("--json", "output NDJSON for programmatic consumption")
     .option("-q, --quiet", "only output final result")
     .option("--mcp <server>", "MCP server as name=command (can be repeated)", collectMcpServers, [])
-    .option("--no-mcp-config", "ignore .unix/mcp.jsonc, use only --mcp servers")
+    .option("--no-mcp-config", "ignore .lattice/mcp.jsonc, use only --mcp servers")
     .option("-e, --experiment <id>", "enable experiment (can be repeated)", collectExperiments, [])
     .option("-b, --budget <usd>", "stop when session cost exceeds budget (USD)", parseFloat)
     .addHelpText("after", `

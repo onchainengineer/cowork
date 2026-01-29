@@ -104,7 +104,7 @@ export interface HookResult {
  */
 export async function getHookPath(runtime: Runtime, projectDir: string): Promise<string | null> {
   // Check project-level hook first
-  const projectHook = joinPathLike(projectDir, ".unix", HOOK_FILENAME);
+  const projectHook = joinPathLike(projectDir, ".lattice", HOOK_FILENAME);
   if (await isFile(runtime, projectHook)) {
     return projectHook;
   }
@@ -112,7 +112,7 @@ export async function getHookPath(runtime: Runtime, projectDir: string): Promise
   // Fall back to user-level hook (resolve ~ for SSH compatibility)
   try {
     const homeDir = await runtime.resolvePath("~");
-    const userHook = joinPathLike(homeDir, ".unix", HOOK_FILENAME);
+    const userHook = joinPathLike(homeDir, ".lattice", HOOK_FILENAME);
     if (await isFile(runtime, userHook)) {
       return userHook;
     }
@@ -130,7 +130,7 @@ export async function getHookPath(runtime: Runtime, projectDir: string): Promise
  */
 export async function getToolEnvPath(runtime: Runtime, projectDir: string): Promise<string | null> {
   // Check project-level tool_env first
-  const projectEnv = joinPathLike(projectDir, ".unix", TOOL_ENV_FILENAME);
+  const projectEnv = joinPathLike(projectDir, ".lattice", TOOL_ENV_FILENAME);
   if (await isFile(runtime, projectEnv)) {
     return projectEnv;
   }
@@ -138,7 +138,7 @@ export async function getToolEnvPath(runtime: Runtime, projectDir: string): Prom
   // Fall back to user-level tool_env (resolve ~ for SSH compatibility)
   try {
     const homeDir = await runtime.resolvePath("~");
-    const userEnv = joinPathLike(homeDir, ".unix", TOOL_ENV_FILENAME);
+    const userEnv = joinPathLike(homeDir, ".lattice", TOOL_ENV_FILENAME);
     if (await isFile(runtime, userEnv)) {
       return userEnv;
     }
@@ -155,14 +155,14 @@ export async function getToolEnvPath(runtime: Runtime, projectDir: string): Prom
  * Returns null if no tool_pre exists.
  */
 export async function getPreHookPath(runtime: Runtime, projectDir: string): Promise<string | null> {
-  const projectHook = joinPathLike(projectDir, ".unix", PRE_HOOK_FILENAME);
+  const projectHook = joinPathLike(projectDir, ".lattice", PRE_HOOK_FILENAME);
   if (await isFile(runtime, projectHook)) {
     return projectHook;
   }
 
   try {
     const homeDir = await runtime.resolvePath("~");
-    const userHook = joinPathLike(homeDir, ".unix", PRE_HOOK_FILENAME);
+    const userHook = joinPathLike(homeDir, ".lattice", PRE_HOOK_FILENAME);
     if (await isFile(runtime, userHook)) {
       return userHook;
     }
@@ -182,14 +182,14 @@ export async function getPostHookPath(
   runtime: Runtime,
   projectDir: string
 ): Promise<string | null> {
-  const projectHook = joinPathLike(projectDir, ".unix", POST_HOOK_FILENAME);
+  const projectHook = joinPathLike(projectDir, ".lattice", POST_HOOK_FILENAME);
   if (await isFile(runtime, projectHook)) {
     return projectHook;
   }
 
   try {
     const homeDir = await runtime.resolvePath("~");
-    const userHook = joinPathLike(homeDir, ".unix", POST_HOOK_FILENAME);
+    const userHook = joinPathLike(homeDir, ".lattice", POST_HOOK_FILENAME);
     if (await isFile(runtime, userHook)) {
       return userHook;
     }

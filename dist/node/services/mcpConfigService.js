@@ -45,7 +45,7 @@ const log_1 = require("../../node/services/log");
 const result_1 = require("../../common/types/result");
 class MCPConfigService {
     getConfigPath(projectPath) {
-        return path.join(projectPath, ".unix", "mcp.jsonc");
+        return path.join(projectPath, ".lattice", "mcp.jsonc");
     }
     async pathExists(targetPath) {
         try {
@@ -57,9 +57,9 @@ class MCPConfigService {
         }
     }
     async ensureProjectDir(projectPath) {
-        const unixDir = path.join(projectPath, ".unix");
-        if (!(await this.pathExists(unixDir))) {
-            await fs.promises.mkdir(unixDir, { recursive: true });
+        const latticeDir = path.join(projectPath, ".lattice");
+        if (!(await this.pathExists(latticeDir))) {
+            await fs.promises.mkdir(latticeDir, { recursive: true });
         }
     }
     /**

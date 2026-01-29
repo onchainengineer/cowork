@@ -6,7 +6,7 @@
  *
  * Docker containers use /var/unix instead (passed via unixHome parameter).
  */
-const DEFAULT_UNIX_HOME = "~/.unix";
+const DEFAULT_UNIX_HOME = "~/.lattice";
 
 /**
  * Get the plan file path for a workspace.
@@ -20,7 +20,7 @@ const DEFAULT_UNIX_HOME = "~/.unix";
  *
  * @param workspaceName - Human-readable workspace name with suffix (e.g., "fix-plan-a1b2")
  * @param projectName - Project name extracted from project path (e.g., "unix")
- * @param unixHome - Unix home directory (default: ~/.unix, Docker uses /var/unix)
+ * @param unixHome - Unix home directory (default: ~/.lattice, Docker uses /var/unix)
  */
 export function getPlanFilePath(
   workspaceName: string,

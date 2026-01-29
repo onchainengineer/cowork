@@ -1,4 +1,4 @@
-import{createRequire}from'module';globalThis.require=createRequire(import.meta.url);
+import{createRequire}frommodule;globalThis.require=createRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -2329,6 +2329,2368 @@ var init_dist5 = __esm({
   }
 });
 
+// node_modules/@ai-sdk/provider/dist/index.mjs
+function getErrorMessage(error) {
+  if (error == null) {
+    return "unknown error";
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return JSON.stringify(error);
+}
+function isJSONValue(value2) {
+  if (value2 === null || typeof value2 === "string" || typeof value2 === "number" || typeof value2 === "boolean") {
+    return true;
+  }
+  if (Array.isArray(value2)) {
+    return value2.every(isJSONValue);
+  }
+  if (typeof value2 === "object") {
+    return Object.entries(value2).every(
+      ([key, val]) => typeof key === "string" && isJSONValue(val)
+    );
+  }
+  return false;
+}
+function isJSONArray(value2) {
+  return Array.isArray(value2) && value2.every(isJSONValue);
+}
+function isJSONObject(value2) {
+  return value2 != null && typeof value2 === "object" && Object.entries(value2).every(
+    ([key, val]) => typeof key === "string" && isJSONValue(val)
+  );
+}
+var marker, symbol, _a, _AISDKError, AISDKError, name, marker2, symbol2, _a2, APICallError, name2, marker3, symbol3, _a3, EmptyResponseBodyError, name3, marker4, symbol4, _a4, InvalidArgumentError2, name4, marker5, symbol5, _a5, InvalidPromptError, name5, marker6, symbol6, _a6, InvalidResponseDataError, name6, marker7, symbol7, _a7, JSONParseError, name7, marker8, symbol8, _a8, LoadAPIKeyError, name8, marker9, symbol9, _a9, LoadSettingError, name9, marker10, symbol10, _a10, NoContentGeneratedError, name10, marker11, symbol11, _a11, NoSuchModelError, name11, marker12, symbol12, _a12, TooManyEmbeddingValuesForCallError, name12, marker13, symbol13, _a13, _TypeValidationError, TypeValidationError, name13, marker14, symbol14, _a14, UnsupportedFunctionalityError;
+var init_dist6 = __esm({
+  "node_modules/@ai-sdk/provider/dist/index.mjs"() {
+    marker = "vercel.ai.error";
+    symbol = Symbol.for(marker);
+    _AISDKError = class _AISDKError2 extends Error {
+      /**
+       * Creates an AI SDK Error.
+       *
+       * @param {Object} params - The parameters for creating the error.
+       * @param {string} params.name - The name of the error.
+       * @param {string} params.message - The error message.
+       * @param {unknown} [params.cause] - The underlying cause of the error.
+       */
+      constructor({
+        name: name143,
+        message,
+        cause
+      }) {
+        super(message);
+        this[_a] = true;
+        this.name = name143;
+        this.cause = cause;
+      }
+      /**
+       * Checks if the given error is an AI SDK Error.
+       * @param {unknown} error - The error to check.
+       * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
+       */
+      static isInstance(error) {
+        return _AISDKError2.hasMarker(error, marker);
+      }
+      static hasMarker(error, marker153) {
+        const markerSymbol = Symbol.for(marker153);
+        return error != null && typeof error === "object" && markerSymbol in error && typeof error[markerSymbol] === "boolean" && error[markerSymbol] === true;
+      }
+    };
+    _a = symbol;
+    AISDKError = _AISDKError;
+    name = "AI_APICallError";
+    marker2 = `vercel.ai.error.${name}`;
+    symbol2 = Symbol.for(marker2);
+    APICallError = class extends AISDKError {
+      constructor({
+        message,
+        url,
+        requestBodyValues,
+        statusCode,
+        responseHeaders,
+        responseBody,
+        cause,
+        isRetryable = statusCode != null && (statusCode === 408 || // request timeout
+        statusCode === 409 || // conflict
+        statusCode === 429 || // too many requests
+        statusCode >= 500),
+        // server error
+        data
+      }) {
+        super({ name, message, cause });
+        this[_a2] = true;
+        this.url = url;
+        this.requestBodyValues = requestBodyValues;
+        this.statusCode = statusCode;
+        this.responseHeaders = responseHeaders;
+        this.responseBody = responseBody;
+        this.isRetryable = isRetryable;
+        this.data = data;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker2);
+      }
+    };
+    _a2 = symbol2;
+    name2 = "AI_EmptyResponseBodyError";
+    marker3 = `vercel.ai.error.${name2}`;
+    symbol3 = Symbol.for(marker3);
+    EmptyResponseBodyError = class extends AISDKError {
+      // used in isInstance
+      constructor({ message = "Empty response body" } = {}) {
+        super({ name: name2, message });
+        this[_a3] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker3);
+      }
+    };
+    _a3 = symbol3;
+    name3 = "AI_InvalidArgumentError";
+    marker4 = `vercel.ai.error.${name3}`;
+    symbol4 = Symbol.for(marker4);
+    InvalidArgumentError2 = class extends AISDKError {
+      constructor({
+        message,
+        cause,
+        argument
+      }) {
+        super({ name: name3, message, cause });
+        this[_a4] = true;
+        this.argument = argument;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker4);
+      }
+    };
+    _a4 = symbol4;
+    name4 = "AI_InvalidPromptError";
+    marker5 = `vercel.ai.error.${name4}`;
+    symbol5 = Symbol.for(marker5);
+    InvalidPromptError = class extends AISDKError {
+      constructor({
+        prompt,
+        message,
+        cause
+      }) {
+        super({ name: name4, message: `Invalid prompt: ${message}`, cause });
+        this[_a5] = true;
+        this.prompt = prompt;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker5);
+      }
+    };
+    _a5 = symbol5;
+    name5 = "AI_InvalidResponseDataError";
+    marker6 = `vercel.ai.error.${name5}`;
+    symbol6 = Symbol.for(marker6);
+    InvalidResponseDataError = class extends AISDKError {
+      constructor({
+        data,
+        message = `Invalid response data: ${JSON.stringify(data)}.`
+      }) {
+        super({ name: name5, message });
+        this[_a6] = true;
+        this.data = data;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker6);
+      }
+    };
+    _a6 = symbol6;
+    name6 = "AI_JSONParseError";
+    marker7 = `vercel.ai.error.${name6}`;
+    symbol7 = Symbol.for(marker7);
+    JSONParseError = class extends AISDKError {
+      constructor({ text: text2, cause }) {
+        super({
+          name: name6,
+          message: `JSON parsing failed: Text: ${text2}.
+Error message: ${getErrorMessage(cause)}`,
+          cause
+        });
+        this[_a7] = true;
+        this.text = text2;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker7);
+      }
+    };
+    _a7 = symbol7;
+    name7 = "AI_LoadAPIKeyError";
+    marker8 = `vercel.ai.error.${name7}`;
+    symbol8 = Symbol.for(marker8);
+    LoadAPIKeyError = class extends AISDKError {
+      // used in isInstance
+      constructor({ message }) {
+        super({ name: name7, message });
+        this[_a8] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker8);
+      }
+    };
+    _a8 = symbol8;
+    name8 = "AI_LoadSettingError";
+    marker9 = `vercel.ai.error.${name8}`;
+    symbol9 = Symbol.for(marker9);
+    LoadSettingError = class extends AISDKError {
+      // used in isInstance
+      constructor({ message }) {
+        super({ name: name8, message });
+        this[_a9] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker9);
+      }
+    };
+    _a9 = symbol9;
+    name9 = "AI_NoContentGeneratedError";
+    marker10 = `vercel.ai.error.${name9}`;
+    symbol10 = Symbol.for(marker10);
+    NoContentGeneratedError = class extends AISDKError {
+      // used in isInstance
+      constructor({
+        message = "No content generated."
+      } = {}) {
+        super({ name: name9, message });
+        this[_a10] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker10);
+      }
+    };
+    _a10 = symbol10;
+    name10 = "AI_NoSuchModelError";
+    marker11 = `vercel.ai.error.${name10}`;
+    symbol11 = Symbol.for(marker11);
+    NoSuchModelError = class extends AISDKError {
+      constructor({
+        errorName = name10,
+        modelId,
+        modelType,
+        message = `No such ${modelType}: ${modelId}`
+      }) {
+        super({ name: errorName, message });
+        this[_a11] = true;
+        this.modelId = modelId;
+        this.modelType = modelType;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker11);
+      }
+    };
+    _a11 = symbol11;
+    name11 = "AI_TooManyEmbeddingValuesForCallError";
+    marker12 = `vercel.ai.error.${name11}`;
+    symbol12 = Symbol.for(marker12);
+    TooManyEmbeddingValuesForCallError = class extends AISDKError {
+      constructor(options) {
+        super({
+          name: name11,
+          message: `Too many values for a single embedding call. The ${options.provider} model "${options.modelId}" can only embed up to ${options.maxEmbeddingsPerCall} values per call, but ${options.values.length} values were provided.`
+        });
+        this[_a12] = true;
+        this.provider = options.provider;
+        this.modelId = options.modelId;
+        this.maxEmbeddingsPerCall = options.maxEmbeddingsPerCall;
+        this.values = options.values;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker12);
+      }
+    };
+    _a12 = symbol12;
+    name12 = "AI_TypeValidationError";
+    marker13 = `vercel.ai.error.${name12}`;
+    symbol13 = Symbol.for(marker13);
+    _TypeValidationError = class _TypeValidationError2 extends AISDKError {
+      constructor({ value: value2, cause }) {
+        super({
+          name: name12,
+          message: `Type validation failed: Value: ${JSON.stringify(value2)}.
+Error message: ${getErrorMessage(cause)}`,
+          cause
+        });
+        this[_a13] = true;
+        this.value = value2;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker13);
+      }
+      /**
+       * Wraps an error into a TypeValidationError.
+       * If the cause is already a TypeValidationError with the same value, it returns the cause.
+       * Otherwise, it creates a new TypeValidationError.
+       *
+       * @param {Object} params - The parameters for wrapping the error.
+       * @param {unknown} params.value - The value that failed validation.
+       * @param {unknown} params.cause - The original error or cause of the validation failure.
+       * @returns {TypeValidationError} A TypeValidationError instance.
+       */
+      static wrap({
+        value: value2,
+        cause
+      }) {
+        return _TypeValidationError2.isInstance(cause) && cause.value === value2 ? cause : new _TypeValidationError2({ value: value2, cause });
+      }
+    };
+    _a13 = symbol13;
+    TypeValidationError = _TypeValidationError;
+    name13 = "AI_UnsupportedFunctionalityError";
+    marker14 = `vercel.ai.error.${name13}`;
+    symbol14 = Symbol.for(marker14);
+    UnsupportedFunctionalityError = class extends AISDKError {
+      constructor({
+        functionality,
+        message = `'${functionality}' functionality not supported.`
+      }) {
+        super({ name: name13, message });
+        this[_a14] = true;
+        this.functionality = functionality;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker14);
+      }
+    };
+    _a14 = symbol14;
+  }
+});
+
+// node_modules/eventsource-parser/dist/index.js
+function noop(_arg) {
+}
+function createParser(callbacks) {
+  if (typeof callbacks == "function")
+    throw new TypeError(
+      "`callbacks` must be an object, got a function instead. Did you mean `{onEvent: fn}`?"
+    );
+  const { onEvent = noop, onError: onError2 = noop, onRetry = noop, onComment } = callbacks;
+  let incompleteLine = "", isFirstChunk = true, id, data = "", eventType = "";
+  function feed(newChunk) {
+    const chunk = isFirstChunk ? newChunk.replace(/^\xEF\xBB\xBF/, "") : newChunk, [complete, incomplete] = splitLines(`${incompleteLine}${chunk}`);
+    for (const line of complete)
+      parseLine(line);
+    incompleteLine = incomplete, isFirstChunk = false;
+  }
+  function parseLine(line) {
+    if (line === "") {
+      dispatchEvent();
+      return;
+    }
+    if (line.startsWith(":")) {
+      onComment && onComment(line.slice(line.startsWith(": ") ? 2 : 1));
+      return;
+    }
+    const fieldSeparatorIndex = line.indexOf(":");
+    if (fieldSeparatorIndex !== -1) {
+      const field = line.slice(0, fieldSeparatorIndex), offset = line[fieldSeparatorIndex + 1] === " " ? 2 : 1, value2 = line.slice(fieldSeparatorIndex + offset);
+      processField(field, value2, line);
+      return;
+    }
+    processField(line, "", line);
+  }
+  function processField(field, value2, line) {
+    switch (field) {
+      case "event":
+        eventType = value2;
+        break;
+      case "data":
+        data = `${data}${value2}
+`;
+        break;
+      case "id":
+        id = value2.includes("\0") ? void 0 : value2;
+        break;
+      case "retry":
+        /^\d+$/.test(value2) ? onRetry(parseInt(value2, 10)) : onError2(
+          new ParseError(`Invalid \`retry\` value: "${value2}"`, {
+            type: "invalid-retry",
+            value: value2,
+            line
+          })
+        );
+        break;
+      default:
+        onError2(
+          new ParseError(
+            `Unknown field "${field.length > 20 ? `${field.slice(0, 20)}\u2026` : field}"`,
+            { type: "unknown-field", field, value: value2, line }
+          )
+        );
+        break;
+    }
+  }
+  function dispatchEvent() {
+    data.length > 0 && onEvent({
+      id,
+      event: eventType || void 0,
+      // If the data buffer's last character is a U+000A LINE FEED (LF) character,
+      // then remove the last character from the data buffer.
+      data: data.endsWith(`
+`) ? data.slice(0, -1) : data
+    }), id = void 0, data = "", eventType = "";
+  }
+  function reset(options = {}) {
+    incompleteLine && options.consume && parseLine(incompleteLine), isFirstChunk = true, id = void 0, data = "", eventType = "", incompleteLine = "";
+  }
+  return { feed, reset };
+}
+function splitLines(chunk) {
+  const lines = [];
+  let incompleteLine = "", searchIndex = 0;
+  for (; searchIndex < chunk.length; ) {
+    const crIndex = chunk.indexOf("\r", searchIndex), lfIndex = chunk.indexOf(`
+`, searchIndex);
+    let lineEnd = -1;
+    if (crIndex !== -1 && lfIndex !== -1 ? lineEnd = Math.min(crIndex, lfIndex) : crIndex !== -1 ? crIndex === chunk.length - 1 ? lineEnd = -1 : lineEnd = crIndex : lfIndex !== -1 && (lineEnd = lfIndex), lineEnd === -1) {
+      incompleteLine = chunk.slice(searchIndex);
+      break;
+    } else {
+      const line = chunk.slice(searchIndex, lineEnd);
+      lines.push(line), searchIndex = lineEnd + 1, chunk[searchIndex - 1] === "\r" && chunk[searchIndex] === `
+` && searchIndex++;
+    }
+  }
+  return [lines, incompleteLine];
+}
+var ParseError;
+var init_dist7 = __esm({
+  "node_modules/eventsource-parser/dist/index.js"() {
+    ParseError = class extends Error {
+      constructor(message, options) {
+        super(message), this.name = "ParseError", this.type = options.type, this.field = options.field, this.value = options.value, this.line = options.line;
+      }
+    };
+  }
+});
+
+// node_modules/eventsource-parser/dist/stream.js
+var EventSourceParserStream;
+var init_stream = __esm({
+  "node_modules/eventsource-parser/dist/stream.js"() {
+    init_dist7();
+    EventSourceParserStream = class extends TransformStream {
+      constructor({ onError: onError2, onRetry, onComment } = {}) {
+        let parser;
+        super({
+          start(controller) {
+            parser = createParser({
+              onEvent: (event) => {
+                controller.enqueue(event);
+              },
+              onError(error) {
+                onError2 === "terminate" ? controller.error(error) : typeof onError2 == "function" && onError2(error);
+              },
+              onRetry,
+              onComment
+            });
+          },
+          transform(chunk) {
+            parser.feed(chunk);
+          }
+        });
+      }
+    };
+  }
+});
+
+// node_modules/@standard-schema/spec/dist/index.js
+var init_dist8 = __esm({
+  "node_modules/@standard-schema/spec/dist/index.js"() {
+  }
+});
+
+// node_modules/@ai-sdk/provider-utils/dist/index.mjs
+import * as z42 from "zod/v4";
+import { ZodFirstPartyTypeKind as ZodFirstPartyTypeKind3 } from "zod/v3";
+import { ZodFirstPartyTypeKind as ZodFirstPartyTypeKind2 } from "zod/v3";
+import {
+  ZodFirstPartyTypeKind as ZodFirstPartyTypeKind22
+} from "zod/v3";
+function combineHeaders(...headers) {
+  return headers.reduce(
+    (combinedHeaders, currentHeaders) => ({
+      ...combinedHeaders,
+      ...currentHeaders != null ? currentHeaders : {}
+    }),
+    {}
+  );
+}
+async function delay(delayInMs, options) {
+  if (delayInMs == null) {
+    return Promise.resolve();
+  }
+  const signal = options == null ? void 0 : options.abortSignal;
+  return new Promise((resolve22, reject) => {
+    if (signal == null ? void 0 : signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      resolve22();
+    }, delayInMs);
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      signal == null ? void 0 : signal.removeEventListener("abort", onAbort);
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+    signal == null ? void 0 : signal.addEventListener("abort", onAbort);
+  });
+}
+function createAbortError() {
+  return new DOMException("Delay was aborted", "AbortError");
+}
+function extractResponseHeaders(response) {
+  return Object.fromEntries([...response.headers]);
+}
+function getErrorMessage2(error) {
+  if (error == null) {
+    return "unknown error";
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return JSON.stringify(error);
+}
+function isAbortError(error) {
+  return (error instanceof Error || error instanceof DOMException) && (error.name === "AbortError" || error.name === "ResponseAborted" || // Next.js
+  error.name === "TimeoutError");
+}
+function handleFetchError({
+  error,
+  url,
+  requestBodyValues
+}) {
+  if (isAbortError(error)) {
+    return error;
+  }
+  if (error instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES.includes(error.message.toLowerCase())) {
+    const cause = error.cause;
+    if (cause != null) {
+      return new APICallError({
+        message: `Cannot connect to API: ${cause.message}`,
+        cause,
+        url,
+        requestBodyValues,
+        isRetryable: true
+        // retry when network error
+      });
+    }
+  }
+  return error;
+}
+function getRuntimeEnvironmentUserAgent(globalThisAny = globalThis) {
+  var _a17, _b8, _c;
+  if (globalThisAny.window) {
+    return `runtime/browser`;
+  }
+  if ((_a17 = globalThisAny.navigator) == null ? void 0 : _a17.userAgent) {
+    return `runtime/${globalThisAny.navigator.userAgent.toLowerCase()}`;
+  }
+  if ((_c = (_b8 = globalThisAny.process) == null ? void 0 : _b8.versions) == null ? void 0 : _c.node) {
+    return `runtime/node.js/${globalThisAny.process.version.substring(0)}`;
+  }
+  if (globalThisAny.EdgeRuntime) {
+    return `runtime/vercel-edge`;
+  }
+  return "runtime/unknown";
+}
+function normalizeHeaders(headers) {
+  if (headers == null) {
+    return {};
+  }
+  const normalized = {};
+  if (headers instanceof Headers) {
+    headers.forEach((value2, key) => {
+      normalized[key.toLowerCase()] = value2;
+    });
+  } else {
+    if (!Array.isArray(headers)) {
+      headers = Object.entries(headers);
+    }
+    for (const [key, value2] of headers) {
+      if (value2 != null) {
+        normalized[key.toLowerCase()] = value2;
+      }
+    }
+  }
+  return normalized;
+}
+function withUserAgentSuffix(headers, ...userAgentSuffixParts) {
+  const normalizedHeaders = new Headers(normalizeHeaders(headers));
+  const currentUserAgentHeader = normalizedHeaders.get("user-agent") || "";
+  normalizedHeaders.set(
+    "user-agent",
+    [currentUserAgentHeader, ...userAgentSuffixParts].filter(Boolean).join(" ")
+  );
+  return Object.fromEntries(normalizedHeaders.entries());
+}
+function isUrlSupported({
+  mediaType,
+  url,
+  supportedUrls
+}) {
+  url = url.toLowerCase();
+  mediaType = mediaType.toLowerCase();
+  return Object.entries(supportedUrls).map(([key, value2]) => {
+    const mediaType2 = key.toLowerCase();
+    return mediaType2 === "*" || mediaType2 === "*/*" ? { mediaTypePrefix: "", regexes: value2 } : { mediaTypePrefix: mediaType2.replace(/\*/, ""), regexes: value2 };
+  }).filter(({ mediaTypePrefix }) => mediaType.startsWith(mediaTypePrefix)).flatMap(({ regexes }) => regexes).some((pattern) => pattern.test(url));
+}
+function loadOptionalSetting({
+  settingValue,
+  environmentVariableName
+}) {
+  if (typeof settingValue === "string") {
+    return settingValue;
+  }
+  if (settingValue != null || typeof process === "undefined") {
+    return void 0;
+  }
+  settingValue = process.env[environmentVariableName];
+  if (settingValue == null || typeof settingValue !== "string") {
+    return void 0;
+  }
+  return settingValue;
+}
+function _parse(text2) {
+  const obj = JSON.parse(text2);
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  if (suspectProtoRx.test(text2) === false && suspectConstructorRx.test(text2) === false) {
+    return obj;
+  }
+  return filter(obj);
+}
+function filter(obj) {
+  let next = [obj];
+  while (next.length) {
+    const nodes = next;
+    next = [];
+    for (const node of nodes) {
+      if (Object.prototype.hasOwnProperty.call(node, "__proto__")) {
+        throw new SyntaxError("Object contains forbidden prototype property");
+      }
+      if (Object.prototype.hasOwnProperty.call(node, "constructor") && Object.prototype.hasOwnProperty.call(node.constructor, "prototype")) {
+        throw new SyntaxError("Object contains forbidden prototype property");
+      }
+      for (const key in node) {
+        const value2 = node[key];
+        if (value2 && typeof value2 === "object") {
+          next.push(value2);
+        }
+      }
+    }
+  }
+  return obj;
+}
+function secureJsonParse(text2) {
+  const { stackTraceLimit } = Error;
+  try {
+    Error.stackTraceLimit = 0;
+  } catch (e) {
+    return _parse(text2);
+  }
+  try {
+    return _parse(text2);
+  } finally {
+    Error.stackTraceLimit = stackTraceLimit;
+  }
+}
+function validator(validate) {
+  return { [validatorSymbol]: true, validate };
+}
+function isValidator(value2) {
+  return typeof value2 === "object" && value2 !== null && validatorSymbol in value2 && value2[validatorSymbol] === true && "validate" in value2;
+}
+function lazyValidator(createValidator) {
+  let validator2;
+  return () => {
+    if (validator2 == null) {
+      validator2 = createValidator();
+    }
+    return validator2;
+  };
+}
+function asValidator(value2) {
+  return isValidator(value2) ? value2 : typeof value2 === "function" ? value2() : standardSchemaValidator(value2);
+}
+function standardSchemaValidator(standardSchema) {
+  return validator(async (value2) => {
+    const result = await standardSchema["~standard"].validate(value2);
+    return result.issues == null ? { success: true, value: result.value } : {
+      success: false,
+      error: new TypeValidationError({
+        value: value2,
+        cause: result.issues
+      })
+    };
+  });
+}
+async function validateTypes({
+  value: value2,
+  schema
+}) {
+  const result = await safeValidateTypes({ value: value2, schema });
+  if (!result.success) {
+    throw TypeValidationError.wrap({ value: value2, cause: result.error });
+  }
+  return result.value;
+}
+async function safeValidateTypes({
+  value: value2,
+  schema
+}) {
+  const validator2 = asValidator(schema);
+  try {
+    if (validator2.validate == null) {
+      return { success: true, value: value2, rawValue: value2 };
+    }
+    const result = await validator2.validate(value2);
+    if (result.success) {
+      return { success: true, value: result.value, rawValue: value2 };
+    }
+    return {
+      success: false,
+      error: TypeValidationError.wrap({ value: value2, cause: result.error }),
+      rawValue: value2
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: TypeValidationError.wrap({ value: value2, cause: error }),
+      rawValue: value2
+    };
+  }
+}
+async function parseJSON({
+  text: text2,
+  schema
+}) {
+  try {
+    const value2 = secureJsonParse(text2);
+    if (schema == null) {
+      return value2;
+    }
+    return validateTypes({ value: value2, schema });
+  } catch (error) {
+    if (JSONParseError.isInstance(error) || TypeValidationError.isInstance(error)) {
+      throw error;
+    }
+    throw new JSONParseError({ text: text2, cause: error });
+  }
+}
+async function safeParseJSON({
+  text: text2,
+  schema
+}) {
+  try {
+    const value2 = secureJsonParse(text2);
+    if (schema == null) {
+      return { success: true, value: value2, rawValue: value2 };
+    }
+    return await safeValidateTypes({ value: value2, schema });
+  } catch (error) {
+    return {
+      success: false,
+      error: JSONParseError.isInstance(error) ? error : new JSONParseError({ text: text2, cause: error }),
+      rawValue: void 0
+    };
+  }
+}
+function parseJsonEventStream({
+  stream,
+  schema
+}) {
+  return stream.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream()).pipeThrough(
+    new TransformStream({
+      async transform({ data }, controller) {
+        if (data === "[DONE]") {
+          return;
+        }
+        controller.enqueue(await safeParseJSON({ text: data, schema }));
+      }
+    })
+  );
+}
+function tool(tool2) {
+  return tool2;
+}
+function dynamicTool(tool2) {
+  return { ...tool2, type: "dynamic" };
+}
+async function resolve(value2) {
+  if (typeof value2 === "function") {
+    value2 = value2();
+  }
+  return Promise.resolve(value2);
+}
+function parseAnyDef2() {
+  return {};
+}
+function parseArrayDef2(def, refs) {
+  var _a17, _b8, _c;
+  const res = {
+    type: "array"
+  };
+  if (((_a17 = def.type) == null ? void 0 : _a17._def) && ((_c = (_b8 = def.type) == null ? void 0 : _b8._def) == null ? void 0 : _c.typeName) !== ZodFirstPartyTypeKind2.ZodAny) {
+    res.items = parseDef2(def.type._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "items"]
+    });
+  }
+  if (def.minLength) {
+    res.minItems = def.minLength.value;
+  }
+  if (def.maxLength) {
+    res.maxItems = def.maxLength.value;
+  }
+  if (def.exactLength) {
+    res.minItems = def.exactLength.value;
+    res.maxItems = def.exactLength.value;
+  }
+  return res;
+}
+function parseBigintDef2(def) {
+  const res = {
+    type: "integer",
+    format: "int64"
+  };
+  if (!def.checks) return res;
+  for (const check of def.checks) {
+    switch (check.kind) {
+      case "min":
+        if (check.inclusive) {
+          res.minimum = check.value;
+        } else {
+          res.exclusiveMinimum = check.value;
+        }
+        break;
+      case "max":
+        if (check.inclusive) {
+          res.maximum = check.value;
+        } else {
+          res.exclusiveMaximum = check.value;
+        }
+        break;
+      case "multipleOf":
+        res.multipleOf = check.value;
+        break;
+    }
+  }
+  return res;
+}
+function parseBooleanDef2() {
+  return { type: "boolean" };
+}
+function parseBrandedDef2(_def, refs) {
+  return parseDef2(_def.type._def, refs);
+}
+function parseDateDef2(def, refs, overrideDateStrategy) {
+  const strategy = overrideDateStrategy != null ? overrideDateStrategy : refs.dateStrategy;
+  if (Array.isArray(strategy)) {
+    return {
+      anyOf: strategy.map((item, i) => parseDateDef2(def, refs, item))
+    };
+  }
+  switch (strategy) {
+    case "string":
+    case "format:date-time":
+      return {
+        type: "string",
+        format: "date-time"
+      };
+    case "format:date":
+      return {
+        type: "string",
+        format: "date"
+      };
+    case "integer":
+      return integerDateParser2(def);
+  }
+}
+function parseDefaultDef2(_def, refs) {
+  return {
+    ...parseDef2(_def.innerType._def, refs),
+    default: _def.defaultValue()
+  };
+}
+function parseEffectsDef2(_def, refs) {
+  return refs.effectStrategy === "input" ? parseDef2(_def.schema._def, refs) : parseAnyDef2();
+}
+function parseEnumDef2(def) {
+  return {
+    type: "string",
+    enum: Array.from(def.values)
+  };
+}
+function parseIntersectionDef2(def, refs) {
+  const allOf = [
+    parseDef2(def.left._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "allOf", "0"]
+    }),
+    parseDef2(def.right._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "allOf", "1"]
+    })
+  ].filter((x) => !!x);
+  const mergedAllOf = [];
+  allOf.forEach((schema) => {
+    if (isJsonSchema7AllOfType2(schema)) {
+      mergedAllOf.push(...schema.allOf);
+    } else {
+      let nestedSchema = schema;
+      if ("additionalProperties" in schema && schema.additionalProperties === false) {
+        const { additionalProperties, ...rest } = schema;
+        nestedSchema = rest;
+      }
+      mergedAllOf.push(nestedSchema);
+    }
+  });
+  return mergedAllOf.length ? { allOf: mergedAllOf } : void 0;
+}
+function parseLiteralDef2(def) {
+  const parsedType = typeof def.value;
+  if (parsedType !== "bigint" && parsedType !== "number" && parsedType !== "boolean" && parsedType !== "string") {
+    return {
+      type: Array.isArray(def.value) ? "array" : "object"
+    };
+  }
+  return {
+    type: parsedType === "bigint" ? "integer" : parsedType,
+    const: def.value
+  };
+}
+function parseStringDef2(def, refs) {
+  const res = {
+    type: "string"
+  };
+  if (def.checks) {
+    for (const check of def.checks) {
+      switch (check.kind) {
+        case "min":
+          res.minLength = typeof res.minLength === "number" ? Math.max(res.minLength, check.value) : check.value;
+          break;
+        case "max":
+          res.maxLength = typeof res.maxLength === "number" ? Math.min(res.maxLength, check.value) : check.value;
+          break;
+        case "email":
+          switch (refs.emailStrategy) {
+            case "format:email":
+              addFormat2(res, "email", check.message, refs);
+              break;
+            case "format:idn-email":
+              addFormat2(res, "idn-email", check.message, refs);
+              break;
+            case "pattern:zod":
+              addPattern2(res, zodPatterns2.email, check.message, refs);
+              break;
+          }
+          break;
+        case "url":
+          addFormat2(res, "uri", check.message, refs);
+          break;
+        case "uuid":
+          addFormat2(res, "uuid", check.message, refs);
+          break;
+        case "regex":
+          addPattern2(res, check.regex, check.message, refs);
+          break;
+        case "cuid":
+          addPattern2(res, zodPatterns2.cuid, check.message, refs);
+          break;
+        case "cuid2":
+          addPattern2(res, zodPatterns2.cuid2, check.message, refs);
+          break;
+        case "startsWith":
+          addPattern2(
+            res,
+            RegExp(`^${escapeLiteralCheckValue2(check.value, refs)}`),
+            check.message,
+            refs
+          );
+          break;
+        case "endsWith":
+          addPattern2(
+            res,
+            RegExp(`${escapeLiteralCheckValue2(check.value, refs)}$`),
+            check.message,
+            refs
+          );
+          break;
+        case "datetime":
+          addFormat2(res, "date-time", check.message, refs);
+          break;
+        case "date":
+          addFormat2(res, "date", check.message, refs);
+          break;
+        case "time":
+          addFormat2(res, "time", check.message, refs);
+          break;
+        case "duration":
+          addFormat2(res, "duration", check.message, refs);
+          break;
+        case "length":
+          res.minLength = typeof res.minLength === "number" ? Math.max(res.minLength, check.value) : check.value;
+          res.maxLength = typeof res.maxLength === "number" ? Math.min(res.maxLength, check.value) : check.value;
+          break;
+        case "includes": {
+          addPattern2(
+            res,
+            RegExp(escapeLiteralCheckValue2(check.value, refs)),
+            check.message,
+            refs
+          );
+          break;
+        }
+        case "ip": {
+          if (check.version !== "v6") {
+            addFormat2(res, "ipv4", check.message, refs);
+          }
+          if (check.version !== "v4") {
+            addFormat2(res, "ipv6", check.message, refs);
+          }
+          break;
+        }
+        case "base64url":
+          addPattern2(res, zodPatterns2.base64url, check.message, refs);
+          break;
+        case "jwt":
+          addPattern2(res, zodPatterns2.jwt, check.message, refs);
+          break;
+        case "cidr": {
+          if (check.version !== "v6") {
+            addPattern2(res, zodPatterns2.ipv4Cidr, check.message, refs);
+          }
+          if (check.version !== "v4") {
+            addPattern2(res, zodPatterns2.ipv6Cidr, check.message, refs);
+          }
+          break;
+        }
+        case "emoji":
+          addPattern2(res, zodPatterns2.emoji(), check.message, refs);
+          break;
+        case "ulid": {
+          addPattern2(res, zodPatterns2.ulid, check.message, refs);
+          break;
+        }
+        case "base64": {
+          switch (refs.base64Strategy) {
+            case "format:binary": {
+              addFormat2(res, "binary", check.message, refs);
+              break;
+            }
+            case "contentEncoding:base64": {
+              res.contentEncoding = "base64";
+              break;
+            }
+            case "pattern:zod": {
+              addPattern2(res, zodPatterns2.base64, check.message, refs);
+              break;
+            }
+          }
+          break;
+        }
+        case "nanoid": {
+          addPattern2(res, zodPatterns2.nanoid, check.message, refs);
+        }
+        case "toLowerCase":
+        case "toUpperCase":
+        case "trim":
+          break;
+        default:
+          /* @__PURE__ */ ((_) => {
+          })(check);
+      }
+    }
+  }
+  return res;
+}
+function escapeLiteralCheckValue2(literal, refs) {
+  return refs.patternStrategy === "escape" ? escapeNonAlphaNumeric2(literal) : literal;
+}
+function escapeNonAlphaNumeric2(source) {
+  let result = "";
+  for (let i = 0; i < source.length; i++) {
+    if (!ALPHA_NUMERIC2.has(source[i])) {
+      result += "\\";
+    }
+    result += source[i];
+  }
+  return result;
+}
+function addFormat2(schema, value2, message, refs) {
+  var _a17;
+  if (schema.format || ((_a17 = schema.anyOf) == null ? void 0 : _a17.some((x) => x.format))) {
+    if (!schema.anyOf) {
+      schema.anyOf = [];
+    }
+    if (schema.format) {
+      schema.anyOf.push({
+        format: schema.format
+      });
+      delete schema.format;
+    }
+    schema.anyOf.push({
+      format: value2,
+      ...message && refs.errorMessages && { errorMessage: { format: message } }
+    });
+  } else {
+    schema.format = value2;
+  }
+}
+function addPattern2(schema, regex, message, refs) {
+  var _a17;
+  if (schema.pattern || ((_a17 = schema.allOf) == null ? void 0 : _a17.some((x) => x.pattern))) {
+    if (!schema.allOf) {
+      schema.allOf = [];
+    }
+    if (schema.pattern) {
+      schema.allOf.push({
+        pattern: schema.pattern
+      });
+      delete schema.pattern;
+    }
+    schema.allOf.push({
+      pattern: stringifyRegExpWithFlags2(regex, refs),
+      ...message && refs.errorMessages && { errorMessage: { pattern: message } }
+    });
+  } else {
+    schema.pattern = stringifyRegExpWithFlags2(regex, refs);
+  }
+}
+function stringifyRegExpWithFlags2(regex, refs) {
+  var _a17;
+  if (!refs.applyRegexFlags || !regex.flags) {
+    return regex.source;
+  }
+  const flags = {
+    i: regex.flags.includes("i"),
+    // Case-insensitive
+    m: regex.flags.includes("m"),
+    // `^` and `$` matches adjacent to newline characters
+    s: regex.flags.includes("s")
+    // `.` matches newlines
+  };
+  const source = flags.i ? regex.source.toLowerCase() : regex.source;
+  let pattern = "";
+  let isEscaped = false;
+  let inCharGroup = false;
+  let inCharRange = false;
+  for (let i = 0; i < source.length; i++) {
+    if (isEscaped) {
+      pattern += source[i];
+      isEscaped = false;
+      continue;
+    }
+    if (flags.i) {
+      if (inCharGroup) {
+        if (source[i].match(/[a-z]/)) {
+          if (inCharRange) {
+            pattern += source[i];
+            pattern += `${source[i - 2]}-${source[i]}`.toUpperCase();
+            inCharRange = false;
+          } else if (source[i + 1] === "-" && ((_a17 = source[i + 2]) == null ? void 0 : _a17.match(/[a-z]/))) {
+            pattern += source[i];
+            inCharRange = true;
+          } else {
+            pattern += `${source[i]}${source[i].toUpperCase()}`;
+          }
+          continue;
+        }
+      } else if (source[i].match(/[a-z]/)) {
+        pattern += `[${source[i]}${source[i].toUpperCase()}]`;
+        continue;
+      }
+    }
+    if (flags.m) {
+      if (source[i] === "^") {
+        pattern += `(^|(?<=[\r
+]))`;
+        continue;
+      } else if (source[i] === "$") {
+        pattern += `($|(?=[\r
+]))`;
+        continue;
+      }
+    }
+    if (flags.s && source[i] === ".") {
+      pattern += inCharGroup ? `${source[i]}\r
+` : `[${source[i]}\r
+]`;
+      continue;
+    }
+    pattern += source[i];
+    if (source[i] === "\\") {
+      isEscaped = true;
+    } else if (inCharGroup && source[i] === "]") {
+      inCharGroup = false;
+    } else if (!inCharGroup && source[i] === "[") {
+      inCharGroup = true;
+    }
+  }
+  try {
+    new RegExp(pattern);
+  } catch (e) {
+    console.warn(
+      `Could not convert regex pattern at ${refs.currentPath.join(
+        "/"
+      )} to a flag-independent form! Falling back to the flag-ignorant source`
+    );
+    return regex.source;
+  }
+  return pattern;
+}
+function parseRecordDef2(def, refs) {
+  var _a17, _b8, _c, _d, _e, _f;
+  const schema = {
+    type: "object",
+    additionalProperties: (_a17 = parseDef2(def.valueType._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "additionalProperties"]
+    })) != null ? _a17 : refs.allowedAdditionalProperties
+  };
+  if (((_b8 = def.keyType) == null ? void 0 : _b8._def.typeName) === ZodFirstPartyTypeKind22.ZodString && ((_c = def.keyType._def.checks) == null ? void 0 : _c.length)) {
+    const { type: type2, ...keyType } = parseStringDef2(def.keyType._def, refs);
+    return {
+      ...schema,
+      propertyNames: keyType
+    };
+  } else if (((_d = def.keyType) == null ? void 0 : _d._def.typeName) === ZodFirstPartyTypeKind22.ZodEnum) {
+    return {
+      ...schema,
+      propertyNames: {
+        enum: def.keyType._def.values
+      }
+    };
+  } else if (((_e = def.keyType) == null ? void 0 : _e._def.typeName) === ZodFirstPartyTypeKind22.ZodBranded && def.keyType._def.type._def.typeName === ZodFirstPartyTypeKind22.ZodString && ((_f = def.keyType._def.type._def.checks) == null ? void 0 : _f.length)) {
+    const { type: type2, ...keyType } = parseBrandedDef2(
+      def.keyType._def,
+      refs
+    );
+    return {
+      ...schema,
+      propertyNames: keyType
+    };
+  }
+  return schema;
+}
+function parseMapDef2(def, refs) {
+  if (refs.mapStrategy === "record") {
+    return parseRecordDef2(def, refs);
+  }
+  const keys = parseDef2(def.keyType._def, {
+    ...refs,
+    currentPath: [...refs.currentPath, "items", "items", "0"]
+  }) || parseAnyDef2();
+  const values = parseDef2(def.valueType._def, {
+    ...refs,
+    currentPath: [...refs.currentPath, "items", "items", "1"]
+  }) || parseAnyDef2();
+  return {
+    type: "array",
+    maxItems: 125,
+    items: {
+      type: "array",
+      items: [keys, values],
+      minItems: 2,
+      maxItems: 2
+    }
+  };
+}
+function parseNativeEnumDef2(def) {
+  const object2 = def.values;
+  const actualKeys = Object.keys(def.values).filter((key) => {
+    return typeof object2[object2[key]] !== "number";
+  });
+  const actualValues = actualKeys.map((key) => object2[key]);
+  const parsedTypes = Array.from(
+    new Set(actualValues.map((values) => typeof values))
+  );
+  return {
+    type: parsedTypes.length === 1 ? parsedTypes[0] === "string" ? "string" : "number" : ["string", "number"],
+    enum: actualValues
+  };
+}
+function parseNeverDef2() {
+  return { not: parseAnyDef2() };
+}
+function parseNullDef2() {
+  return {
+    type: "null"
+  };
+}
+function parseUnionDef2(def, refs) {
+  const options = def.options instanceof Map ? Array.from(def.options.values()) : def.options;
+  if (options.every(
+    (x) => x._def.typeName in primitiveMappings2 && (!x._def.checks || !x._def.checks.length)
+  )) {
+    const types = options.reduce((types2, x) => {
+      const type2 = primitiveMappings2[x._def.typeName];
+      return type2 && !types2.includes(type2) ? [...types2, type2] : types2;
+    }, []);
+    return {
+      type: types.length > 1 ? types : types[0]
+    };
+  } else if (options.every((x) => x._def.typeName === "ZodLiteral" && !x.description)) {
+    const types = options.reduce(
+      (acc, x) => {
+        const type2 = typeof x._def.value;
+        switch (type2) {
+          case "string":
+          case "number":
+          case "boolean":
+            return [...acc, type2];
+          case "bigint":
+            return [...acc, "integer"];
+          case "object":
+            if (x._def.value === null) return [...acc, "null"];
+          case "symbol":
+          case "undefined":
+          case "function":
+          default:
+            return acc;
+        }
+      },
+      []
+    );
+    if (types.length === options.length) {
+      const uniqueTypes = types.filter((x, i, a) => a.indexOf(x) === i);
+      return {
+        type: uniqueTypes.length > 1 ? uniqueTypes : uniqueTypes[0],
+        enum: options.reduce(
+          (acc, x) => {
+            return acc.includes(x._def.value) ? acc : [...acc, x._def.value];
+          },
+          []
+        )
+      };
+    }
+  } else if (options.every((x) => x._def.typeName === "ZodEnum")) {
+    return {
+      type: "string",
+      enum: options.reduce(
+        (acc, x) => [
+          ...acc,
+          ...x._def.values.filter((x2) => !acc.includes(x2))
+        ],
+        []
+      )
+    };
+  }
+  return asAnyOf2(def, refs);
+}
+function parseNullableDef2(def, refs) {
+  if (["ZodString", "ZodNumber", "ZodBigInt", "ZodBoolean", "ZodNull"].includes(
+    def.innerType._def.typeName
+  ) && (!def.innerType._def.checks || !def.innerType._def.checks.length)) {
+    return {
+      type: [
+        primitiveMappings2[def.innerType._def.typeName],
+        "null"
+      ]
+    };
+  }
+  const base = parseDef2(def.innerType._def, {
+    ...refs,
+    currentPath: [...refs.currentPath, "anyOf", "0"]
+  });
+  return base && { anyOf: [base, { type: "null" }] };
+}
+function parseNumberDef2(def) {
+  const res = {
+    type: "number"
+  };
+  if (!def.checks) return res;
+  for (const check of def.checks) {
+    switch (check.kind) {
+      case "int":
+        res.type = "integer";
+        break;
+      case "min":
+        if (check.inclusive) {
+          res.minimum = check.value;
+        } else {
+          res.exclusiveMinimum = check.value;
+        }
+        break;
+      case "max":
+        if (check.inclusive) {
+          res.maximum = check.value;
+        } else {
+          res.exclusiveMaximum = check.value;
+        }
+        break;
+      case "multipleOf":
+        res.multipleOf = check.value;
+        break;
+    }
+  }
+  return res;
+}
+function parseObjectDef2(def, refs) {
+  const result = {
+    type: "object",
+    properties: {}
+  };
+  const required = [];
+  const shape = def.shape();
+  for (const propName in shape) {
+    let propDef = shape[propName];
+    if (propDef === void 0 || propDef._def === void 0) {
+      continue;
+    }
+    const propOptional = safeIsOptional2(propDef);
+    const parsedDef = parseDef2(propDef._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "properties", propName],
+      propertyPath: [...refs.currentPath, "properties", propName]
+    });
+    if (parsedDef === void 0) {
+      continue;
+    }
+    result.properties[propName] = parsedDef;
+    if (!propOptional) {
+      required.push(propName);
+    }
+  }
+  if (required.length) {
+    result.required = required;
+  }
+  const additionalProperties = decideAdditionalProperties2(def, refs);
+  if (additionalProperties !== void 0) {
+    result.additionalProperties = additionalProperties;
+  }
+  return result;
+}
+function decideAdditionalProperties2(def, refs) {
+  if (def.catchall._def.typeName !== "ZodNever") {
+    return parseDef2(def.catchall._def, {
+      ...refs,
+      currentPath: [...refs.currentPath, "additionalProperties"]
+    });
+  }
+  switch (def.unknownKeys) {
+    case "passthrough":
+      return refs.allowedAdditionalProperties;
+    case "strict":
+      return refs.rejectedAdditionalProperties;
+    case "strip":
+      return refs.removeAdditionalStrategy === "strict" ? refs.allowedAdditionalProperties : refs.rejectedAdditionalProperties;
+  }
+}
+function safeIsOptional2(schema) {
+  try {
+    return schema.isOptional();
+  } catch (e) {
+    return true;
+  }
+}
+function parsePromiseDef2(def, refs) {
+  return parseDef2(def.type._def, refs);
+}
+function parseSetDef2(def, refs) {
+  const items = parseDef2(def.valueType._def, {
+    ...refs,
+    currentPath: [...refs.currentPath, "items"]
+  });
+  const schema = {
+    type: "array",
+    uniqueItems: true,
+    items
+  };
+  if (def.minSize) {
+    schema.minItems = def.minSize.value;
+  }
+  if (def.maxSize) {
+    schema.maxItems = def.maxSize.value;
+  }
+  return schema;
+}
+function parseTupleDef2(def, refs) {
+  if (def.rest) {
+    return {
+      type: "array",
+      minItems: def.items.length,
+      items: def.items.map(
+        (x, i) => parseDef2(x._def, {
+          ...refs,
+          currentPath: [...refs.currentPath, "items", `${i}`]
+        })
+      ).reduce(
+        (acc, x) => x === void 0 ? acc : [...acc, x],
+        []
+      ),
+      additionalItems: parseDef2(def.rest._def, {
+        ...refs,
+        currentPath: [...refs.currentPath, "additionalItems"]
+      })
+    };
+  } else {
+    return {
+      type: "array",
+      minItems: def.items.length,
+      maxItems: def.items.length,
+      items: def.items.map(
+        (x, i) => parseDef2(x._def, {
+          ...refs,
+          currentPath: [...refs.currentPath, "items", `${i}`]
+        })
+      ).reduce(
+        (acc, x) => x === void 0 ? acc : [...acc, x],
+        []
+      )
+    };
+  }
+}
+function parseUndefinedDef2() {
+  return {
+    not: parseAnyDef2()
+  };
+}
+function parseUnknownDef2() {
+  return parseAnyDef2();
+}
+function parseDef2(def, refs, forceResolution = false) {
+  var _a17;
+  const seenItem = refs.seen.get(def);
+  if (refs.override) {
+    const overrideResult = (_a17 = refs.override) == null ? void 0 : _a17.call(
+      refs,
+      def,
+      refs,
+      seenItem,
+      forceResolution
+    );
+    if (overrideResult !== ignoreOverride2) {
+      return overrideResult;
+    }
+  }
+  if (seenItem && !forceResolution) {
+    const seenSchema = get$ref2(seenItem, refs);
+    if (seenSchema !== void 0) {
+      return seenSchema;
+    }
+  }
+  const newItem = { def, path: refs.currentPath, jsonSchema: void 0 };
+  refs.seen.set(def, newItem);
+  const jsonSchemaOrGetter = selectParser2(def, def.typeName, refs);
+  const jsonSchema2 = typeof jsonSchemaOrGetter === "function" ? parseDef2(jsonSchemaOrGetter(), refs) : jsonSchemaOrGetter;
+  if (jsonSchema2) {
+    addMeta2(def, refs, jsonSchema2);
+  }
+  if (refs.postProcess) {
+    const postProcessResult = refs.postProcess(jsonSchema2, def, refs);
+    newItem.jsonSchema = jsonSchema2;
+    return postProcessResult;
+  }
+  newItem.jsonSchema = jsonSchema2;
+  return jsonSchema2;
+}
+function zod3Schema(zodSchema2, options) {
+  var _a17;
+  const useReferences = (_a17 = options == null ? void 0 : options.useReferences) != null ? _a17 : false;
+  return jsonSchema(
+    // defer json schema creation to avoid unnecessary computation when only validation is needed
+    () => zod_to_json_schema_default(zodSchema2, {
+      $refStrategy: useReferences ? "root" : "none"
+    }),
+    {
+      validate: async (value2) => {
+        const result = await zodSchema2.safeParseAsync(value2);
+        return result.success ? { success: true, value: result.data } : { success: false, error: result.error };
+      }
+    }
+  );
+}
+function zod4Schema(zodSchema2, options) {
+  var _a17;
+  const useReferences = (_a17 = options == null ? void 0 : options.useReferences) != null ? _a17 : false;
+  return jsonSchema(
+    // defer json schema creation to avoid unnecessary computation when only validation is needed
+    () => z42.toJSONSchema(zodSchema2, {
+      target: "draft-7",
+      io: "output",
+      reused: useReferences ? "ref" : "inline"
+    }),
+    {
+      validate: async (value2) => {
+        const result = await z42.safeParseAsync(zodSchema2, value2);
+        return result.success ? { success: true, value: result.data } : { success: false, error: result.error };
+      }
+    }
+  );
+}
+function isZod4Schema(zodSchema2) {
+  return "_zod" in zodSchema2;
+}
+function zodSchema(zodSchema2, options) {
+  if (isZod4Schema(zodSchema2)) {
+    return zod4Schema(zodSchema2, options);
+  } else {
+    return zod3Schema(zodSchema2, options);
+  }
+}
+function jsonSchema(jsonSchema2, {
+  validate
+} = {}) {
+  return {
+    [schemaSymbol]: true,
+    _type: void 0,
+    // should never be used directly
+    [validatorSymbol]: true,
+    get jsonSchema() {
+      if (typeof jsonSchema2 === "function") {
+        jsonSchema2 = jsonSchema2();
+      }
+      return jsonSchema2;
+    },
+    validate
+  };
+}
+function isSchema(value2) {
+  return typeof value2 === "object" && value2 !== null && schemaSymbol in value2 && value2[schemaSymbol] === true && "jsonSchema" in value2 && "validate" in value2;
+}
+function asSchema(schema) {
+  return schema == null ? jsonSchema({
+    properties: {},
+    additionalProperties: false
+  }) : isSchema(schema) ? schema : typeof schema === "function" ? schema() : zodSchema(schema);
+}
+function convertBase64ToUint8Array(base64String) {
+  const base64Url = base64String.replace(/-/g, "+").replace(/_/g, "/");
+  const latin1string = atob2(base64Url);
+  return Uint8Array.from(latin1string, (byte) => byte.codePointAt(0));
+}
+function convertUint8ArrayToBase64(array) {
+  let latin1string = "";
+  for (let i = 0; i < array.length; i++) {
+    latin1string += String.fromCodePoint(array[i]);
+  }
+  return btoa2(latin1string);
+}
+function withoutTrailingSlash(url) {
+  return url == null ? void 0 : url.replace(/\/$/, "");
+}
+function isAsyncIterable(obj) {
+  return obj != null && typeof obj[Symbol.asyncIterator] === "function";
+}
+async function* executeTool({
+  execute,
+  input,
+  options
+}) {
+  const result = execute(input, options);
+  if (isAsyncIterable(result)) {
+    let lastOutput;
+    for await (const output of result) {
+      lastOutput = output;
+      yield { type: "preliminary", output };
+    }
+    yield { type: "final", output: lastOutput };
+  } else {
+    yield { type: "final", output: await result };
+  }
+}
+var DelayedPromise, createIdGenerator, generateId, FETCH_FAILED_ERROR_MESSAGES, VERSION, getOriginalFetch, getFromApi, suspectProtoRx, suspectConstructorRx, validatorSymbol, getOriginalFetch2, postJsonToApi, postToApi, createJsonErrorResponseHandler, createEventSourceResponseHandler, createJsonResponseHandler, getRelativePath2, ignoreOverride2, defaultOptions2, getDefaultOptions2, parseCatchDef2, integerDateParser2, isJsonSchema7AllOfType2, emojiRegex2, zodPatterns2, ALPHA_NUMERIC2, primitiveMappings2, asAnyOf2, parseOptionalDef2, parsePipelineDef2, parseReadonlyDef2, selectParser2, get$ref2, addMeta2, getRefs2, zodToJsonSchema2, zod_to_json_schema_default, schemaSymbol, btoa2, atob2;
+var init_dist9 = __esm({
+  "node_modules/@ai-sdk/provider-utils/dist/index.mjs"() {
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_stream();
+    init_dist6();
+    init_dist6();
+    init_dist8();
+    DelayedPromise = class {
+      constructor() {
+        this.status = { type: "pending" };
+        this._resolve = void 0;
+        this._reject = void 0;
+      }
+      get promise() {
+        if (this._promise) {
+          return this._promise;
+        }
+        this._promise = new Promise((resolve22, reject) => {
+          if (this.status.type === "resolved") {
+            resolve22(this.status.value);
+          } else if (this.status.type === "rejected") {
+            reject(this.status.error);
+          }
+          this._resolve = resolve22;
+          this._reject = reject;
+        });
+        return this._promise;
+      }
+      resolve(value2) {
+        var _a17;
+        this.status = { type: "resolved", value: value2 };
+        if (this._promise) {
+          (_a17 = this._resolve) == null ? void 0 : _a17.call(this, value2);
+        }
+      }
+      reject(error) {
+        var _a17;
+        this.status = { type: "rejected", error };
+        if (this._promise) {
+          (_a17 = this._reject) == null ? void 0 : _a17.call(this, error);
+        }
+      }
+      isResolved() {
+        return this.status.type === "resolved";
+      }
+      isRejected() {
+        return this.status.type === "rejected";
+      }
+      isPending() {
+        return this.status.type === "pending";
+      }
+    };
+    createIdGenerator = ({
+      prefix,
+      size = 16,
+      alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+      separator = "-"
+    } = {}) => {
+      const generator = () => {
+        const alphabetLength = alphabet.length;
+        const chars = new Array(size);
+        for (let i = 0; i < size; i++) {
+          chars[i] = alphabet[Math.random() * alphabetLength | 0];
+        }
+        return chars.join("");
+      };
+      if (prefix == null) {
+        return generator;
+      }
+      if (alphabet.includes(separator)) {
+        throw new InvalidArgumentError2({
+          argument: "separator",
+          message: `The separator "${separator}" must not be part of the alphabet "${alphabet}".`
+        });
+      }
+      return () => `${prefix}${separator}${generator()}`;
+    };
+    generateId = createIdGenerator();
+    FETCH_FAILED_ERROR_MESSAGES = ["fetch failed", "failed to fetch"];
+    VERSION = true ? "3.0.18" : "0.0.0-test";
+    getOriginalFetch = () => globalThis.fetch;
+    getFromApi = async ({
+      url,
+      headers = {},
+      successfulResponseHandler,
+      failedResponseHandler,
+      abortSignal,
+      fetch: fetch2 = getOriginalFetch()
+    }) => {
+      try {
+        const response = await fetch2(url, {
+          method: "GET",
+          headers: withUserAgentSuffix(
+            headers,
+            `ai-sdk/provider-utils/${VERSION}`,
+            getRuntimeEnvironmentUserAgent()
+          ),
+          signal: abortSignal
+        });
+        const responseHeaders = extractResponseHeaders(response);
+        if (!response.ok) {
+          let errorInformation;
+          try {
+            errorInformation = await failedResponseHandler({
+              response,
+              url,
+              requestBodyValues: {}
+            });
+          } catch (error) {
+            if (isAbortError(error) || APICallError.isInstance(error)) {
+              throw error;
+            }
+            throw new APICallError({
+              message: "Failed to process error response",
+              cause: error,
+              statusCode: response.status,
+              url,
+              responseHeaders,
+              requestBodyValues: {}
+            });
+          }
+          throw errorInformation.value;
+        }
+        try {
+          return await successfulResponseHandler({
+            response,
+            url,
+            requestBodyValues: {}
+          });
+        } catch (error) {
+          if (error instanceof Error) {
+            if (isAbortError(error) || APICallError.isInstance(error)) {
+              throw error;
+            }
+          }
+          throw new APICallError({
+            message: "Failed to process successful response",
+            cause: error,
+            statusCode: response.status,
+            url,
+            responseHeaders,
+            requestBodyValues: {}
+          });
+        }
+      } catch (error) {
+        throw handleFetchError({ error, url, requestBodyValues: {} });
+      }
+    };
+    suspectProtoRx = /"__proto__"\s*:/;
+    suspectConstructorRx = /"constructor"\s*:/;
+    validatorSymbol = Symbol.for("vercel.ai.validator");
+    getOriginalFetch2 = () => globalThis.fetch;
+    postJsonToApi = async ({
+      url,
+      headers,
+      body,
+      failedResponseHandler,
+      successfulResponseHandler,
+      abortSignal,
+      fetch: fetch2
+    }) => postToApi({
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        ...headers
+      },
+      body: {
+        content: JSON.stringify(body),
+        values: body
+      },
+      failedResponseHandler,
+      successfulResponseHandler,
+      abortSignal,
+      fetch: fetch2
+    });
+    postToApi = async ({
+      url,
+      headers = {},
+      body,
+      successfulResponseHandler,
+      failedResponseHandler,
+      abortSignal,
+      fetch: fetch2 = getOriginalFetch2()
+    }) => {
+      try {
+        const response = await fetch2(url, {
+          method: "POST",
+          headers: withUserAgentSuffix(
+            headers,
+            `ai-sdk/provider-utils/${VERSION}`,
+            getRuntimeEnvironmentUserAgent()
+          ),
+          body: body.content,
+          signal: abortSignal
+        });
+        const responseHeaders = extractResponseHeaders(response);
+        if (!response.ok) {
+          let errorInformation;
+          try {
+            errorInformation = await failedResponseHandler({
+              response,
+              url,
+              requestBodyValues: body.values
+            });
+          } catch (error) {
+            if (isAbortError(error) || APICallError.isInstance(error)) {
+              throw error;
+            }
+            throw new APICallError({
+              message: "Failed to process error response",
+              cause: error,
+              statusCode: response.status,
+              url,
+              responseHeaders,
+              requestBodyValues: body.values
+            });
+          }
+          throw errorInformation.value;
+        }
+        try {
+          return await successfulResponseHandler({
+            response,
+            url,
+            requestBodyValues: body.values
+          });
+        } catch (error) {
+          if (error instanceof Error) {
+            if (isAbortError(error) || APICallError.isInstance(error)) {
+              throw error;
+            }
+          }
+          throw new APICallError({
+            message: "Failed to process successful response",
+            cause: error,
+            statusCode: response.status,
+            url,
+            responseHeaders,
+            requestBodyValues: body.values
+          });
+        }
+      } catch (error) {
+        throw handleFetchError({ error, url, requestBodyValues: body.values });
+      }
+    };
+    createJsonErrorResponseHandler = ({
+      errorSchema,
+      errorToMessage,
+      isRetryable
+    }) => async ({ response, url, requestBodyValues }) => {
+      const responseBody = await response.text();
+      const responseHeaders = extractResponseHeaders(response);
+      if (responseBody.trim() === "") {
+        return {
+          responseHeaders,
+          value: new APICallError({
+            message: response.statusText,
+            url,
+            requestBodyValues,
+            statusCode: response.status,
+            responseHeaders,
+            responseBody,
+            isRetryable: isRetryable == null ? void 0 : isRetryable(response)
+          })
+        };
+      }
+      try {
+        const parsedError = await parseJSON({
+          text: responseBody,
+          schema: errorSchema
+        });
+        return {
+          responseHeaders,
+          value: new APICallError({
+            message: errorToMessage(parsedError),
+            url,
+            requestBodyValues,
+            statusCode: response.status,
+            responseHeaders,
+            responseBody,
+            data: parsedError,
+            isRetryable: isRetryable == null ? void 0 : isRetryable(response, parsedError)
+          })
+        };
+      } catch (parseError) {
+        return {
+          responseHeaders,
+          value: new APICallError({
+            message: response.statusText,
+            url,
+            requestBodyValues,
+            statusCode: response.status,
+            responseHeaders,
+            responseBody,
+            isRetryable: isRetryable == null ? void 0 : isRetryable(response)
+          })
+        };
+      }
+    };
+    createEventSourceResponseHandler = (chunkSchema) => async ({ response }) => {
+      const responseHeaders = extractResponseHeaders(response);
+      if (response.body == null) {
+        throw new EmptyResponseBodyError({});
+      }
+      return {
+        responseHeaders,
+        value: parseJsonEventStream({
+          stream: response.body,
+          schema: chunkSchema
+        })
+      };
+    };
+    createJsonResponseHandler = (responseSchema) => async ({ response, url, requestBodyValues }) => {
+      const responseBody = await response.text();
+      const parsedResult = await safeParseJSON({
+        text: responseBody,
+        schema: responseSchema
+      });
+      const responseHeaders = extractResponseHeaders(response);
+      if (!parsedResult.success) {
+        throw new APICallError({
+          message: "Invalid JSON response",
+          cause: parsedResult.error,
+          statusCode: response.status,
+          responseHeaders,
+          responseBody,
+          url,
+          requestBodyValues
+        });
+      }
+      return {
+        responseHeaders,
+        value: parsedResult.value,
+        rawValue: parsedResult.rawValue
+      };
+    };
+    getRelativePath2 = (pathA, pathB) => {
+      let i = 0;
+      for (; i < pathA.length && i < pathB.length; i++) {
+        if (pathA[i] !== pathB[i]) break;
+      }
+      return [(pathA.length - i).toString(), ...pathB.slice(i)].join("/");
+    };
+    ignoreOverride2 = Symbol(
+      "Let zodToJsonSchema decide on which parser to use"
+    );
+    defaultOptions2 = {
+      name: void 0,
+      $refStrategy: "root",
+      basePath: ["#"],
+      effectStrategy: "input",
+      pipeStrategy: "all",
+      dateStrategy: "format:date-time",
+      mapStrategy: "entries",
+      removeAdditionalStrategy: "passthrough",
+      allowedAdditionalProperties: true,
+      rejectedAdditionalProperties: false,
+      definitionPath: "definitions",
+      strictUnions: false,
+      definitions: {},
+      errorMessages: false,
+      patternStrategy: "escape",
+      applyRegexFlags: false,
+      emailStrategy: "format:email",
+      base64Strategy: "contentEncoding:base64",
+      nameStrategy: "ref"
+    };
+    getDefaultOptions2 = (options) => typeof options === "string" ? {
+      ...defaultOptions2,
+      name: options
+    } : {
+      ...defaultOptions2,
+      ...options
+    };
+    parseCatchDef2 = (def, refs) => {
+      return parseDef2(def.innerType._def, refs);
+    };
+    integerDateParser2 = (def) => {
+      const res = {
+        type: "integer",
+        format: "unix-time"
+      };
+      for (const check of def.checks) {
+        switch (check.kind) {
+          case "min":
+            res.minimum = check.value;
+            break;
+          case "max":
+            res.maximum = check.value;
+            break;
+        }
+      }
+      return res;
+    };
+    isJsonSchema7AllOfType2 = (type2) => {
+      if ("type" in type2 && type2.type === "string") return false;
+      return "allOf" in type2;
+    };
+    emojiRegex2 = void 0;
+    zodPatterns2 = {
+      /**
+       * `c` was changed to `[cC]` to replicate /i flag
+       */
+      cuid: /^[cC][^\s-]{8,}$/,
+      cuid2: /^[0-9a-z]+$/,
+      ulid: /^[0-9A-HJKMNP-TV-Z]{26}$/,
+      /**
+       * `a-z` was added to replicate /i flag
+       */
+      email: /^(?!\.)(?!.*\.\.)([a-zA-Z0-9_'+\-\.]*)[a-zA-Z0-9_+-]@([a-zA-Z0-9][a-zA-Z0-9\-]*\.)+[a-zA-Z]{2,}$/,
+      /**
+       * Constructed a valid Unicode RegExp
+       *
+       * Lazily instantiate since this type of regex isn't supported
+       * in all envs (e.g. React Native).
+       *
+       * See:
+       * https://github.com/colinhacks/zod/issues/2433
+       * Fix in Zod:
+       * https://github.com/colinhacks/zod/commit/9340fd51e48576a75adc919bff65dbc4a5d4c99b
+       */
+      emoji: () => {
+        if (emojiRegex2 === void 0) {
+          emojiRegex2 = RegExp(
+            "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
+            "u"
+          );
+        }
+        return emojiRegex2;
+      },
+      /**
+       * Unused
+       */
+      uuid: /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/,
+      /**
+       * Unused
+       */
+      ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/,
+      ipv4Cidr: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/(3[0-2]|[12]?[0-9])$/,
+      /**
+       * Unused
+       */
+      ipv6: /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/,
+      ipv6Cidr: /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/,
+      base64: /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/,
+      base64url: /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/,
+      nanoid: /^[a-zA-Z0-9_-]{21}$/,
+      jwt: /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/
+    };
+    ALPHA_NUMERIC2 = new Set(
+      "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789"
+    );
+    primitiveMappings2 = {
+      ZodString: "string",
+      ZodNumber: "number",
+      ZodBigInt: "integer",
+      ZodBoolean: "boolean",
+      ZodNull: "null"
+    };
+    asAnyOf2 = (def, refs) => {
+      const anyOf = (def.options instanceof Map ? Array.from(def.options.values()) : def.options).map(
+        (x, i) => parseDef2(x._def, {
+          ...refs,
+          currentPath: [...refs.currentPath, "anyOf", `${i}`]
+        })
+      ).filter(
+        (x) => !!x && (!refs.strictUnions || typeof x === "object" && Object.keys(x).length > 0)
+      );
+      return anyOf.length ? { anyOf } : void 0;
+    };
+    parseOptionalDef2 = (def, refs) => {
+      var _a17;
+      if (refs.currentPath.toString() === ((_a17 = refs.propertyPath) == null ? void 0 : _a17.toString())) {
+        return parseDef2(def.innerType._def, refs);
+      }
+      const innerSchema = parseDef2(def.innerType._def, {
+        ...refs,
+        currentPath: [...refs.currentPath, "anyOf", "1"]
+      });
+      return innerSchema ? { anyOf: [{ not: parseAnyDef2() }, innerSchema] } : parseAnyDef2();
+    };
+    parsePipelineDef2 = (def, refs) => {
+      if (refs.pipeStrategy === "input") {
+        return parseDef2(def.in._def, refs);
+      } else if (refs.pipeStrategy === "output") {
+        return parseDef2(def.out._def, refs);
+      }
+      const a = parseDef2(def.in._def, {
+        ...refs,
+        currentPath: [...refs.currentPath, "allOf", "0"]
+      });
+      const b = parseDef2(def.out._def, {
+        ...refs,
+        currentPath: [...refs.currentPath, "allOf", a ? "1" : "0"]
+      });
+      return {
+        allOf: [a, b].filter((x) => x !== void 0)
+      };
+    };
+    parseReadonlyDef2 = (def, refs) => {
+      return parseDef2(def.innerType._def, refs);
+    };
+    selectParser2 = (def, typeName, refs) => {
+      switch (typeName) {
+        case ZodFirstPartyTypeKind3.ZodString:
+          return parseStringDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodNumber:
+          return parseNumberDef2(def);
+        case ZodFirstPartyTypeKind3.ZodObject:
+          return parseObjectDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodBigInt:
+          return parseBigintDef2(def);
+        case ZodFirstPartyTypeKind3.ZodBoolean:
+          return parseBooleanDef2();
+        case ZodFirstPartyTypeKind3.ZodDate:
+          return parseDateDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodUndefined:
+          return parseUndefinedDef2();
+        case ZodFirstPartyTypeKind3.ZodNull:
+          return parseNullDef2();
+        case ZodFirstPartyTypeKind3.ZodArray:
+          return parseArrayDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodUnion:
+        case ZodFirstPartyTypeKind3.ZodDiscriminatedUnion:
+          return parseUnionDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodIntersection:
+          return parseIntersectionDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodTuple:
+          return parseTupleDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodRecord:
+          return parseRecordDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodLiteral:
+          return parseLiteralDef2(def);
+        case ZodFirstPartyTypeKind3.ZodEnum:
+          return parseEnumDef2(def);
+        case ZodFirstPartyTypeKind3.ZodNativeEnum:
+          return parseNativeEnumDef2(def);
+        case ZodFirstPartyTypeKind3.ZodNullable:
+          return parseNullableDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodOptional:
+          return parseOptionalDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodMap:
+          return parseMapDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodSet:
+          return parseSetDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodLazy:
+          return () => def.getter()._def;
+        case ZodFirstPartyTypeKind3.ZodPromise:
+          return parsePromiseDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodNaN:
+        case ZodFirstPartyTypeKind3.ZodNever:
+          return parseNeverDef2();
+        case ZodFirstPartyTypeKind3.ZodEffects:
+          return parseEffectsDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodAny:
+          return parseAnyDef2();
+        case ZodFirstPartyTypeKind3.ZodUnknown:
+          return parseUnknownDef2();
+        case ZodFirstPartyTypeKind3.ZodDefault:
+          return parseDefaultDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodBranded:
+          return parseBrandedDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodReadonly:
+          return parseReadonlyDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodCatch:
+          return parseCatchDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodPipeline:
+          return parsePipelineDef2(def, refs);
+        case ZodFirstPartyTypeKind3.ZodFunction:
+        case ZodFirstPartyTypeKind3.ZodVoid:
+        case ZodFirstPartyTypeKind3.ZodSymbol:
+          return void 0;
+        default:
+          return /* @__PURE__ */ ((_) => void 0)(typeName);
+      }
+    };
+    get$ref2 = (item, refs) => {
+      switch (refs.$refStrategy) {
+        case "root":
+          return { $ref: item.path.join("/") };
+        case "relative":
+          return { $ref: getRelativePath2(refs.currentPath, item.path) };
+        case "none":
+        case "seen": {
+          if (item.path.length < refs.currentPath.length && item.path.every((value2, index) => refs.currentPath[index] === value2)) {
+            console.warn(
+              `Recursive reference detected at ${refs.currentPath.join(
+                "/"
+              )}! Defaulting to any`
+            );
+            return parseAnyDef2();
+          }
+          return refs.$refStrategy === "seen" ? parseAnyDef2() : void 0;
+        }
+      }
+    };
+    addMeta2 = (def, refs, jsonSchema2) => {
+      if (def.description) {
+        jsonSchema2.description = def.description;
+      }
+      return jsonSchema2;
+    };
+    getRefs2 = (options) => {
+      const _options = getDefaultOptions2(options);
+      const currentPath = _options.name !== void 0 ? [..._options.basePath, _options.definitionPath, _options.name] : _options.basePath;
+      return {
+        ..._options,
+        currentPath,
+        propertyPath: void 0,
+        seen: new Map(
+          Object.entries(_options.definitions).map(([name16, def]) => [
+            def._def,
+            {
+              def: def._def,
+              path: [..._options.basePath, _options.definitionPath, name16],
+              // Resolution of references will be forced even though seen, so it's ok that the schema is undefined here for now.
+              jsonSchema: void 0
+            }
+          ])
+        )
+      };
+    };
+    zodToJsonSchema2 = (schema, options) => {
+      var _a17;
+      const refs = getRefs2(options);
+      let definitions = typeof options === "object" && options.definitions ? Object.entries(options.definitions).reduce(
+        (acc, [name24, schema2]) => {
+          var _a24;
+          return {
+            ...acc,
+            [name24]: (_a24 = parseDef2(
+              schema2._def,
+              {
+                ...refs,
+                currentPath: [...refs.basePath, refs.definitionPath, name24]
+              },
+              true
+            )) != null ? _a24 : parseAnyDef2()
+          };
+        },
+        {}
+      ) : void 0;
+      const name16 = typeof options === "string" ? options : (options == null ? void 0 : options.nameStrategy) === "title" ? void 0 : options == null ? void 0 : options.name;
+      const main = (_a17 = parseDef2(
+        schema._def,
+        name16 === void 0 ? refs : {
+          ...refs,
+          currentPath: [...refs.basePath, refs.definitionPath, name16]
+        },
+        false
+      )) != null ? _a17 : parseAnyDef2();
+      const title = typeof options === "object" && options.name !== void 0 && options.nameStrategy === "title" ? options.name : void 0;
+      if (title !== void 0) {
+        main.title = title;
+      }
+      const combined = name16 === void 0 ? definitions ? {
+        ...main,
+        [refs.definitionPath]: definitions
+      } : main : {
+        $ref: [
+          ...refs.$refStrategy === "relative" ? [] : refs.basePath,
+          refs.definitionPath,
+          name16
+        ].join("/"),
+        [refs.definitionPath]: {
+          ...definitions,
+          [name16]: main
+        }
+      };
+      combined.$schema = "http://json-schema.org/draft-07/schema#";
+      return combined;
+    };
+    zod_to_json_schema_default = zodToJsonSchema2;
+    schemaSymbol = Symbol.for("vercel.ai.schema");
+    ({ btoa: btoa2, atob: atob2 } = globalThis);
+  }
+});
+
 // node_modules/@vercel/oidc/dist/get-context.js
 var require_get_context = __commonJS({
   "node_modules/@vercel/oidc/dist/get-context.js"(exports, module) {
@@ -2807,6 +5169,11439 @@ var require_dist = __commonJS({
     module.exports = __toCommonJS(src_exports);
     var import_get_vercel_oidc_token = require_get_vercel_oidc_token();
     var import_get_context = require_get_context();
+  }
+});
+
+// node_modules/@ai-sdk/gateway/dist/index.mjs
+import { z as z24 } from "zod/v4";
+import { z as z25 } from "zod/v4";
+import { z as z32 } from "zod/v4";
+import { z as z43 } from "zod/v4";
+import { z as z52 } from "zod/v4";
+import { z as z62 } from "zod/v4";
+import { z as z72 } from "zod/v4";
+async function createGatewayErrorFromResponse({
+  response,
+  statusCode,
+  defaultMessage = "Gateway request failed",
+  cause,
+  authMethod
+}) {
+  const parseResult = await safeValidateTypes({
+    value: response,
+    schema: gatewayErrorResponseSchema
+  });
+  if (!parseResult.success) {
+    return new GatewayResponseError({
+      message: `Invalid error response format: ${defaultMessage}`,
+      statusCode,
+      response,
+      validationError: parseResult.error,
+      cause
+    });
+  }
+  const validatedResponse = parseResult.value;
+  const errorType = validatedResponse.error.type;
+  const message = validatedResponse.error.message;
+  switch (errorType) {
+    case "authentication_error":
+      return GatewayAuthenticationError.createContextualError({
+        apiKeyProvided: authMethod === "api-key",
+        oidcTokenProvided: authMethod === "oidc",
+        statusCode,
+        cause
+      });
+    case "invalid_request_error":
+      return new GatewayInvalidRequestError({ message, statusCode, cause });
+    case "rate_limit_exceeded":
+      return new GatewayRateLimitError({ message, statusCode, cause });
+    case "model_not_found": {
+      const modelResult = await safeValidateTypes({
+        value: validatedResponse.error.param,
+        schema: modelNotFoundParamSchema
+      });
+      return new GatewayModelNotFoundError({
+        message,
+        statusCode,
+        modelId: modelResult.success ? modelResult.value.modelId : void 0,
+        cause
+      });
+    }
+    case "internal_server_error":
+      return new GatewayInternalServerError({ message, statusCode, cause });
+    default:
+      return new GatewayInternalServerError({ message, statusCode, cause });
+  }
+}
+function asGatewayError(error, authMethod) {
+  var _a83;
+  if (GatewayError.isInstance(error)) {
+    return error;
+  }
+  if (APICallError.isInstance(error)) {
+    return createGatewayErrorFromResponse({
+      response: extractApiCallResponse(error),
+      statusCode: (_a83 = error.statusCode) != null ? _a83 : 500,
+      defaultMessage: "Gateway request failed",
+      cause: error,
+      authMethod
+    });
+  }
+  return createGatewayErrorFromResponse({
+    response: {},
+    statusCode: 500,
+    defaultMessage: error instanceof Error ? `Gateway request failed: ${error.message}` : "Unknown Gateway error",
+    cause: error,
+    authMethod
+  });
+}
+function extractApiCallResponse(error) {
+  if (error.data !== void 0) {
+    return error.data;
+  }
+  if (error.responseBody != null) {
+    try {
+      return JSON.parse(error.responseBody);
+    } catch (e) {
+      return error.responseBody;
+    }
+  }
+  return {};
+}
+async function parseAuthMethod(headers) {
+  const result = await safeValidateTypes({
+    value: headers[GATEWAY_AUTH_METHOD_HEADER],
+    schema: gatewayAuthMethodSchema
+  });
+  return result.success ? result.value : void 0;
+}
+async function getVercelRequestId() {
+  var _a83;
+  return (_a83 = (0, import_oidc.getContext)().headers) == null ? void 0 : _a83["x-vercel-id"];
+}
+function createGatewayProvider(options = {}) {
+  var _a83, _b8;
+  let pendingMetadata = null;
+  let metadataCache = null;
+  const cacheRefreshMillis = (_a83 = options.metadataCacheRefreshMillis) != null ? _a83 : 1e3 * 60 * 5;
+  let lastFetchTime = 0;
+  const baseURL = (_b8 = withoutTrailingSlash(options.baseURL)) != null ? _b8 : "https://ai-gateway.vercel.sh/v1/ai";
+  const getHeaders = async () => {
+    const auth = await getGatewayAuthToken(options);
+    if (auth) {
+      return withUserAgentSuffix(
+        {
+          Authorization: `Bearer ${auth.token}`,
+          "ai-gateway-protocol-version": AI_GATEWAY_PROTOCOL_VERSION,
+          [GATEWAY_AUTH_METHOD_HEADER]: auth.authMethod,
+          ...options.headers
+        },
+        `ai-sdk/gateway/${VERSION2}`
+      );
+    }
+    throw GatewayAuthenticationError.createContextualError({
+      apiKeyProvided: false,
+      oidcTokenProvided: false,
+      statusCode: 401
+    });
+  };
+  const createO11yHeaders = () => {
+    const deploymentId = loadOptionalSetting({
+      settingValue: void 0,
+      environmentVariableName: "VERCEL_DEPLOYMENT_ID"
+    });
+    const environment = loadOptionalSetting({
+      settingValue: void 0,
+      environmentVariableName: "VERCEL_ENV"
+    });
+    const region = loadOptionalSetting({
+      settingValue: void 0,
+      environmentVariableName: "VERCEL_REGION"
+    });
+    return async () => {
+      const requestId = await getVercelRequestId();
+      return {
+        ...deploymentId && { "ai-o11y-deployment-id": deploymentId },
+        ...environment && { "ai-o11y-environment": environment },
+        ...region && { "ai-o11y-region": region },
+        ...requestId && { "ai-o11y-request-id": requestId }
+      };
+    };
+  };
+  const createLanguageModel = (modelId) => {
+    return new GatewayLanguageModel(modelId, {
+      provider: "gateway",
+      baseURL,
+      headers: getHeaders,
+      fetch: options.fetch,
+      o11yHeaders: createO11yHeaders()
+    });
+  };
+  const getAvailableModels = async () => {
+    var _a93, _b9, _c;
+    const now2 = (_c = (_b9 = (_a93 = options._internal) == null ? void 0 : _a93.currentDate) == null ? void 0 : _b9.call(_a93).getTime()) != null ? _c : Date.now();
+    if (!pendingMetadata || now2 - lastFetchTime > cacheRefreshMillis) {
+      lastFetchTime = now2;
+      pendingMetadata = new GatewayFetchMetadata({
+        baseURL,
+        headers: getHeaders,
+        fetch: options.fetch
+      }).getAvailableModels().then((metadata) => {
+        metadataCache = metadata;
+        return metadata;
+      }).catch(async (error) => {
+        throw await asGatewayError(
+          error,
+          await parseAuthMethod(await getHeaders())
+        );
+      });
+    }
+    return metadataCache ? Promise.resolve(metadataCache) : pendingMetadata;
+  };
+  const getCredits = async () => {
+    return new GatewayFetchMetadata({
+      baseURL,
+      headers: getHeaders,
+      fetch: options.fetch
+    }).getCredits().catch(async (error) => {
+      throw await asGatewayError(
+        error,
+        await parseAuthMethod(await getHeaders())
+      );
+    });
+  };
+  const provider = function(modelId) {
+    if (new.target) {
+      throw new Error(
+        "The Gateway Provider model function cannot be called with the new keyword."
+      );
+    }
+    return createLanguageModel(modelId);
+  };
+  provider.getAvailableModels = getAvailableModels;
+  provider.getCredits = getCredits;
+  provider.imageModel = (modelId) => {
+    return new GatewayImageModel(modelId, {
+      provider: "gateway",
+      baseURL,
+      headers: getHeaders,
+      fetch: options.fetch,
+      o11yHeaders: createO11yHeaders()
+    });
+  };
+  provider.languageModel = createLanguageModel;
+  provider.textEmbeddingModel = (modelId) => {
+    return new GatewayEmbeddingModel(modelId, {
+      provider: "gateway",
+      baseURL,
+      headers: getHeaders,
+      fetch: options.fetch,
+      o11yHeaders: createO11yHeaders()
+    });
+  };
+  return provider;
+}
+async function getGatewayAuthToken(options) {
+  const apiKey = loadOptionalSetting({
+    settingValue: options.apiKey,
+    environmentVariableName: "AI_GATEWAY_API_KEY"
+  });
+  if (apiKey) {
+    return {
+      token: apiKey,
+      authMethod: "api-key"
+    };
+  }
+  try {
+    const oidcToken = await (0, import_oidc2.getVercelOidcToken)();
+    return {
+      token: oidcToken,
+      authMethod: "oidc"
+    };
+  } catch (e) {
+    return null;
+  }
+}
+var import_oidc, import_oidc2, marker15, symbol15, _a15, _b, GatewayError, name14, marker22, symbol22, _a22, _b2, GatewayAuthenticationError, name22, marker32, symbol32, _a32, _b3, GatewayInvalidRequestError, name32, marker42, symbol42, _a42, _b4, GatewayRateLimitError, name42, marker52, symbol52, modelNotFoundParamSchema, _a52, _b5, GatewayModelNotFoundError, name52, marker62, symbol62, _a62, _b6, GatewayInternalServerError, name62, marker72, symbol72, _a72, _b7, GatewayResponseError, gatewayErrorResponseSchema, GATEWAY_AUTH_METHOD_HEADER, gatewayAuthMethodSchema, GatewayFetchMetadata, gatewayAvailableModelsResponseSchema, gatewayCreditsResponseSchema, GatewayLanguageModel, GatewayEmbeddingModel, gatewayEmbeddingResponseSchema, GatewayImageModel, providerMetadataEntrySchema, gatewayImageResponseSchema, VERSION2, AI_GATEWAY_PROTOCOL_VERSION, gateway;
+var init_dist10 = __esm({
+  "node_modules/@ai-sdk/gateway/dist/index.mjs"() {
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    import_oidc = __toESM(require_dist(), 1);
+    import_oidc2 = __toESM(require_dist(), 1);
+    init_dist9();
+    marker15 = "vercel.ai.gateway.error";
+    symbol15 = Symbol.for(marker15);
+    GatewayError = class _GatewayError extends (_b = Error, _a15 = symbol15, _b) {
+      constructor({
+        message,
+        statusCode = 500,
+        cause
+      }) {
+        super(message);
+        this[_a15] = true;
+        this.statusCode = statusCode;
+        this.cause = cause;
+      }
+      /**
+       * Checks if the given error is a Gateway Error.
+       * @param {unknown} error - The error to check.
+       * @returns {boolean} True if the error is a Gateway Error, false otherwise.
+       */
+      static isInstance(error) {
+        return _GatewayError.hasMarker(error);
+      }
+      static hasMarker(error) {
+        return typeof error === "object" && error !== null && symbol15 in error && error[symbol15] === true;
+      }
+    };
+    name14 = "GatewayAuthenticationError";
+    marker22 = `vercel.ai.gateway.error.${name14}`;
+    symbol22 = Symbol.for(marker22);
+    GatewayAuthenticationError = class _GatewayAuthenticationError extends (_b2 = GatewayError, _a22 = symbol22, _b2) {
+      constructor({
+        message = "Authentication failed",
+        statusCode = 401,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a22] = true;
+        this.name = name14;
+        this.type = "authentication_error";
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol22 in error;
+      }
+      /**
+       * Creates a contextual error message when authentication fails
+       */
+      static createContextualError({
+        apiKeyProvided,
+        oidcTokenProvided,
+        message = "Authentication failed",
+        statusCode = 401,
+        cause
+      }) {
+        let contextualMessage;
+        if (apiKeyProvided) {
+          contextualMessage = `AI Gateway authentication failed: Invalid API key.
+
+Create a new API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys
+
+Provide via 'apiKey' option or 'AI_GATEWAY_API_KEY' environment variable.`;
+        } else if (oidcTokenProvided) {
+          contextualMessage = `AI Gateway authentication failed: Invalid OIDC token.
+
+Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the token.
+
+Alternatively, use an API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys`;
+        } else {
+          contextualMessage = `AI Gateway authentication failed: No authentication provided.
+
+Option 1 - API key:
+Create an API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys
+Provide via 'apiKey' option or 'AI_GATEWAY_API_KEY' environment variable.
+
+Option 2 - OIDC token:
+Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the token.`;
+        }
+        return new _GatewayAuthenticationError({
+          message: contextualMessage,
+          statusCode,
+          cause
+        });
+      }
+    };
+    name22 = "GatewayInvalidRequestError";
+    marker32 = `vercel.ai.gateway.error.${name22}`;
+    symbol32 = Symbol.for(marker32);
+    GatewayInvalidRequestError = class extends (_b3 = GatewayError, _a32 = symbol32, _b3) {
+      constructor({
+        message = "Invalid request",
+        statusCode = 400,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a32] = true;
+        this.name = name22;
+        this.type = "invalid_request_error";
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol32 in error;
+      }
+    };
+    name32 = "GatewayRateLimitError";
+    marker42 = `vercel.ai.gateway.error.${name32}`;
+    symbol42 = Symbol.for(marker42);
+    GatewayRateLimitError = class extends (_b4 = GatewayError, _a42 = symbol42, _b4) {
+      constructor({
+        message = "Rate limit exceeded",
+        statusCode = 429,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a42] = true;
+        this.name = name32;
+        this.type = "rate_limit_exceeded";
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol42 in error;
+      }
+    };
+    name42 = "GatewayModelNotFoundError";
+    marker52 = `vercel.ai.gateway.error.${name42}`;
+    symbol52 = Symbol.for(marker52);
+    modelNotFoundParamSchema = lazyValidator(
+      () => zodSchema(
+        z25.object({
+          modelId: z25.string()
+        })
+      )
+    );
+    GatewayModelNotFoundError = class extends (_b5 = GatewayError, _a52 = symbol52, _b5) {
+      constructor({
+        message = "Model not found",
+        statusCode = 404,
+        modelId,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a52] = true;
+        this.name = name42;
+        this.type = "model_not_found";
+        this.modelId = modelId;
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol52 in error;
+      }
+    };
+    name52 = "GatewayInternalServerError";
+    marker62 = `vercel.ai.gateway.error.${name52}`;
+    symbol62 = Symbol.for(marker62);
+    GatewayInternalServerError = class extends (_b6 = GatewayError, _a62 = symbol62, _b6) {
+      constructor({
+        message = "Internal server error",
+        statusCode = 500,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a62] = true;
+        this.name = name52;
+        this.type = "internal_server_error";
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol62 in error;
+      }
+    };
+    name62 = "GatewayResponseError";
+    marker72 = `vercel.ai.gateway.error.${name62}`;
+    symbol72 = Symbol.for(marker72);
+    GatewayResponseError = class extends (_b7 = GatewayError, _a72 = symbol72, _b7) {
+      constructor({
+        message = "Invalid response from Gateway",
+        statusCode = 502,
+        response,
+        validationError,
+        cause
+      } = {}) {
+        super({ message, statusCode, cause });
+        this[_a72] = true;
+        this.name = name62;
+        this.type = "response_error";
+        this.response = response;
+        this.validationError = validationError;
+      }
+      static isInstance(error) {
+        return GatewayError.hasMarker(error) && symbol72 in error;
+      }
+    };
+    gatewayErrorResponseSchema = lazyValidator(
+      () => zodSchema(
+        z24.object({
+          error: z24.object({
+            message: z24.string(),
+            type: z24.string().nullish(),
+            param: z24.unknown().nullish(),
+            code: z24.union([z24.string(), z24.number()]).nullish()
+          })
+        })
+      )
+    );
+    GATEWAY_AUTH_METHOD_HEADER = "ai-gateway-auth-method";
+    gatewayAuthMethodSchema = lazyValidator(
+      () => zodSchema(z32.union([z32.literal("api-key"), z32.literal("oidc")]))
+    );
+    GatewayFetchMetadata = class {
+      constructor(config2) {
+        this.config = config2;
+      }
+      async getAvailableModels() {
+        try {
+          const { value: value2 } = await getFromApi({
+            url: `${this.config.baseURL}/config`,
+            headers: await resolve(this.config.headers()),
+            successfulResponseHandler: createJsonResponseHandler(
+              gatewayAvailableModelsResponseSchema
+            ),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z43.any(),
+              errorToMessage: (data) => data
+            }),
+            fetch: this.config.fetch
+          });
+          return value2;
+        } catch (error) {
+          throw await asGatewayError(error);
+        }
+      }
+      async getCredits() {
+        try {
+          const baseUrl = new URL(this.config.baseURL);
+          const { value: value2 } = await getFromApi({
+            url: `${baseUrl.origin}/v1/credits`,
+            headers: await resolve(this.config.headers()),
+            successfulResponseHandler: createJsonResponseHandler(
+              gatewayCreditsResponseSchema
+            ),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z43.any(),
+              errorToMessage: (data) => data
+            }),
+            fetch: this.config.fetch
+          });
+          return value2;
+        } catch (error) {
+          throw await asGatewayError(error);
+        }
+      }
+    };
+    gatewayAvailableModelsResponseSchema = lazyValidator(
+      () => zodSchema(
+        z43.object({
+          models: z43.array(
+            z43.object({
+              id: z43.string(),
+              name: z43.string(),
+              description: z43.string().nullish(),
+              pricing: z43.object({
+                input: z43.string(),
+                output: z43.string(),
+                input_cache_read: z43.string().nullish(),
+                input_cache_write: z43.string().nullish()
+              }).transform(
+                ({ input, output, input_cache_read, input_cache_write }) => ({
+                  input,
+                  output,
+                  ...input_cache_read ? { cachedInputTokens: input_cache_read } : {},
+                  ...input_cache_write ? { cacheCreationInputTokens: input_cache_write } : {}
+                })
+              ).nullish(),
+              specification: z43.object({
+                specificationVersion: z43.literal("v2"),
+                provider: z43.string(),
+                modelId: z43.string()
+              }),
+              modelType: z43.enum(["language", "embedding", "image"]).nullish()
+            })
+          )
+        })
+      )
+    );
+    gatewayCreditsResponseSchema = lazyValidator(
+      () => zodSchema(
+        z43.object({
+          balance: z43.string(),
+          total_used: z43.string()
+        }).transform(({ balance, total_used }) => ({
+          balance,
+          totalUsed: total_used
+        }))
+      )
+    );
+    GatewayLanguageModel = class {
+      constructor(modelId, config2) {
+        this.modelId = modelId;
+        this.config = config2;
+        this.specificationVersion = "v2";
+        this.supportedUrls = { "*/*": [/.*/] };
+      }
+      get provider() {
+        return this.config.provider;
+      }
+      async getArgs(options) {
+        const { abortSignal: _abortSignal, ...optionsWithoutSignal } = options;
+        return {
+          args: this.maybeEncodeFileParts(optionsWithoutSignal),
+          warnings: []
+        };
+      }
+      async doGenerate(options) {
+        const { args: args2, warnings } = await this.getArgs(options);
+        const { abortSignal } = options;
+        const resolvedHeaders = await resolve(this.config.headers());
+        try {
+          const {
+            responseHeaders,
+            value: responseBody,
+            rawValue: rawResponse
+          } = await postJsonToApi({
+            url: this.getUrl(),
+            headers: combineHeaders(
+              resolvedHeaders,
+              options.headers,
+              this.getModelConfigHeaders(this.modelId, false),
+              await resolve(this.config.o11yHeaders)
+            ),
+            body: args2,
+            successfulResponseHandler: createJsonResponseHandler(z52.any()),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z52.any(),
+              errorToMessage: (data) => data
+            }),
+            ...abortSignal && { abortSignal },
+            fetch: this.config.fetch
+          });
+          return {
+            ...responseBody,
+            request: { body: args2 },
+            response: { headers: responseHeaders, body: rawResponse },
+            warnings
+          };
+        } catch (error) {
+          throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
+        }
+      }
+      async doStream(options) {
+        const { args: args2, warnings } = await this.getArgs(options);
+        const { abortSignal } = options;
+        const resolvedHeaders = await resolve(this.config.headers());
+        try {
+          const { value: response, responseHeaders } = await postJsonToApi({
+            url: this.getUrl(),
+            headers: combineHeaders(
+              resolvedHeaders,
+              options.headers,
+              this.getModelConfigHeaders(this.modelId, true),
+              await resolve(this.config.o11yHeaders)
+            ),
+            body: args2,
+            successfulResponseHandler: createEventSourceResponseHandler(z52.any()),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z52.any(),
+              errorToMessage: (data) => data
+            }),
+            ...abortSignal && { abortSignal },
+            fetch: this.config.fetch
+          });
+          return {
+            stream: response.pipeThrough(
+              new TransformStream({
+                start(controller) {
+                  if (warnings.length > 0) {
+                    controller.enqueue({ type: "stream-start", warnings });
+                  }
+                },
+                transform(chunk, controller) {
+                  if (chunk.success) {
+                    const streamPart = chunk.value;
+                    if (streamPart.type === "raw" && !options.includeRawChunks) {
+                      return;
+                    }
+                    if (streamPart.type === "response-metadata" && streamPart.timestamp && typeof streamPart.timestamp === "string") {
+                      streamPart.timestamp = new Date(streamPart.timestamp);
+                    }
+                    controller.enqueue(streamPart);
+                  } else {
+                    controller.error(
+                      chunk.error
+                    );
+                  }
+                }
+              })
+            ),
+            request: { body: args2 },
+            response: { headers: responseHeaders }
+          };
+        } catch (error) {
+          throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
+        }
+      }
+      isFilePart(part) {
+        return part && typeof part === "object" && "type" in part && part.type === "file";
+      }
+      /**
+       * Encodes file parts in the prompt to base64. Mutates the passed options
+       * instance directly to avoid copying the file data.
+       * @param options - The options to encode.
+       * @returns The options with the file parts encoded.
+       */
+      maybeEncodeFileParts(options) {
+        for (const message of options.prompt) {
+          for (const part of message.content) {
+            if (this.isFilePart(part)) {
+              const filePart = part;
+              if (filePart.data instanceof Uint8Array) {
+                const buffer = Uint8Array.from(filePart.data);
+                const base64Data = Buffer.from(buffer).toString("base64");
+                filePart.data = new URL(
+                  `data:${filePart.mediaType || "application/octet-stream"};base64,${base64Data}`
+                );
+              }
+            }
+          }
+        }
+        return options;
+      }
+      getUrl() {
+        return `${this.config.baseURL}/language-model`;
+      }
+      getModelConfigHeaders(modelId, streaming) {
+        return {
+          "ai-language-model-specification-version": "2",
+          "ai-language-model-id": modelId,
+          "ai-language-model-streaming": String(streaming)
+        };
+      }
+    };
+    GatewayEmbeddingModel = class {
+      constructor(modelId, config2) {
+        this.modelId = modelId;
+        this.config = config2;
+        this.specificationVersion = "v2";
+        this.maxEmbeddingsPerCall = 2048;
+        this.supportsParallelCalls = true;
+      }
+      get provider() {
+        return this.config.provider;
+      }
+      async doEmbed({
+        values,
+        headers,
+        abortSignal,
+        providerOptions
+      }) {
+        var _a83;
+        const resolvedHeaders = await resolve(this.config.headers());
+        try {
+          const {
+            responseHeaders,
+            value: responseBody,
+            rawValue
+          } = await postJsonToApi({
+            url: this.getUrl(),
+            headers: combineHeaders(
+              resolvedHeaders,
+              headers != null ? headers : {},
+              this.getModelConfigHeaders(),
+              await resolve(this.config.o11yHeaders)
+            ),
+            body: {
+              input: values.length === 1 ? values[0] : values,
+              ...providerOptions ? { providerOptions } : {}
+            },
+            successfulResponseHandler: createJsonResponseHandler(
+              gatewayEmbeddingResponseSchema
+            ),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z62.any(),
+              errorToMessage: (data) => data
+            }),
+            ...abortSignal && { abortSignal },
+            fetch: this.config.fetch
+          });
+          return {
+            embeddings: responseBody.embeddings,
+            usage: (_a83 = responseBody.usage) != null ? _a83 : void 0,
+            providerMetadata: responseBody.providerMetadata,
+            response: { headers: responseHeaders, body: rawValue }
+          };
+        } catch (error) {
+          throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
+        }
+      }
+      getUrl() {
+        return `${this.config.baseURL}/embedding-model`;
+      }
+      getModelConfigHeaders() {
+        return {
+          "ai-embedding-model-specification-version": "2",
+          "ai-model-id": this.modelId
+        };
+      }
+    };
+    gatewayEmbeddingResponseSchema = lazyValidator(
+      () => zodSchema(
+        z62.object({
+          embeddings: z62.array(z62.array(z62.number())),
+          usage: z62.object({ tokens: z62.number() }).nullish(),
+          providerMetadata: z62.record(z62.string(), z62.record(z62.string(), z62.unknown())).optional()
+        })
+      )
+    );
+    GatewayImageModel = class {
+      constructor(modelId, config2) {
+        this.modelId = modelId;
+        this.config = config2;
+        this.specificationVersion = "v2";
+        this.maxImagesPerCall = Number.MAX_SAFE_INTEGER;
+      }
+      get provider() {
+        return this.config.provider;
+      }
+      async doGenerate({
+        prompt,
+        n,
+        size,
+        aspectRatio,
+        seed,
+        providerOptions,
+        headers,
+        abortSignal
+      }) {
+        var _a83;
+        const resolvedHeaders = await resolve(this.config.headers());
+        try {
+          const {
+            responseHeaders,
+            value: responseBody,
+            rawValue
+          } = await postJsonToApi({
+            url: this.getUrl(),
+            headers: combineHeaders(
+              resolvedHeaders,
+              headers != null ? headers : {},
+              this.getModelConfigHeaders(),
+              await resolve(this.config.o11yHeaders)
+            ),
+            body: {
+              prompt,
+              n,
+              ...size && { size },
+              ...aspectRatio && { aspectRatio },
+              ...seed && { seed },
+              ...providerOptions && { providerOptions }
+            },
+            successfulResponseHandler: createJsonResponseHandler(
+              gatewayImageResponseSchema
+            ),
+            failedResponseHandler: createJsonErrorResponseHandler({
+              errorSchema: z72.any(),
+              errorToMessage: (data) => data
+            }),
+            ...abortSignal && { abortSignal },
+            fetch: this.config.fetch
+          });
+          return {
+            images: responseBody.images,
+            // Always base64 strings from server
+            warnings: (_a83 = responseBody.warnings) != null ? _a83 : [],
+            providerMetadata: responseBody.providerMetadata,
+            response: {
+              timestamp: /* @__PURE__ */ new Date(),
+              modelId: this.modelId,
+              headers: responseHeaders
+            }
+          };
+        } catch (error) {
+          throw asGatewayError(error, await parseAuthMethod(resolvedHeaders));
+        }
+      }
+      getUrl() {
+        return `${this.config.baseURL}/image-model`;
+      }
+      getModelConfigHeaders() {
+        return {
+          "ai-image-model-specification-version": "2",
+          "ai-model-id": this.modelId
+        };
+      }
+    };
+    providerMetadataEntrySchema = z72.object({
+      images: z72.array(z72.unknown()).optional()
+    }).catchall(z72.unknown());
+    gatewayImageResponseSchema = z72.object({
+      images: z72.array(z72.string()),
+      // Always base64 strings over the wire
+      warnings: z72.array(
+        z72.object({
+          type: z72.literal("other"),
+          message: z72.string()
+        })
+      ).optional(),
+      providerMetadata: z72.record(z72.string(), providerMetadataEntrySchema).optional()
+    });
+    VERSION2 = true ? "2.0.18" : "0.0.0-test";
+    AI_GATEWAY_PROTOCOL_VERSION = "0.0.1";
+    gateway = createGatewayProvider();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/platform/node/globalThis.js
+var _globalThis;
+var init_globalThis = __esm({
+  "node_modules/@opentelemetry/api/build/esm/platform/node/globalThis.js"() {
+    _globalThis = typeof globalThis === "object" ? globalThis : global;
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/platform/node/index.js
+var init_node = __esm({
+  "node_modules/@opentelemetry/api/build/esm/platform/node/index.js"() {
+    init_globalThis();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/platform/index.js
+var init_platform = __esm({
+  "node_modules/@opentelemetry/api/build/esm/platform/index.js"() {
+    init_node();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/version.js
+var VERSION3;
+var init_version = __esm({
+  "node_modules/@opentelemetry/api/build/esm/version.js"() {
+    VERSION3 = "1.9.0";
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/internal/semver.js
+function _makeCompatibilityCheck(ownVersion) {
+  var acceptedVersions = /* @__PURE__ */ new Set([ownVersion]);
+  var rejectedVersions = /* @__PURE__ */ new Set();
+  var myVersionMatch = ownVersion.match(re);
+  if (!myVersionMatch) {
+    return function() {
+      return false;
+    };
+  }
+  var ownVersionParsed = {
+    major: +myVersionMatch[1],
+    minor: +myVersionMatch[2],
+    patch: +myVersionMatch[3],
+    prerelease: myVersionMatch[4]
+  };
+  if (ownVersionParsed.prerelease != null) {
+    return function isExactmatch(globalVersion) {
+      return globalVersion === ownVersion;
+    };
+  }
+  function _reject(v) {
+    rejectedVersions.add(v);
+    return false;
+  }
+  function _accept(v) {
+    acceptedVersions.add(v);
+    return true;
+  }
+  return function isCompatible2(globalVersion) {
+    if (acceptedVersions.has(globalVersion)) {
+      return true;
+    }
+    if (rejectedVersions.has(globalVersion)) {
+      return false;
+    }
+    var globalVersionMatch = globalVersion.match(re);
+    if (!globalVersionMatch) {
+      return _reject(globalVersion);
+    }
+    var globalVersionParsed = {
+      major: +globalVersionMatch[1],
+      minor: +globalVersionMatch[2],
+      patch: +globalVersionMatch[3],
+      prerelease: globalVersionMatch[4]
+    };
+    if (globalVersionParsed.prerelease != null) {
+      return _reject(globalVersion);
+    }
+    if (ownVersionParsed.major !== globalVersionParsed.major) {
+      return _reject(globalVersion);
+    }
+    if (ownVersionParsed.major === 0) {
+      if (ownVersionParsed.minor === globalVersionParsed.minor && ownVersionParsed.patch <= globalVersionParsed.patch) {
+        return _accept(globalVersion);
+      }
+      return _reject(globalVersion);
+    }
+    if (ownVersionParsed.minor <= globalVersionParsed.minor) {
+      return _accept(globalVersion);
+    }
+    return _reject(globalVersion);
+  };
+}
+var re, isCompatible;
+var init_semver = __esm({
+  "node_modules/@opentelemetry/api/build/esm/internal/semver.js"() {
+    init_version();
+    re = /^(\d+)\.(\d+)\.(\d+)(-(.+))?$/;
+    isCompatible = _makeCompatibilityCheck(VERSION3);
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/internal/global-utils.js
+function registerGlobal(type2, instance, diag, allowOverride) {
+  var _a17;
+  if (allowOverride === void 0) {
+    allowOverride = false;
+  }
+  var api = _global[GLOBAL_OPENTELEMETRY_API_KEY] = (_a17 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) !== null && _a17 !== void 0 ? _a17 : {
+    version: VERSION3
+  };
+  if (!allowOverride && api[type2]) {
+    var err = new Error("@opentelemetry/api: Attempted duplicate registration of API: " + type2);
+    diag.error(err.stack || err.message);
+    return false;
+  }
+  if (api.version !== VERSION3) {
+    var err = new Error("@opentelemetry/api: Registration of version v" + api.version + " for " + type2 + " does not match previously registered API v" + VERSION3);
+    diag.error(err.stack || err.message);
+    return false;
+  }
+  api[type2] = instance;
+  diag.debug("@opentelemetry/api: Registered a global for " + type2 + " v" + VERSION3 + ".");
+  return true;
+}
+function getGlobal(type2) {
+  var _a17, _b8;
+  var globalVersion = (_a17 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _a17 === void 0 ? void 0 : _a17.version;
+  if (!globalVersion || !isCompatible(globalVersion)) {
+    return;
+  }
+  return (_b8 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _b8 === void 0 ? void 0 : _b8[type2];
+}
+function unregisterGlobal(type2, diag) {
+  diag.debug("@opentelemetry/api: Unregistering a global for " + type2 + " v" + VERSION3 + ".");
+  var api = _global[GLOBAL_OPENTELEMETRY_API_KEY];
+  if (api) {
+    delete api[type2];
+  }
+}
+var major, GLOBAL_OPENTELEMETRY_API_KEY, _global;
+var init_global_utils = __esm({
+  "node_modules/@opentelemetry/api/build/esm/internal/global-utils.js"() {
+    init_platform();
+    init_version();
+    init_semver();
+    major = VERSION3.split(".")[0];
+    GLOBAL_OPENTELEMETRY_API_KEY = Symbol.for("opentelemetry.js.api." + major);
+    _global = _globalThis;
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/diag/ComponentLogger.js
+function logProxy(funcName, namespace, args2) {
+  var logger = getGlobal("diag");
+  if (!logger) {
+    return;
+  }
+  args2.unshift(namespace);
+  return logger[funcName].apply(logger, __spreadArray([], __read(args2), false));
+}
+var __read, __spreadArray, DiagComponentLogger;
+var init_ComponentLogger = __esm({
+  "node_modules/@opentelemetry/api/build/esm/diag/ComponentLogger.js"() {
+    init_global_utils();
+    __read = function(o, n) {
+      var m = typeof Symbol === "function" && o[Symbol.iterator];
+      if (!m) return o;
+      var i = m.call(o), r, ar = [], e;
+      try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+      } catch (error) {
+        e = { error };
+      } finally {
+        try {
+          if (r && !r.done && (m = i["return"])) m.call(i);
+        } finally {
+          if (e) throw e.error;
+        }
+      }
+      return ar;
+    };
+    __spreadArray = function(to, from, pack) {
+      if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+          if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+          ar[i] = from[i];
+        }
+      }
+      return to.concat(ar || Array.prototype.slice.call(from));
+    };
+    DiagComponentLogger = /** @class */
+    (function() {
+      function DiagComponentLogger2(props) {
+        this._namespace = props.namespace || "DiagComponentLogger";
+      }
+      DiagComponentLogger2.prototype.debug = function() {
+        var args2 = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args2[_i] = arguments[_i];
+        }
+        return logProxy("debug", this._namespace, args2);
+      };
+      DiagComponentLogger2.prototype.error = function() {
+        var args2 = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args2[_i] = arguments[_i];
+        }
+        return logProxy("error", this._namespace, args2);
+      };
+      DiagComponentLogger2.prototype.info = function() {
+        var args2 = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args2[_i] = arguments[_i];
+        }
+        return logProxy("info", this._namespace, args2);
+      };
+      DiagComponentLogger2.prototype.warn = function() {
+        var args2 = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args2[_i] = arguments[_i];
+        }
+        return logProxy("warn", this._namespace, args2);
+      };
+      DiagComponentLogger2.prototype.verbose = function() {
+        var args2 = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args2[_i] = arguments[_i];
+        }
+        return logProxy("verbose", this._namespace, args2);
+      };
+      return DiagComponentLogger2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/diag/types.js
+var DiagLogLevel;
+var init_types = __esm({
+  "node_modules/@opentelemetry/api/build/esm/diag/types.js"() {
+    (function(DiagLogLevel2) {
+      DiagLogLevel2[DiagLogLevel2["NONE"] = 0] = "NONE";
+      DiagLogLevel2[DiagLogLevel2["ERROR"] = 30] = "ERROR";
+      DiagLogLevel2[DiagLogLevel2["WARN"] = 50] = "WARN";
+      DiagLogLevel2[DiagLogLevel2["INFO"] = 60] = "INFO";
+      DiagLogLevel2[DiagLogLevel2["DEBUG"] = 70] = "DEBUG";
+      DiagLogLevel2[DiagLogLevel2["VERBOSE"] = 80] = "VERBOSE";
+      DiagLogLevel2[DiagLogLevel2["ALL"] = 9999] = "ALL";
+    })(DiagLogLevel || (DiagLogLevel = {}));
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/diag/internal/logLevelLogger.js
+function createLogLevelDiagLogger(maxLevel, logger) {
+  if (maxLevel < DiagLogLevel.NONE) {
+    maxLevel = DiagLogLevel.NONE;
+  } else if (maxLevel > DiagLogLevel.ALL) {
+    maxLevel = DiagLogLevel.ALL;
+  }
+  logger = logger || {};
+  function _filterFunc(funcName, theLevel) {
+    var theFunc = logger[funcName];
+    if (typeof theFunc === "function" && maxLevel >= theLevel) {
+      return theFunc.bind(logger);
+    }
+    return function() {
+    };
+  }
+  return {
+    error: _filterFunc("error", DiagLogLevel.ERROR),
+    warn: _filterFunc("warn", DiagLogLevel.WARN),
+    info: _filterFunc("info", DiagLogLevel.INFO),
+    debug: _filterFunc("debug", DiagLogLevel.DEBUG),
+    verbose: _filterFunc("verbose", DiagLogLevel.VERBOSE)
+  };
+}
+var init_logLevelLogger = __esm({
+  "node_modules/@opentelemetry/api/build/esm/diag/internal/logLevelLogger.js"() {
+    init_types();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/api/diag.js
+var __read2, __spreadArray2, API_NAME, DiagAPI;
+var init_diag = __esm({
+  "node_modules/@opentelemetry/api/build/esm/api/diag.js"() {
+    init_ComponentLogger();
+    init_logLevelLogger();
+    init_types();
+    init_global_utils();
+    __read2 = function(o, n) {
+      var m = typeof Symbol === "function" && o[Symbol.iterator];
+      if (!m) return o;
+      var i = m.call(o), r, ar = [], e;
+      try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+      } catch (error) {
+        e = { error };
+      } finally {
+        try {
+          if (r && !r.done && (m = i["return"])) m.call(i);
+        } finally {
+          if (e) throw e.error;
+        }
+      }
+      return ar;
+    };
+    __spreadArray2 = function(to, from, pack) {
+      if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+          if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+          ar[i] = from[i];
+        }
+      }
+      return to.concat(ar || Array.prototype.slice.call(from));
+    };
+    API_NAME = "diag";
+    DiagAPI = /** @class */
+    (function() {
+      function DiagAPI2() {
+        function _logProxy(funcName) {
+          return function() {
+            var args2 = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+              args2[_i] = arguments[_i];
+            }
+            var logger = getGlobal("diag");
+            if (!logger)
+              return;
+            return logger[funcName].apply(logger, __spreadArray2([], __read2(args2), false));
+          };
+        }
+        var self = this;
+        var setLogger = function(logger, optionsOrLogLevel) {
+          var _a17, _b8, _c;
+          if (optionsOrLogLevel === void 0) {
+            optionsOrLogLevel = { logLevel: DiagLogLevel.INFO };
+          }
+          if (logger === self) {
+            var err = new Error("Cannot use diag as the logger for itself. Please use a DiagLogger implementation like ConsoleDiagLogger or a custom implementation");
+            self.error((_a17 = err.stack) !== null && _a17 !== void 0 ? _a17 : err.message);
+            return false;
+          }
+          if (typeof optionsOrLogLevel === "number") {
+            optionsOrLogLevel = {
+              logLevel: optionsOrLogLevel
+            };
+          }
+          var oldLogger = getGlobal("diag");
+          var newLogger = createLogLevelDiagLogger((_b8 = optionsOrLogLevel.logLevel) !== null && _b8 !== void 0 ? _b8 : DiagLogLevel.INFO, logger);
+          if (oldLogger && !optionsOrLogLevel.suppressOverrideMessage) {
+            var stack = (_c = new Error().stack) !== null && _c !== void 0 ? _c : "<failed to generate stacktrace>";
+            oldLogger.warn("Current logger will be overwritten from " + stack);
+            newLogger.warn("Current logger will overwrite one already registered from " + stack);
+          }
+          return registerGlobal("diag", newLogger, self, true);
+        };
+        self.setLogger = setLogger;
+        self.disable = function() {
+          unregisterGlobal(API_NAME, self);
+        };
+        self.createComponentLogger = function(options) {
+          return new DiagComponentLogger(options);
+        };
+        self.verbose = _logProxy("verbose");
+        self.debug = _logProxy("debug");
+        self.info = _logProxy("info");
+        self.warn = _logProxy("warn");
+        self.error = _logProxy("error");
+      }
+      DiagAPI2.instance = function() {
+        if (!this._instance) {
+          this._instance = new DiagAPI2();
+        }
+        return this._instance;
+      };
+      return DiagAPI2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/context/context.js
+function createContextKey(description) {
+  return Symbol.for(description);
+}
+var BaseContext, ROOT_CONTEXT;
+var init_context = __esm({
+  "node_modules/@opentelemetry/api/build/esm/context/context.js"() {
+    BaseContext = /** @class */
+    /* @__PURE__ */ (function() {
+      function BaseContext2(parentContext) {
+        var self = this;
+        self._currentContext = parentContext ? new Map(parentContext) : /* @__PURE__ */ new Map();
+        self.getValue = function(key) {
+          return self._currentContext.get(key);
+        };
+        self.setValue = function(key, value2) {
+          var context = new BaseContext2(self._currentContext);
+          context._currentContext.set(key, value2);
+          return context;
+        };
+        self.deleteValue = function(key) {
+          var context = new BaseContext2(self._currentContext);
+          context._currentContext.delete(key);
+          return context;
+        };
+      }
+      return BaseContext2;
+    })();
+    ROOT_CONTEXT = new BaseContext();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/context/NoopContextManager.js
+var __read3, __spreadArray3, NoopContextManager;
+var init_NoopContextManager = __esm({
+  "node_modules/@opentelemetry/api/build/esm/context/NoopContextManager.js"() {
+    init_context();
+    __read3 = function(o, n) {
+      var m = typeof Symbol === "function" && o[Symbol.iterator];
+      if (!m) return o;
+      var i = m.call(o), r, ar = [], e;
+      try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+      } catch (error) {
+        e = { error };
+      } finally {
+        try {
+          if (r && !r.done && (m = i["return"])) m.call(i);
+        } finally {
+          if (e) throw e.error;
+        }
+      }
+      return ar;
+    };
+    __spreadArray3 = function(to, from, pack) {
+      if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+          if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+          ar[i] = from[i];
+        }
+      }
+      return to.concat(ar || Array.prototype.slice.call(from));
+    };
+    NoopContextManager = /** @class */
+    (function() {
+      function NoopContextManager2() {
+      }
+      NoopContextManager2.prototype.active = function() {
+        return ROOT_CONTEXT;
+      };
+      NoopContextManager2.prototype.with = function(_context, fn, thisArg) {
+        var args2 = [];
+        for (var _i = 3; _i < arguments.length; _i++) {
+          args2[_i - 3] = arguments[_i];
+        }
+        return fn.call.apply(fn, __spreadArray3([thisArg], __read3(args2), false));
+      };
+      NoopContextManager2.prototype.bind = function(_context, target) {
+        return target;
+      };
+      NoopContextManager2.prototype.enable = function() {
+        return this;
+      };
+      NoopContextManager2.prototype.disable = function() {
+        return this;
+      };
+      return NoopContextManager2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/api/context.js
+var __read4, __spreadArray4, API_NAME2, NOOP_CONTEXT_MANAGER, ContextAPI;
+var init_context2 = __esm({
+  "node_modules/@opentelemetry/api/build/esm/api/context.js"() {
+    init_NoopContextManager();
+    init_global_utils();
+    init_diag();
+    __read4 = function(o, n) {
+      var m = typeof Symbol === "function" && o[Symbol.iterator];
+      if (!m) return o;
+      var i = m.call(o), r, ar = [], e;
+      try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+      } catch (error) {
+        e = { error };
+      } finally {
+        try {
+          if (r && !r.done && (m = i["return"])) m.call(i);
+        } finally {
+          if (e) throw e.error;
+        }
+      }
+      return ar;
+    };
+    __spreadArray4 = function(to, from, pack) {
+      if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+          if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+          ar[i] = from[i];
+        }
+      }
+      return to.concat(ar || Array.prototype.slice.call(from));
+    };
+    API_NAME2 = "context";
+    NOOP_CONTEXT_MANAGER = new NoopContextManager();
+    ContextAPI = /** @class */
+    (function() {
+      function ContextAPI2() {
+      }
+      ContextAPI2.getInstance = function() {
+        if (!this._instance) {
+          this._instance = new ContextAPI2();
+        }
+        return this._instance;
+      };
+      ContextAPI2.prototype.setGlobalContextManager = function(contextManager) {
+        return registerGlobal(API_NAME2, contextManager, DiagAPI.instance());
+      };
+      ContextAPI2.prototype.active = function() {
+        return this._getContextManager().active();
+      };
+      ContextAPI2.prototype.with = function(context, fn, thisArg) {
+        var _a17;
+        var args2 = [];
+        for (var _i = 3; _i < arguments.length; _i++) {
+          args2[_i - 3] = arguments[_i];
+        }
+        return (_a17 = this._getContextManager()).with.apply(_a17, __spreadArray4([context, fn, thisArg], __read4(args2), false));
+      };
+      ContextAPI2.prototype.bind = function(context, target) {
+        return this._getContextManager().bind(context, target);
+      };
+      ContextAPI2.prototype._getContextManager = function() {
+        return getGlobal(API_NAME2) || NOOP_CONTEXT_MANAGER;
+      };
+      ContextAPI2.prototype.disable = function() {
+        this._getContextManager().disable();
+        unregisterGlobal(API_NAME2, DiagAPI.instance());
+      };
+      return ContextAPI2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/trace_flags.js
+var TraceFlags;
+var init_trace_flags = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/trace_flags.js"() {
+    (function(TraceFlags2) {
+      TraceFlags2[TraceFlags2["NONE"] = 0] = "NONE";
+      TraceFlags2[TraceFlags2["SAMPLED"] = 1] = "SAMPLED";
+    })(TraceFlags || (TraceFlags = {}));
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/invalid-span-constants.js
+var INVALID_SPANID, INVALID_TRACEID, INVALID_SPAN_CONTEXT;
+var init_invalid_span_constants = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/invalid-span-constants.js"() {
+    init_trace_flags();
+    INVALID_SPANID = "0000000000000000";
+    INVALID_TRACEID = "00000000000000000000000000000000";
+    INVALID_SPAN_CONTEXT = {
+      traceId: INVALID_TRACEID,
+      spanId: INVALID_SPANID,
+      traceFlags: TraceFlags.NONE
+    };
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/NonRecordingSpan.js
+var NonRecordingSpan;
+var init_NonRecordingSpan = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/NonRecordingSpan.js"() {
+    init_invalid_span_constants();
+    NonRecordingSpan = /** @class */
+    (function() {
+      function NonRecordingSpan2(_spanContext) {
+        if (_spanContext === void 0) {
+          _spanContext = INVALID_SPAN_CONTEXT;
+        }
+        this._spanContext = _spanContext;
+      }
+      NonRecordingSpan2.prototype.spanContext = function() {
+        return this._spanContext;
+      };
+      NonRecordingSpan2.prototype.setAttribute = function(_key, _value) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.setAttributes = function(_attributes) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.addEvent = function(_name, _attributes) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.addLink = function(_link) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.addLinks = function(_links) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.setStatus = function(_status) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.updateName = function(_name) {
+        return this;
+      };
+      NonRecordingSpan2.prototype.end = function(_endTime) {
+      };
+      NonRecordingSpan2.prototype.isRecording = function() {
+        return false;
+      };
+      NonRecordingSpan2.prototype.recordException = function(_exception, _time) {
+      };
+      return NonRecordingSpan2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/context-utils.js
+function getSpan(context) {
+  return context.getValue(SPAN_KEY) || void 0;
+}
+function getActiveSpan() {
+  return getSpan(ContextAPI.getInstance().active());
+}
+function setSpan(context, span) {
+  return context.setValue(SPAN_KEY, span);
+}
+function deleteSpan(context) {
+  return context.deleteValue(SPAN_KEY);
+}
+function setSpanContext(context, spanContext) {
+  return setSpan(context, new NonRecordingSpan(spanContext));
+}
+function getSpanContext(context) {
+  var _a17;
+  return (_a17 = getSpan(context)) === null || _a17 === void 0 ? void 0 : _a17.spanContext();
+}
+var SPAN_KEY;
+var init_context_utils = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/context-utils.js"() {
+    init_context();
+    init_NonRecordingSpan();
+    init_context2();
+    SPAN_KEY = createContextKey("OpenTelemetry Context Key SPAN");
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/spancontext-utils.js
+function isValidTraceId(traceId) {
+  return VALID_TRACEID_REGEX.test(traceId) && traceId !== INVALID_TRACEID;
+}
+function isValidSpanId(spanId) {
+  return VALID_SPANID_REGEX.test(spanId) && spanId !== INVALID_SPANID;
+}
+function isSpanContextValid(spanContext) {
+  return isValidTraceId(spanContext.traceId) && isValidSpanId(spanContext.spanId);
+}
+function wrapSpanContext(spanContext) {
+  return new NonRecordingSpan(spanContext);
+}
+var VALID_TRACEID_REGEX, VALID_SPANID_REGEX;
+var init_spancontext_utils = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/spancontext-utils.js"() {
+    init_invalid_span_constants();
+    init_NonRecordingSpan();
+    VALID_TRACEID_REGEX = /^([0-9a-f]{32})$/i;
+    VALID_SPANID_REGEX = /^[0-9a-f]{16}$/i;
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/NoopTracer.js
+function isSpanContext(spanContext) {
+  return typeof spanContext === "object" && typeof spanContext["spanId"] === "string" && typeof spanContext["traceId"] === "string" && typeof spanContext["traceFlags"] === "number";
+}
+var contextApi, NoopTracer;
+var init_NoopTracer = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/NoopTracer.js"() {
+    init_context2();
+    init_context_utils();
+    init_NonRecordingSpan();
+    init_spancontext_utils();
+    contextApi = ContextAPI.getInstance();
+    NoopTracer = /** @class */
+    (function() {
+      function NoopTracer2() {
+      }
+      NoopTracer2.prototype.startSpan = function(name16, options, context) {
+        if (context === void 0) {
+          context = contextApi.active();
+        }
+        var root = Boolean(options === null || options === void 0 ? void 0 : options.root);
+        if (root) {
+          return new NonRecordingSpan();
+        }
+        var parentFromContext = context && getSpanContext(context);
+        if (isSpanContext(parentFromContext) && isSpanContextValid(parentFromContext)) {
+          return new NonRecordingSpan(parentFromContext);
+        } else {
+          return new NonRecordingSpan();
+        }
+      };
+      NoopTracer2.prototype.startActiveSpan = function(name16, arg2, arg3, arg4) {
+        var opts;
+        var ctx;
+        var fn;
+        if (arguments.length < 2) {
+          return;
+        } else if (arguments.length === 2) {
+          fn = arg2;
+        } else if (arguments.length === 3) {
+          opts = arg2;
+          fn = arg3;
+        } else {
+          opts = arg2;
+          ctx = arg3;
+          fn = arg4;
+        }
+        var parentContext = ctx !== null && ctx !== void 0 ? ctx : contextApi.active();
+        var span = this.startSpan(name16, opts, parentContext);
+        var contextWithSpanSet = setSpan(parentContext, span);
+        return contextApi.with(contextWithSpanSet, fn, void 0, span);
+      };
+      return NoopTracer2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/ProxyTracer.js
+var NOOP_TRACER, ProxyTracer;
+var init_ProxyTracer = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/ProxyTracer.js"() {
+    init_NoopTracer();
+    NOOP_TRACER = new NoopTracer();
+    ProxyTracer = /** @class */
+    (function() {
+      function ProxyTracer2(_provider, name16, version, options) {
+        this._provider = _provider;
+        this.name = name16;
+        this.version = version;
+        this.options = options;
+      }
+      ProxyTracer2.prototype.startSpan = function(name16, options, context) {
+        return this._getTracer().startSpan(name16, options, context);
+      };
+      ProxyTracer2.prototype.startActiveSpan = function(_name, _options, _context, _fn) {
+        var tracer = this._getTracer();
+        return Reflect.apply(tracer.startActiveSpan, tracer, arguments);
+      };
+      ProxyTracer2.prototype._getTracer = function() {
+        if (this._delegate) {
+          return this._delegate;
+        }
+        var tracer = this._provider.getDelegateTracer(this.name, this.version, this.options);
+        if (!tracer) {
+          return NOOP_TRACER;
+        }
+        this._delegate = tracer;
+        return this._delegate;
+      };
+      return ProxyTracer2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/NoopTracerProvider.js
+var NoopTracerProvider;
+var init_NoopTracerProvider = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/NoopTracerProvider.js"() {
+    init_NoopTracer();
+    NoopTracerProvider = /** @class */
+    (function() {
+      function NoopTracerProvider2() {
+      }
+      NoopTracerProvider2.prototype.getTracer = function(_name, _version, _options) {
+        return new NoopTracer();
+      };
+      return NoopTracerProvider2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/ProxyTracerProvider.js
+var NOOP_TRACER_PROVIDER, ProxyTracerProvider;
+var init_ProxyTracerProvider = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/ProxyTracerProvider.js"() {
+    init_ProxyTracer();
+    init_NoopTracerProvider();
+    NOOP_TRACER_PROVIDER = new NoopTracerProvider();
+    ProxyTracerProvider = /** @class */
+    (function() {
+      function ProxyTracerProvider2() {
+      }
+      ProxyTracerProvider2.prototype.getTracer = function(name16, version, options) {
+        var _a17;
+        return (_a17 = this.getDelegateTracer(name16, version, options)) !== null && _a17 !== void 0 ? _a17 : new ProxyTracer(this, name16, version, options);
+      };
+      ProxyTracerProvider2.prototype.getDelegate = function() {
+        var _a17;
+        return (_a17 = this._delegate) !== null && _a17 !== void 0 ? _a17 : NOOP_TRACER_PROVIDER;
+      };
+      ProxyTracerProvider2.prototype.setDelegate = function(delegate) {
+        this._delegate = delegate;
+      };
+      ProxyTracerProvider2.prototype.getDelegateTracer = function(name16, version, options) {
+        var _a17;
+        return (_a17 = this._delegate) === null || _a17 === void 0 ? void 0 : _a17.getTracer(name16, version, options);
+      };
+      return ProxyTracerProvider2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace/status.js
+var SpanStatusCode;
+var init_status = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace/status.js"() {
+    (function(SpanStatusCode2) {
+      SpanStatusCode2[SpanStatusCode2["UNSET"] = 0] = "UNSET";
+      SpanStatusCode2[SpanStatusCode2["OK"] = 1] = "OK";
+      SpanStatusCode2[SpanStatusCode2["ERROR"] = 2] = "ERROR";
+    })(SpanStatusCode || (SpanStatusCode = {}));
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/api/trace.js
+var API_NAME3, TraceAPI;
+var init_trace = __esm({
+  "node_modules/@opentelemetry/api/build/esm/api/trace.js"() {
+    init_global_utils();
+    init_ProxyTracerProvider();
+    init_spancontext_utils();
+    init_context_utils();
+    init_diag();
+    API_NAME3 = "trace";
+    TraceAPI = /** @class */
+    (function() {
+      function TraceAPI2() {
+        this._proxyTracerProvider = new ProxyTracerProvider();
+        this.wrapSpanContext = wrapSpanContext;
+        this.isSpanContextValid = isSpanContextValid;
+        this.deleteSpan = deleteSpan;
+        this.getSpan = getSpan;
+        this.getActiveSpan = getActiveSpan;
+        this.getSpanContext = getSpanContext;
+        this.setSpan = setSpan;
+        this.setSpanContext = setSpanContext;
+      }
+      TraceAPI2.getInstance = function() {
+        if (!this._instance) {
+          this._instance = new TraceAPI2();
+        }
+        return this._instance;
+      };
+      TraceAPI2.prototype.setGlobalTracerProvider = function(provider) {
+        var success = registerGlobal(API_NAME3, this._proxyTracerProvider, DiagAPI.instance());
+        if (success) {
+          this._proxyTracerProvider.setDelegate(provider);
+        }
+        return success;
+      };
+      TraceAPI2.prototype.getTracerProvider = function() {
+        return getGlobal(API_NAME3) || this._proxyTracerProvider;
+      };
+      TraceAPI2.prototype.getTracer = function(name16, version) {
+        return this.getTracerProvider().getTracer(name16, version);
+      };
+      TraceAPI2.prototype.disable = function() {
+        unregisterGlobal(API_NAME3, DiagAPI.instance());
+        this._proxyTracerProvider = new ProxyTracerProvider();
+      };
+      return TraceAPI2;
+    })();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/trace-api.js
+var trace;
+var init_trace_api = __esm({
+  "node_modules/@opentelemetry/api/build/esm/trace-api.js"() {
+    init_trace();
+    trace = TraceAPI.getInstance();
+  }
+});
+
+// node_modules/@opentelemetry/api/build/esm/index.js
+var init_esm = __esm({
+  "node_modules/@opentelemetry/api/build/esm/index.js"() {
+    init_status();
+    init_trace_api();
+  }
+});
+
+// node_modules/ai/dist/index.mjs
+var dist_exports2 = {};
+__export(dist_exports2, {
+  AISDKError: () => AISDKError,
+  APICallError: () => APICallError,
+  AbstractChat: () => AbstractChat,
+  DefaultChatTransport: () => DefaultChatTransport,
+  DownloadError: () => DownloadError,
+  EmptyResponseBodyError: () => EmptyResponseBodyError,
+  Experimental_Agent: () => Agent,
+  HttpChatTransport: () => HttpChatTransport,
+  InvalidArgumentError: () => InvalidArgumentError3,
+  InvalidDataContentError: () => InvalidDataContentError,
+  InvalidMessageRoleError: () => InvalidMessageRoleError,
+  InvalidPromptError: () => InvalidPromptError,
+  InvalidResponseDataError: () => InvalidResponseDataError,
+  InvalidStreamPartError: () => InvalidStreamPartError,
+  InvalidToolInputError: () => InvalidToolInputError,
+  JSONParseError: () => JSONParseError,
+  JsonToSseTransformStream: () => JsonToSseTransformStream,
+  LoadAPIKeyError: () => LoadAPIKeyError,
+  LoadSettingError: () => LoadSettingError,
+  MessageConversionError: () => MessageConversionError,
+  NoContentGeneratedError: () => NoContentGeneratedError,
+  NoImageGeneratedError: () => NoImageGeneratedError,
+  NoObjectGeneratedError: () => NoObjectGeneratedError,
+  NoOutputGeneratedError: () => NoOutputGeneratedError,
+  NoOutputSpecifiedError: () => NoOutputSpecifiedError,
+  NoSpeechGeneratedError: () => NoSpeechGeneratedError,
+  NoSuchModelError: () => NoSuchModelError,
+  NoSuchProviderError: () => NoSuchProviderError,
+  NoSuchToolError: () => NoSuchToolError,
+  Output: () => output_exports,
+  RetryError: () => RetryError,
+  SerialJobExecutor: () => SerialJobExecutor,
+  TextStreamChatTransport: () => TextStreamChatTransport,
+  TooManyEmbeddingValuesForCallError: () => TooManyEmbeddingValuesForCallError,
+  ToolCallRepairError: () => ToolCallRepairError,
+  TypeValidationError: () => TypeValidationError,
+  UI_MESSAGE_STREAM_HEADERS: () => UI_MESSAGE_STREAM_HEADERS,
+  UnsupportedFunctionalityError: () => UnsupportedFunctionalityError,
+  UnsupportedModelVersionError: () => UnsupportedModelVersionError,
+  asSchema: () => asSchema,
+  assistantModelMessageSchema: () => assistantModelMessageSchema,
+  callCompletionApi: () => callCompletionApi,
+  consumeStream: () => consumeStream,
+  convertFileListToFileUIParts: () => convertFileListToFileUIParts,
+  convertToCoreMessages: () => convertToCoreMessages,
+  convertToModelMessages: () => convertToModelMessages,
+  coreAssistantMessageSchema: () => coreAssistantMessageSchema,
+  coreMessageSchema: () => coreMessageSchema,
+  coreSystemMessageSchema: () => coreSystemMessageSchema,
+  coreToolMessageSchema: () => coreToolMessageSchema,
+  coreUserMessageSchema: () => coreUserMessageSchema,
+  cosineSimilarity: () => cosineSimilarity,
+  createGateway: () => createGatewayProvider,
+  createIdGenerator: () => createIdGenerator,
+  createProviderRegistry: () => createProviderRegistry,
+  createTextStreamResponse: () => createTextStreamResponse,
+  createUIMessageStream: () => createUIMessageStream,
+  createUIMessageStreamResponse: () => createUIMessageStreamResponse,
+  customProvider: () => customProvider,
+  defaultSettingsMiddleware: () => defaultSettingsMiddleware,
+  dynamicTool: () => dynamicTool,
+  embed: () => embed,
+  embedMany: () => embedMany,
+  experimental_createProviderRegistry: () => experimental_createProviderRegistry,
+  experimental_customProvider: () => experimental_customProvider,
+  experimental_generateImage: () => generateImage,
+  experimental_generateSpeech: () => generateSpeech,
+  experimental_transcribe: () => transcribe,
+  extractReasoningMiddleware: () => extractReasoningMiddleware,
+  gateway: () => gateway,
+  generateId: () => generateId,
+  generateObject: () => generateObject,
+  generateText: () => generateText,
+  getTextFromDataUrl: () => getTextFromDataUrl,
+  getToolName: () => getToolName,
+  getToolOrDynamicToolName: () => getToolOrDynamicToolName,
+  hasToolCall: () => hasToolCall,
+  isDataUIPart: () => isDataUIPart,
+  isDeepEqualData: () => isDeepEqualData,
+  isFileUIPart: () => isFileUIPart,
+  isReasoningUIPart: () => isReasoningUIPart,
+  isTextUIPart: () => isTextUIPart,
+  isToolOrDynamicToolUIPart: () => isToolOrDynamicToolUIPart,
+  isToolUIPart: () => isToolUIPart,
+  jsonSchema: () => jsonSchema,
+  lastAssistantMessageIsCompleteWithToolCalls: () => lastAssistantMessageIsCompleteWithToolCalls,
+  modelMessageSchema: () => modelMessageSchema,
+  parseJsonEventStream: () => parseJsonEventStream,
+  parsePartialJson: () => parsePartialJson,
+  pipeTextStreamToResponse: () => pipeTextStreamToResponse,
+  pipeUIMessageStreamToResponse: () => pipeUIMessageStreamToResponse,
+  pruneMessages: () => pruneMessages,
+  readUIMessageStream: () => readUIMessageStream,
+  safeValidateUIMessages: () => safeValidateUIMessages,
+  simulateReadableStream: () => simulateReadableStream,
+  simulateStreamingMiddleware: () => simulateStreamingMiddleware,
+  smoothStream: () => smoothStream,
+  stepCountIs: () => stepCountIs,
+  streamObject: () => streamObject,
+  streamText: () => streamText,
+  systemModelMessageSchema: () => systemModelMessageSchema,
+  tool: () => tool,
+  toolModelMessageSchema: () => toolModelMessageSchema,
+  uiMessageChunkSchema: () => uiMessageChunkSchema,
+  userModelMessageSchema: () => userModelMessageSchema,
+  validateUIMessages: () => validateUIMessages,
+  wrapLanguageModel: () => wrapLanguageModel,
+  wrapProvider: () => wrapProvider,
+  zodSchema: () => zodSchema
+});
+import { z as z26 } from "zod/v4";
+import { z as z63 } from "zod/v4";
+import { z as z53 } from "zod/v4";
+import { z as z33 } from "zod/v4";
+import { z as z27 } from "zod/v4";
+import { z as z44 } from "zod/v4";
+import { z as z73 } from "zod/v4";
+import { z as z82 } from "zod/v4";
+function formatWarning(warning) {
+  const prefix = "AI SDK Warning:";
+  switch (warning.type) {
+    case "unsupported-setting": {
+      let message = `${prefix} The "${warning.setting}" setting is not supported by this model`;
+      if (warning.details) {
+        message += ` - ${warning.details}`;
+      }
+      return message;
+    }
+    case "unsupported-tool": {
+      const toolName = "name" in warning.tool ? warning.tool.name : "unknown tool";
+      let message = `${prefix} The tool "${toolName}" is not supported by this model`;
+      if (warning.details) {
+        message += ` - ${warning.details}`;
+      }
+      return message;
+    }
+    case "other": {
+      return `${prefix} ${warning.message}`;
+    }
+    default: {
+      return `${prefix} ${JSON.stringify(warning, null, 2)}`;
+    }
+  }
+}
+function resolveLanguageModel(model) {
+  if (typeof model !== "string") {
+    if (model.specificationVersion !== "v2") {
+      throw new UnsupportedModelVersionError({
+        version: model.specificationVersion,
+        provider: model.provider,
+        modelId: model.modelId
+      });
+    }
+    return model;
+  }
+  return getGlobalProvider().languageModel(model);
+}
+function resolveEmbeddingModel(model) {
+  if (typeof model !== "string") {
+    if (model.specificationVersion !== "v2") {
+      throw new UnsupportedModelVersionError({
+        version: model.specificationVersion,
+        provider: model.provider,
+        modelId: model.modelId
+      });
+    }
+    return model;
+  }
+  return getGlobalProvider().textEmbeddingModel(
+    model
+  );
+}
+function resolveImageModel(model) {
+  if (typeof model !== "string") {
+    if (model.specificationVersion !== "v2") {
+      throw new UnsupportedModelVersionError({
+        version: model.specificationVersion,
+        provider: model.provider,
+        modelId: model.modelId
+      });
+    }
+    return model;
+  }
+  return getGlobalProvider().imageModel(model);
+}
+function getGlobalProvider() {
+  var _a162;
+  return (_a162 = globalThis.AI_SDK_DEFAULT_PROVIDER) != null ? _a162 : gateway;
+}
+function stripID3TagsIfPresent(data) {
+  const hasId3 = typeof data === "string" && data.startsWith("SUQz") || typeof data !== "string" && data.length > 10 && data[0] === 73 && // 'I'
+  data[1] === 68 && // 'D'
+  data[2] === 51;
+  return hasId3 ? stripID3(data) : data;
+}
+function detectMediaType({
+  data,
+  signatures
+}) {
+  const processedData = stripID3TagsIfPresent(data);
+  const bytes = typeof processedData === "string" ? convertBase64ToUint8Array(
+    processedData.substring(0, Math.min(processedData.length, 24))
+  ) : processedData;
+  for (const signature of signatures) {
+    if (bytes.length >= signature.bytesPrefix.length && signature.bytesPrefix.every(
+      (byte, index) => byte === null || bytes[index] === byte
+    )) {
+      return signature.mediaType;
+    }
+  }
+  return void 0;
+}
+function splitDataUrl(dataUrl) {
+  try {
+    const [header, base64Content] = dataUrl.split(",");
+    return {
+      mediaType: header.split(";")[0].split(":")[1],
+      base64Content
+    };
+  } catch (error) {
+    return {
+      mediaType: void 0,
+      base64Content: void 0
+    };
+  }
+}
+function convertToLanguageModelV2DataContent(content) {
+  if (content instanceof Uint8Array) {
+    return { data: content, mediaType: void 0 };
+  }
+  if (content instanceof ArrayBuffer) {
+    return { data: new Uint8Array(content), mediaType: void 0 };
+  }
+  if (typeof content === "string") {
+    try {
+      content = new URL(content);
+    } catch (error) {
+    }
+  }
+  if (content instanceof URL && content.protocol === "data:") {
+    const { mediaType: dataUrlMediaType, base64Content } = splitDataUrl(
+      content.toString()
+    );
+    if (dataUrlMediaType == null || base64Content == null) {
+      throw new AISDKError({
+        name: "InvalidDataContentError",
+        message: `Invalid data URL format in content ${content.toString()}`
+      });
+    }
+    return { data: base64Content, mediaType: dataUrlMediaType };
+  }
+  return { data: content, mediaType: void 0 };
+}
+function convertDataContentToBase64String(content) {
+  if (typeof content === "string") {
+    return content;
+  }
+  if (content instanceof ArrayBuffer) {
+    return convertUint8ArrayToBase64(new Uint8Array(content));
+  }
+  return convertUint8ArrayToBase64(content);
+}
+function convertDataContentToUint8Array(content) {
+  if (content instanceof Uint8Array) {
+    return content;
+  }
+  if (typeof content === "string") {
+    try {
+      return convertBase64ToUint8Array(content);
+    } catch (error) {
+      throw new InvalidDataContentError({
+        message: "Invalid data content. Content string is not a base64-encoded media.",
+        content,
+        cause: error
+      });
+    }
+  }
+  if (content instanceof ArrayBuffer) {
+    return new Uint8Array(content);
+  }
+  throw new InvalidDataContentError({ content });
+}
+async function convertToLanguageModelPrompt({
+  prompt,
+  supportedUrls,
+  download: download2 = createDefaultDownloadFunction()
+}) {
+  const downloadedAssets = await downloadAssets(
+    prompt.messages,
+    download2,
+    supportedUrls
+  );
+  return [
+    ...prompt.system != null ? [{ role: "system", content: prompt.system }] : [],
+    ...prompt.messages.map(
+      (message) => convertToLanguageModelMessage({ message, downloadedAssets })
+    )
+  ];
+}
+function convertToLanguageModelMessage({
+  message,
+  downloadedAssets
+}) {
+  const role = message.role;
+  switch (role) {
+    case "system": {
+      return {
+        role: "system",
+        content: message.content,
+        providerOptions: message.providerOptions
+      };
+    }
+    case "user": {
+      if (typeof message.content === "string") {
+        return {
+          role: "user",
+          content: [{ type: "text", text: message.content }],
+          providerOptions: message.providerOptions
+        };
+      }
+      return {
+        role: "user",
+        content: message.content.map((part) => convertPartToLanguageModelPart(part, downloadedAssets)).filter((part) => part.type !== "text" || part.text !== ""),
+        providerOptions: message.providerOptions
+      };
+    }
+    case "assistant": {
+      if (typeof message.content === "string") {
+        return {
+          role: "assistant",
+          content: [{ type: "text", text: message.content }],
+          providerOptions: message.providerOptions
+        };
+      }
+      return {
+        role: "assistant",
+        content: message.content.filter(
+          // remove empty text parts (no text, and no provider options):
+          (part) => part.type !== "text" || part.text !== "" || part.providerOptions != null
+        ).map((part) => {
+          const providerOptions = part.providerOptions;
+          switch (part.type) {
+            case "file": {
+              const { data, mediaType } = convertToLanguageModelV2DataContent(
+                part.data
+              );
+              return {
+                type: "file",
+                data,
+                filename: part.filename,
+                mediaType: mediaType != null ? mediaType : part.mediaType,
+                providerOptions
+              };
+            }
+            case "reasoning": {
+              return {
+                type: "reasoning",
+                text: part.text,
+                providerOptions
+              };
+            }
+            case "text": {
+              return {
+                type: "text",
+                text: part.text,
+                providerOptions
+              };
+            }
+            case "tool-call": {
+              return {
+                type: "tool-call",
+                toolCallId: part.toolCallId,
+                toolName: part.toolName,
+                input: part.input,
+                providerExecuted: part.providerExecuted,
+                providerOptions
+              };
+            }
+            case "tool-result": {
+              return {
+                type: "tool-result",
+                toolCallId: part.toolCallId,
+                toolName: part.toolName,
+                output: part.output,
+                providerOptions
+              };
+            }
+          }
+        }),
+        providerOptions: message.providerOptions
+      };
+    }
+    case "tool": {
+      return {
+        role: "tool",
+        content: message.content.map((part) => ({
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: part.output,
+          providerOptions: part.providerOptions
+        })),
+        providerOptions: message.providerOptions
+      };
+    }
+    default: {
+      const _exhaustiveCheck = role;
+      throw new InvalidMessageRoleError({ role: _exhaustiveCheck });
+    }
+  }
+}
+async function downloadAssets(messages, download2, supportedUrls) {
+  const plannedDownloads = messages.filter((message) => message.role === "user").map((message) => message.content).filter(
+    (content) => Array.isArray(content)
+  ).flat().filter(
+    (part) => part.type === "image" || part.type === "file"
+  ).map((part) => {
+    var _a162;
+    const mediaType = (_a162 = part.mediaType) != null ? _a162 : part.type === "image" ? "image/*" : void 0;
+    let data = part.type === "image" ? part.image : part.data;
+    if (typeof data === "string") {
+      try {
+        data = new URL(data);
+      } catch (ignored) {
+      }
+    }
+    return { mediaType, data };
+  }).filter(
+    (part) => part.data instanceof URL
+  ).map((part) => ({
+    url: part.data,
+    isUrlSupportedByModel: part.mediaType != null && isUrlSupported({
+      url: part.data.toString(),
+      mediaType: part.mediaType,
+      supportedUrls
+    })
+  }));
+  const downloadedFiles = await download2(plannedDownloads);
+  return Object.fromEntries(
+    downloadedFiles.map(
+      (file, index) => file == null ? null : [
+        plannedDownloads[index].url.toString(),
+        { data: file.data, mediaType: file.mediaType }
+      ]
+    ).filter((file) => file != null)
+  );
+}
+function convertPartToLanguageModelPart(part, downloadedAssets) {
+  var _a162;
+  if (part.type === "text") {
+    return {
+      type: "text",
+      text: part.text,
+      providerOptions: part.providerOptions
+    };
+  }
+  let originalData;
+  const type2 = part.type;
+  switch (type2) {
+    case "image":
+      originalData = part.image;
+      break;
+    case "file":
+      originalData = part.data;
+      break;
+    default:
+      throw new Error(`Unsupported part type: ${type2}`);
+  }
+  const { data: convertedData, mediaType: convertedMediaType } = convertToLanguageModelV2DataContent(originalData);
+  let mediaType = convertedMediaType != null ? convertedMediaType : part.mediaType;
+  let data = convertedData;
+  if (data instanceof URL) {
+    const downloadedFile = downloadedAssets[data.toString()];
+    if (downloadedFile) {
+      data = downloadedFile.data;
+      mediaType != null ? mediaType : mediaType = downloadedFile.mediaType;
+    }
+  }
+  switch (type2) {
+    case "image": {
+      if (data instanceof Uint8Array || typeof data === "string") {
+        mediaType = (_a162 = detectMediaType({ data, signatures: imageMediaTypeSignatures })) != null ? _a162 : mediaType;
+      }
+      return {
+        type: "file",
+        mediaType: mediaType != null ? mediaType : "image/*",
+        // any image
+        filename: void 0,
+        data,
+        providerOptions: part.providerOptions
+      };
+    }
+    case "file": {
+      if (mediaType == null) {
+        throw new Error(`Media type is missing for file part`);
+      }
+      return {
+        type: "file",
+        mediaType,
+        filename: part.filename,
+        data,
+        providerOptions: part.providerOptions
+      };
+    }
+  }
+}
+function prepareCallSettings({
+  maxOutputTokens,
+  temperature,
+  topP,
+  topK,
+  presencePenalty,
+  frequencyPenalty,
+  seed,
+  stopSequences
+}) {
+  if (maxOutputTokens != null) {
+    if (!Number.isInteger(maxOutputTokens)) {
+      throw new InvalidArgumentError3({
+        parameter: "maxOutputTokens",
+        value: maxOutputTokens,
+        message: "maxOutputTokens must be an integer"
+      });
+    }
+    if (maxOutputTokens < 1) {
+      throw new InvalidArgumentError3({
+        parameter: "maxOutputTokens",
+        value: maxOutputTokens,
+        message: "maxOutputTokens must be >= 1"
+      });
+    }
+  }
+  if (temperature != null) {
+    if (typeof temperature !== "number") {
+      throw new InvalidArgumentError3({
+        parameter: "temperature",
+        value: temperature,
+        message: "temperature must be a number"
+      });
+    }
+  }
+  if (topP != null) {
+    if (typeof topP !== "number") {
+      throw new InvalidArgumentError3({
+        parameter: "topP",
+        value: topP,
+        message: "topP must be a number"
+      });
+    }
+  }
+  if (topK != null) {
+    if (typeof topK !== "number") {
+      throw new InvalidArgumentError3({
+        parameter: "topK",
+        value: topK,
+        message: "topK must be a number"
+      });
+    }
+  }
+  if (presencePenalty != null) {
+    if (typeof presencePenalty !== "number") {
+      throw new InvalidArgumentError3({
+        parameter: "presencePenalty",
+        value: presencePenalty,
+        message: "presencePenalty must be a number"
+      });
+    }
+  }
+  if (frequencyPenalty != null) {
+    if (typeof frequencyPenalty !== "number") {
+      throw new InvalidArgumentError3({
+        parameter: "frequencyPenalty",
+        value: frequencyPenalty,
+        message: "frequencyPenalty must be a number"
+      });
+    }
+  }
+  if (seed != null) {
+    if (!Number.isInteger(seed)) {
+      throw new InvalidArgumentError3({
+        parameter: "seed",
+        value: seed,
+        message: "seed must be an integer"
+      });
+    }
+  }
+  return {
+    maxOutputTokens,
+    temperature,
+    topP,
+    topK,
+    presencePenalty,
+    frequencyPenalty,
+    stopSequences,
+    seed
+  };
+}
+function isNonEmptyObject(object2) {
+  return object2 != null && Object.keys(object2).length > 0;
+}
+function prepareToolsAndToolChoice({
+  tools,
+  toolChoice,
+  activeTools
+}) {
+  if (!isNonEmptyObject(tools)) {
+    return {
+      tools: void 0,
+      toolChoice: void 0
+    };
+  }
+  const filteredTools = activeTools != null ? Object.entries(tools).filter(
+    ([name16]) => activeTools.includes(name16)
+  ) : Object.entries(tools);
+  return {
+    tools: filteredTools.map(([name16, tool2]) => {
+      const toolType = tool2.type;
+      switch (toolType) {
+        case void 0:
+        case "dynamic":
+        case "function":
+          return {
+            type: "function",
+            name: name16,
+            description: tool2.description,
+            inputSchema: asSchema(tool2.inputSchema).jsonSchema,
+            providerOptions: tool2.providerOptions
+          };
+        case "provider-defined":
+          return {
+            type: "provider-defined",
+            name: name16,
+            id: tool2.id,
+            args: tool2.args
+          };
+        default: {
+          const exhaustiveCheck = toolType;
+          throw new Error(`Unsupported tool type: ${exhaustiveCheck}`);
+        }
+      }
+    }),
+    toolChoice: toolChoice == null ? { type: "auto" } : typeof toolChoice === "string" ? { type: toolChoice } : { type: "tool", toolName: toolChoice.toolName }
+  };
+}
+async function standardizePrompt(prompt) {
+  if (prompt.prompt == null && prompt.messages == null) {
+    throw new InvalidPromptError({
+      prompt,
+      message: "prompt or messages must be defined"
+    });
+  }
+  if (prompt.prompt != null && prompt.messages != null) {
+    throw new InvalidPromptError({
+      prompt,
+      message: "prompt and messages cannot be defined at the same time"
+    });
+  }
+  if (prompt.system != null && typeof prompt.system !== "string") {
+    throw new InvalidPromptError({
+      prompt,
+      message: "system must be a string"
+    });
+  }
+  let messages;
+  if (prompt.prompt != null && typeof prompt.prompt === "string") {
+    messages = [{ role: "user", content: prompt.prompt }];
+  } else if (prompt.prompt != null && Array.isArray(prompt.prompt)) {
+    messages = prompt.prompt;
+  } else if (prompt.messages != null) {
+    messages = prompt.messages;
+  } else {
+    throw new InvalidPromptError({
+      prompt,
+      message: "prompt or messages must be defined"
+    });
+  }
+  if (messages.length === 0) {
+    throw new InvalidPromptError({
+      prompt,
+      message: "messages must not be empty"
+    });
+  }
+  const validationResult = await safeValidateTypes({
+    value: messages,
+    schema: z63.array(modelMessageSchema)
+  });
+  if (!validationResult.success) {
+    throw new InvalidPromptError({
+      prompt,
+      message: "The messages must be a ModelMessage[]. If you have passed a UIMessage[], you can use convertToModelMessages to convert them.",
+      cause: validationResult.error
+    });
+  }
+  return {
+    messages,
+    system: prompt.system
+  };
+}
+function wrapGatewayError(error) {
+  if (GatewayAuthenticationError.isInstance(error) || GatewayModelNotFoundError.isInstance(error)) {
+    return new AISDKError({
+      name: "GatewayError",
+      message: "Vercel AI Gateway access failed. If you want to use AI SDK providers directly, use the providers, e.g. @ai-sdk/openai, or register a different global default provider.",
+      cause: error
+    });
+  }
+  return error;
+}
+function assembleOperationName({
+  operationId,
+  telemetry: telemetry2
+}) {
+  return {
+    // standardized operation and resource name:
+    "operation.name": `${operationId}${(telemetry2 == null ? void 0 : telemetry2.functionId) != null ? ` ${telemetry2.functionId}` : ""}`,
+    "resource.name": telemetry2 == null ? void 0 : telemetry2.functionId,
+    // detailed, AI SDK specific data:
+    "ai.operationId": operationId,
+    "ai.telemetry.functionId": telemetry2 == null ? void 0 : telemetry2.functionId
+  };
+}
+function getBaseTelemetryAttributes({
+  model,
+  settings,
+  telemetry: telemetry2,
+  headers
+}) {
+  var _a162;
+  return {
+    "ai.model.provider": model.provider,
+    "ai.model.id": model.modelId,
+    // settings:
+    ...Object.entries(settings).reduce((attributes, [key, value2]) => {
+      attributes[`ai.settings.${key}`] = value2;
+      return attributes;
+    }, {}),
+    // add metadata as attributes:
+    ...Object.entries((_a162 = telemetry2 == null ? void 0 : telemetry2.metadata) != null ? _a162 : {}).reduce(
+      (attributes, [key, value2]) => {
+        attributes[`ai.telemetry.metadata.${key}`] = value2;
+        return attributes;
+      },
+      {}
+    ),
+    // request headers
+    ...Object.entries(headers != null ? headers : {}).reduce((attributes, [key, value2]) => {
+      if (value2 !== void 0) {
+        attributes[`ai.request.headers.${key}`] = value2;
+      }
+      return attributes;
+    }, {})
+  };
+}
+function getTracer({
+  isEnabled = false,
+  tracer
+} = {}) {
+  if (!isEnabled) {
+    return noopTracer;
+  }
+  if (tracer) {
+    return tracer;
+  }
+  return trace.getTracer("ai");
+}
+function recordSpan({
+  name: name16,
+  tracer,
+  attributes,
+  fn,
+  endWhenDone = true
+}) {
+  return tracer.startActiveSpan(name16, { attributes }, async (span) => {
+    try {
+      const result = await fn(span);
+      if (endWhenDone) {
+        span.end();
+      }
+      return result;
+    } catch (error) {
+      try {
+        recordErrorOnSpan(span, error);
+      } finally {
+        span.end();
+      }
+      throw error;
+    }
+  });
+}
+function recordErrorOnSpan(span, error) {
+  if (error instanceof Error) {
+    span.recordException({
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: error.message
+    });
+  } else {
+    span.setStatus({ code: SpanStatusCode.ERROR });
+  }
+}
+function selectTelemetryAttributes({
+  telemetry: telemetry2,
+  attributes
+}) {
+  if ((telemetry2 == null ? void 0 : telemetry2.isEnabled) !== true) {
+    return {};
+  }
+  return Object.entries(attributes).reduce((attributes2, [key, value2]) => {
+    if (value2 == null) {
+      return attributes2;
+    }
+    if (typeof value2 === "object" && "input" in value2 && typeof value2.input === "function") {
+      if ((telemetry2 == null ? void 0 : telemetry2.recordInputs) === false) {
+        return attributes2;
+      }
+      const result = value2.input();
+      return result == null ? attributes2 : { ...attributes2, [key]: result };
+    }
+    if (typeof value2 === "object" && "output" in value2 && typeof value2.output === "function") {
+      if ((telemetry2 == null ? void 0 : telemetry2.recordOutputs) === false) {
+        return attributes2;
+      }
+      const result = value2.output();
+      return result == null ? attributes2 : { ...attributes2, [key]: result };
+    }
+    return { ...attributes2, [key]: value2 };
+  }, {});
+}
+function stringifyForTelemetry(prompt) {
+  return JSON.stringify(
+    prompt.map((message) => ({
+      ...message,
+      content: typeof message.content === "string" ? message.content : message.content.map(
+        (part) => part.type === "file" ? {
+          ...part,
+          data: part.data instanceof Uint8Array ? convertDataContentToBase64String(part.data) : part.data
+        } : part
+      )
+    }))
+  );
+}
+function addLanguageModelUsage(usage1, usage2) {
+  return {
+    inputTokens: addTokenCounts(usage1.inputTokens, usage2.inputTokens),
+    outputTokens: addTokenCounts(usage1.outputTokens, usage2.outputTokens),
+    totalTokens: addTokenCounts(usage1.totalTokens, usage2.totalTokens),
+    reasoningTokens: addTokenCounts(
+      usage1.reasoningTokens,
+      usage2.reasoningTokens
+    ),
+    cachedInputTokens: addTokenCounts(
+      usage1.cachedInputTokens,
+      usage2.cachedInputTokens
+    )
+  };
+}
+function addTokenCounts(tokenCount1, tokenCount2) {
+  return tokenCount1 == null && tokenCount2 == null ? void 0 : (tokenCount1 != null ? tokenCount1 : 0) + (tokenCount2 != null ? tokenCount2 : 0);
+}
+function asArray(value2) {
+  return value2 === void 0 ? [] : Array.isArray(value2) ? value2 : [value2];
+}
+function getRetryDelayInMs({
+  error,
+  exponentialBackoffDelay
+}) {
+  const headers = error.responseHeaders;
+  if (!headers)
+    return exponentialBackoffDelay;
+  let ms;
+  const retryAfterMs = headers["retry-after-ms"];
+  if (retryAfterMs) {
+    const timeoutMs = parseFloat(retryAfterMs);
+    if (!Number.isNaN(timeoutMs)) {
+      ms = timeoutMs;
+    }
+  }
+  const retryAfter = headers["retry-after"];
+  if (retryAfter && ms === void 0) {
+    const timeoutSeconds = parseFloat(retryAfter);
+    if (!Number.isNaN(timeoutSeconds)) {
+      ms = timeoutSeconds * 1e3;
+    } else {
+      ms = Date.parse(retryAfter) - Date.now();
+    }
+  }
+  if (ms != null && !Number.isNaN(ms) && 0 <= ms && (ms < 60 * 1e3 || ms < exponentialBackoffDelay)) {
+    return ms;
+  }
+  return exponentialBackoffDelay;
+}
+async function _retryWithExponentialBackoff(f, {
+  maxRetries,
+  delayInMs,
+  backoffFactor,
+  abortSignal
+}, errors = []) {
+  try {
+    return await f();
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+    if (maxRetries === 0) {
+      throw error;
+    }
+    const errorMessage = getErrorMessage2(error);
+    const newErrors = [...errors, error];
+    const tryNumber = newErrors.length;
+    if (tryNumber > maxRetries) {
+      throw new RetryError({
+        message: `Failed after ${tryNumber} attempts. Last error: ${errorMessage}`,
+        reason: "maxRetriesExceeded",
+        errors: newErrors
+      });
+    }
+    if (error instanceof Error && APICallError.isInstance(error) && error.isRetryable === true && tryNumber <= maxRetries) {
+      await delay(
+        getRetryDelayInMs({
+          error,
+          exponentialBackoffDelay: delayInMs
+        }),
+        { abortSignal }
+      );
+      return _retryWithExponentialBackoff(
+        f,
+        {
+          maxRetries,
+          delayInMs: backoffFactor * delayInMs,
+          backoffFactor,
+          abortSignal
+        },
+        newErrors
+      );
+    }
+    if (tryNumber === 1) {
+      throw error;
+    }
+    throw new RetryError({
+      message: `Failed after ${tryNumber} attempts with non-retryable error: '${errorMessage}'`,
+      reason: "errorNotRetryable",
+      errors: newErrors
+    });
+  }
+}
+function prepareRetries({
+  maxRetries,
+  abortSignal
+}) {
+  if (maxRetries != null) {
+    if (!Number.isInteger(maxRetries)) {
+      throw new InvalidArgumentError3({
+        parameter: "maxRetries",
+        value: maxRetries,
+        message: "maxRetries must be an integer"
+      });
+    }
+    if (maxRetries < 0) {
+      throw new InvalidArgumentError3({
+        parameter: "maxRetries",
+        value: maxRetries,
+        message: "maxRetries must be >= 0"
+      });
+    }
+  }
+  const maxRetriesResult = maxRetries != null ? maxRetries : 2;
+  return {
+    maxRetries: maxRetriesResult,
+    retry: retryWithExponentialBackoffRespectingRetryHeaders({
+      maxRetries: maxRetriesResult,
+      abortSignal
+    })
+  };
+}
+function extractTextContent(content) {
+  const parts = content.filter(
+    (content2) => content2.type === "text"
+  );
+  if (parts.length === 0) {
+    return void 0;
+  }
+  return parts.map((content2) => content2.text).join("");
+}
+async function parseToolCall({
+  toolCall,
+  tools,
+  repairToolCall,
+  system,
+  messages
+}) {
+  try {
+    if (tools == null) {
+      throw new NoSuchToolError({ toolName: toolCall.toolName });
+    }
+    try {
+      return await doParseToolCall({ toolCall, tools });
+    } catch (error) {
+      if (repairToolCall == null || !(NoSuchToolError.isInstance(error) || InvalidToolInputError.isInstance(error))) {
+        throw error;
+      }
+      let repairedToolCall = null;
+      try {
+        repairedToolCall = await repairToolCall({
+          toolCall,
+          tools,
+          inputSchema: ({ toolName }) => {
+            const { inputSchema } = tools[toolName];
+            return asSchema(inputSchema).jsonSchema;
+          },
+          system,
+          messages,
+          error
+        });
+      } catch (repairError) {
+        throw new ToolCallRepairError({
+          cause: repairError,
+          originalError: error
+        });
+      }
+      if (repairedToolCall == null) {
+        throw error;
+      }
+      return await doParseToolCall({ toolCall: repairedToolCall, tools });
+    }
+  } catch (error) {
+    const parsedInput = await safeParseJSON({ text: toolCall.input });
+    const input = parsedInput.success ? parsedInput.value : toolCall.input;
+    return {
+      type: "tool-call",
+      toolCallId: toolCall.toolCallId,
+      toolName: toolCall.toolName,
+      input,
+      dynamic: true,
+      invalid: true,
+      error,
+      providerMetadata: toolCall.providerMetadata
+    };
+  }
+}
+async function doParseToolCall({
+  toolCall,
+  tools
+}) {
+  const toolName = toolCall.toolName;
+  const tool2 = tools[toolName];
+  if (tool2 == null) {
+    throw new NoSuchToolError({
+      toolName: toolCall.toolName,
+      availableTools: Object.keys(tools)
+    });
+  }
+  const schema = asSchema(tool2.inputSchema);
+  const parseResult = toolCall.input.trim() === "" ? await safeValidateTypes({ value: {}, schema }) : await safeParseJSON({ text: toolCall.input, schema });
+  if (parseResult.success === false) {
+    throw new InvalidToolInputError({
+      toolName,
+      toolInput: toolCall.input,
+      cause: parseResult.error
+    });
+  }
+  return tool2.type === "dynamic" ? {
+    type: "tool-call",
+    toolCallId: toolCall.toolCallId,
+    toolName: toolCall.toolName,
+    input: parseResult.value,
+    providerExecuted: toolCall.providerExecuted,
+    providerMetadata: toolCall.providerMetadata,
+    dynamic: true
+  } : {
+    type: "tool-call",
+    toolCallId: toolCall.toolCallId,
+    toolName,
+    input: parseResult.value,
+    providerExecuted: toolCall.providerExecuted,
+    providerMetadata: toolCall.providerMetadata
+  };
+}
+function stepCountIs(stepCount) {
+  return ({ steps }) => steps.length === stepCount;
+}
+function hasToolCall(toolName) {
+  return ({ steps }) => {
+    var _a162, _b8, _c;
+    return (_c = (_b8 = (_a162 = steps[steps.length - 1]) == null ? void 0 : _a162.toolCalls) == null ? void 0 : _b8.some(
+      (toolCall) => toolCall.toolName === toolName
+    )) != null ? _c : false;
+  };
+}
+async function isStopConditionMet({
+  stopConditions,
+  steps
+}) {
+  return (await Promise.all(stopConditions.map((condition) => condition({ steps })))).some((result) => result);
+}
+function createToolModelOutput({
+  output,
+  tool: tool2,
+  errorMode
+}) {
+  if (errorMode === "text") {
+    return { type: "error-text", value: getErrorMessage(output) };
+  } else if (errorMode === "json") {
+    return { type: "error-json", value: toJSONValue(output) };
+  }
+  if (tool2 == null ? void 0 : tool2.toModelOutput) {
+    return tool2.toModelOutput(output);
+  }
+  return typeof output === "string" ? { type: "text", value: output } : { type: "json", value: toJSONValue(output) };
+}
+function toJSONValue(value2) {
+  return value2 === void 0 ? null : value2;
+}
+function toResponseMessages({
+  content: inputContent,
+  tools
+}) {
+  const responseMessages = [];
+  const content = inputContent.filter((part) => part.type !== "source").filter(
+    (part) => (part.type !== "tool-result" || part.providerExecuted) && (part.type !== "tool-error" || part.providerExecuted)
+  ).filter((part) => part.type !== "text" || part.text.length > 0).map((part) => {
+    switch (part.type) {
+      case "text":
+        return {
+          type: "text",
+          text: part.text,
+          providerOptions: part.providerMetadata
+        };
+      case "reasoning":
+        return {
+          type: "reasoning",
+          text: part.text,
+          providerOptions: part.providerMetadata
+        };
+      case "file":
+        return {
+          type: "file",
+          data: part.file.base64,
+          mediaType: part.file.mediaType,
+          providerOptions: part.providerMetadata
+        };
+      case "tool-call":
+        return {
+          type: "tool-call",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          input: part.input,
+          providerExecuted: part.providerExecuted,
+          providerOptions: part.providerMetadata
+        };
+      case "tool-result":
+        return {
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: createToolModelOutput({
+            tool: tools == null ? void 0 : tools[part.toolName],
+            output: part.output,
+            errorMode: "none"
+          }),
+          providerExecuted: true,
+          providerOptions: part.providerMetadata
+        };
+      case "tool-error":
+        return {
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          output: createToolModelOutput({
+            tool: tools == null ? void 0 : tools[part.toolName],
+            output: part.error,
+            errorMode: "json"
+          }),
+          providerOptions: part.providerMetadata
+        };
+    }
+  });
+  if (content.length > 0) {
+    responseMessages.push({
+      role: "assistant",
+      content
+    });
+  }
+  const toolResultContent = inputContent.filter((part) => part.type === "tool-result" || part.type === "tool-error").filter((part) => !part.providerExecuted).map((toolResult) => ({
+    type: "tool-result",
+    toolCallId: toolResult.toolCallId,
+    toolName: toolResult.toolName,
+    output: createToolModelOutput({
+      tool: tools == null ? void 0 : tools[toolResult.toolName],
+      output: toolResult.type === "tool-result" ? toolResult.output : toolResult.error,
+      errorMode: toolResult.type === "tool-error" ? "text" : "none"
+    }),
+    ...toolResult.providerMetadata != null ? { providerOptions: toolResult.providerMetadata } : {}
+  }));
+  if (toolResultContent.length > 0) {
+    responseMessages.push({
+      role: "tool",
+      content: toolResultContent
+    });
+  }
+  return responseMessages;
+}
+async function generateText({
+  model: modelArg,
+  tools,
+  toolChoice,
+  system,
+  prompt,
+  messages,
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers,
+  stopWhen = stepCountIs(1),
+  experimental_output: output,
+  experimental_telemetry: telemetry2,
+  providerOptions,
+  experimental_activeTools,
+  activeTools = experimental_activeTools,
+  experimental_prepareStep,
+  prepareStep = experimental_prepareStep,
+  experimental_repairToolCall: repairToolCall,
+  experimental_download: download2,
+  experimental_context,
+  _internal: {
+    generateId: generateId3 = originalGenerateId,
+    currentDate = () => /* @__PURE__ */ new Date()
+  } = {},
+  onStepFinish,
+  ...settings
+}) {
+  const model = resolveLanguageModel(modelArg);
+  const stopConditions = asArray(stopWhen);
+  const { maxRetries, retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const callSettings = prepareCallSettings(settings);
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const baseTelemetryAttributes = getBaseTelemetryAttributes({
+    model,
+    telemetry: telemetry2,
+    headers: headersWithUserAgent,
+    settings: { ...callSettings, maxRetries }
+  });
+  const initialPrompt = await standardizePrompt({
+    system,
+    prompt,
+    messages
+  });
+  const tracer = getTracer(telemetry2);
+  try {
+    return await recordSpan({
+      name: "ai.generateText",
+      attributes: selectTelemetryAttributes({
+        telemetry: telemetry2,
+        attributes: {
+          ...assembleOperationName({
+            operationId: "ai.generateText",
+            telemetry: telemetry2
+          }),
+          ...baseTelemetryAttributes,
+          // model:
+          "ai.model.provider": model.provider,
+          "ai.model.id": model.modelId,
+          // specific settings that only make sense on the outer level:
+          "ai.prompt": {
+            input: () => JSON.stringify({ system, prompt, messages })
+          }
+        }
+      }),
+      tracer,
+      fn: async (span) => {
+        var _a162, _b8, _c, _d, _e, _f, _g;
+        const callSettings2 = prepareCallSettings(settings);
+        let currentModelResponse;
+        let clientToolCalls = [];
+        let clientToolOutputs = [];
+        const responseMessages = [];
+        const steps = [];
+        do {
+          const stepInputMessages = [
+            ...initialPrompt.messages,
+            ...responseMessages
+          ];
+          const prepareStepResult = await (prepareStep == null ? void 0 : prepareStep({
+            model,
+            steps,
+            stepNumber: steps.length,
+            messages: stepInputMessages
+          }));
+          const stepModel = resolveLanguageModel(
+            (_a162 = prepareStepResult == null ? void 0 : prepareStepResult.model) != null ? _a162 : model
+          );
+          const promptMessages = await convertToLanguageModelPrompt({
+            prompt: {
+              system: (_b8 = prepareStepResult == null ? void 0 : prepareStepResult.system) != null ? _b8 : initialPrompt.system,
+              messages: (_c = prepareStepResult == null ? void 0 : prepareStepResult.messages) != null ? _c : stepInputMessages
+            },
+            supportedUrls: await stepModel.supportedUrls,
+            download: download2
+          });
+          const { toolChoice: stepToolChoice, tools: stepTools } = prepareToolsAndToolChoice({
+            tools,
+            toolChoice: (_d = prepareStepResult == null ? void 0 : prepareStepResult.toolChoice) != null ? _d : toolChoice,
+            activeTools: (_e = prepareStepResult == null ? void 0 : prepareStepResult.activeTools) != null ? _e : activeTools
+          });
+          currentModelResponse = await retry(
+            () => {
+              var _a17;
+              return recordSpan({
+                name: "ai.generateText.doGenerate",
+                attributes: selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    ...assembleOperationName({
+                      operationId: "ai.generateText.doGenerate",
+                      telemetry: telemetry2
+                    }),
+                    ...baseTelemetryAttributes,
+                    // model:
+                    "ai.model.provider": stepModel.provider,
+                    "ai.model.id": stepModel.modelId,
+                    // prompt:
+                    "ai.prompt.messages": {
+                      input: () => stringifyForTelemetry(promptMessages)
+                    },
+                    "ai.prompt.tools": {
+                      // convert the language model level tools:
+                      input: () => stepTools == null ? void 0 : stepTools.map((tool2) => JSON.stringify(tool2))
+                    },
+                    "ai.prompt.toolChoice": {
+                      input: () => stepToolChoice != null ? JSON.stringify(stepToolChoice) : void 0
+                    },
+                    // standardized gen-ai llm span attributes:
+                    "gen_ai.system": stepModel.provider,
+                    "gen_ai.request.model": stepModel.modelId,
+                    "gen_ai.request.frequency_penalty": settings.frequencyPenalty,
+                    "gen_ai.request.max_tokens": settings.maxOutputTokens,
+                    "gen_ai.request.presence_penalty": settings.presencePenalty,
+                    "gen_ai.request.stop_sequences": settings.stopSequences,
+                    "gen_ai.request.temperature": (_a17 = settings.temperature) != null ? _a17 : void 0,
+                    "gen_ai.request.top_k": settings.topK,
+                    "gen_ai.request.top_p": settings.topP
+                  }
+                }),
+                tracer,
+                fn: async (span2) => {
+                  var _a18, _b22, _c2, _d2, _e2, _f2, _g2, _h;
+                  const result = await stepModel.doGenerate({
+                    ...callSettings2,
+                    tools: stepTools,
+                    toolChoice: stepToolChoice,
+                    responseFormat: output == null ? void 0 : output.responseFormat,
+                    prompt: promptMessages,
+                    providerOptions,
+                    abortSignal,
+                    headers: headersWithUserAgent
+                  });
+                  const responseData = {
+                    id: (_b22 = (_a18 = result.response) == null ? void 0 : _a18.id) != null ? _b22 : generateId3(),
+                    timestamp: (_d2 = (_c2 = result.response) == null ? void 0 : _c2.timestamp) != null ? _d2 : currentDate(),
+                    modelId: (_f2 = (_e2 = result.response) == null ? void 0 : _e2.modelId) != null ? _f2 : stepModel.modelId,
+                    headers: (_g2 = result.response) == null ? void 0 : _g2.headers,
+                    body: (_h = result.response) == null ? void 0 : _h.body
+                  };
+                  span2.setAttributes(
+                    selectTelemetryAttributes({
+                      telemetry: telemetry2,
+                      attributes: {
+                        "ai.response.finishReason": result.finishReason,
+                        "ai.response.text": {
+                          output: () => extractTextContent(result.content)
+                        },
+                        "ai.response.toolCalls": {
+                          output: () => {
+                            const toolCalls = asToolCalls(result.content);
+                            return toolCalls == null ? void 0 : JSON.stringify(toolCalls);
+                          }
+                        },
+                        "ai.response.id": responseData.id,
+                        "ai.response.model": responseData.modelId,
+                        "ai.response.timestamp": responseData.timestamp.toISOString(),
+                        "ai.response.providerMetadata": JSON.stringify(
+                          result.providerMetadata
+                        ),
+                        // TODO rename telemetry attributes to inputTokens and outputTokens
+                        "ai.usage.promptTokens": result.usage.inputTokens,
+                        "ai.usage.completionTokens": result.usage.outputTokens,
+                        // standardized gen-ai llm span attributes:
+                        "gen_ai.response.finish_reasons": [result.finishReason],
+                        "gen_ai.response.id": responseData.id,
+                        "gen_ai.response.model": responseData.modelId,
+                        "gen_ai.usage.input_tokens": result.usage.inputTokens,
+                        "gen_ai.usage.output_tokens": result.usage.outputTokens
+                      }
+                    })
+                  );
+                  return { ...result, response: responseData };
+                }
+              });
+            }
+          );
+          const stepToolCalls = await Promise.all(
+            currentModelResponse.content.filter(
+              (part) => part.type === "tool-call"
+            ).map(
+              (toolCall) => parseToolCall({
+                toolCall,
+                tools,
+                repairToolCall,
+                system,
+                messages: stepInputMessages
+              })
+            )
+          );
+          for (const toolCall of stepToolCalls) {
+            if (toolCall.invalid) {
+              continue;
+            }
+            const tool2 = tools[toolCall.toolName];
+            if ((tool2 == null ? void 0 : tool2.onInputAvailable) != null) {
+              await tool2.onInputAvailable({
+                input: toolCall.input,
+                toolCallId: toolCall.toolCallId,
+                messages: stepInputMessages,
+                abortSignal,
+                experimental_context
+              });
+            }
+          }
+          const invalidToolCalls = stepToolCalls.filter(
+            (toolCall) => toolCall.invalid && toolCall.dynamic
+          );
+          clientToolOutputs = [];
+          for (const toolCall of invalidToolCalls) {
+            clientToolOutputs.push({
+              type: "tool-error",
+              toolCallId: toolCall.toolCallId,
+              toolName: toolCall.toolName,
+              input: toolCall.input,
+              error: getErrorMessage2(toolCall.error),
+              dynamic: true
+            });
+          }
+          clientToolCalls = stepToolCalls.filter(
+            (toolCall) => !toolCall.providerExecuted
+          );
+          if (tools != null) {
+            clientToolOutputs.push(
+              ...await executeTools({
+                toolCalls: clientToolCalls.filter(
+                  (toolCall) => !toolCall.invalid
+                ),
+                tools,
+                tracer,
+                telemetry: telemetry2,
+                messages: stepInputMessages,
+                abortSignal,
+                experimental_context
+              })
+            );
+          }
+          const stepContent = asContent({
+            content: currentModelResponse.content,
+            toolCalls: stepToolCalls,
+            toolOutputs: clientToolOutputs
+          });
+          responseMessages.push(
+            ...toResponseMessages({
+              content: stepContent,
+              tools
+            })
+          );
+          const currentStepResult = new DefaultStepResult({
+            content: stepContent,
+            finishReason: currentModelResponse.finishReason,
+            usage: currentModelResponse.usage,
+            warnings: currentModelResponse.warnings,
+            providerMetadata: currentModelResponse.providerMetadata,
+            request: (_f = currentModelResponse.request) != null ? _f : {},
+            response: {
+              ...currentModelResponse.response,
+              // deep clone msgs to avoid mutating past messages in multi-step:
+              messages: structuredClone(responseMessages)
+            }
+          });
+          logWarnings((_g = currentModelResponse.warnings) != null ? _g : []);
+          steps.push(currentStepResult);
+          await (onStepFinish == null ? void 0 : onStepFinish(currentStepResult));
+        } while (
+          // there are tool calls:
+          clientToolCalls.length > 0 && // all current tool calls have outputs (incl. execution errors):
+          clientToolOutputs.length === clientToolCalls.length && // continue until a stop condition is met:
+          !await isStopConditionMet({ stopConditions, steps })
+        );
+        span.setAttributes(
+          selectTelemetryAttributes({
+            telemetry: telemetry2,
+            attributes: {
+              "ai.response.finishReason": currentModelResponse.finishReason,
+              "ai.response.text": {
+                output: () => extractTextContent(currentModelResponse.content)
+              },
+              "ai.response.toolCalls": {
+                output: () => {
+                  const toolCalls = asToolCalls(currentModelResponse.content);
+                  return toolCalls == null ? void 0 : JSON.stringify(toolCalls);
+                }
+              },
+              "ai.response.providerMetadata": JSON.stringify(
+                currentModelResponse.providerMetadata
+              ),
+              // TODO rename telemetry attributes to inputTokens and outputTokens
+              "ai.usage.promptTokens": currentModelResponse.usage.inputTokens,
+              "ai.usage.completionTokens": currentModelResponse.usage.outputTokens
+            }
+          })
+        );
+        const lastStep = steps[steps.length - 1];
+        let resolvedOutput;
+        if (lastStep.finishReason === "stop") {
+          resolvedOutput = await (output == null ? void 0 : output.parseOutput(
+            { text: lastStep.text },
+            {
+              response: lastStep.response,
+              usage: lastStep.usage,
+              finishReason: lastStep.finishReason
+            }
+          ));
+        }
+        return new DefaultGenerateTextResult({
+          steps,
+          resolvedOutput
+        });
+      }
+    });
+  } catch (error) {
+    throw wrapGatewayError(error);
+  }
+}
+async function executeTools({
+  toolCalls,
+  tools,
+  tracer,
+  telemetry: telemetry2,
+  messages,
+  abortSignal,
+  experimental_context
+}) {
+  const toolOutputs = await Promise.all(
+    toolCalls.map(async ({ toolCallId, toolName, input }) => {
+      const tool2 = tools[toolName];
+      if ((tool2 == null ? void 0 : tool2.execute) == null) {
+        return void 0;
+      }
+      return recordSpan({
+        name: "ai.toolCall",
+        attributes: selectTelemetryAttributes({
+          telemetry: telemetry2,
+          attributes: {
+            ...assembleOperationName({
+              operationId: "ai.toolCall",
+              telemetry: telemetry2
+            }),
+            "ai.toolCall.name": toolName,
+            "ai.toolCall.id": toolCallId,
+            "ai.toolCall.args": {
+              output: () => JSON.stringify(input)
+            }
+          }
+        }),
+        tracer,
+        fn: async (span) => {
+          try {
+            const stream = executeTool({
+              execute: tool2.execute.bind(tool2),
+              input,
+              options: {
+                toolCallId,
+                messages,
+                abortSignal,
+                experimental_context
+              }
+            });
+            let output;
+            for await (const part of stream) {
+              if (part.type === "final") {
+                output = part.output;
+              }
+            }
+            try {
+              span.setAttributes(
+                selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    "ai.toolCall.result": {
+                      output: () => JSON.stringify(output)
+                    }
+                  }
+                })
+              );
+            } catch (ignored) {
+            }
+            return {
+              type: "tool-result",
+              toolCallId,
+              toolName,
+              input,
+              output,
+              dynamic: tool2.type === "dynamic"
+            };
+          } catch (error) {
+            recordErrorOnSpan(span, error);
+            return {
+              type: "tool-error",
+              toolCallId,
+              toolName,
+              input,
+              error,
+              dynamic: tool2.type === "dynamic"
+            };
+          }
+        }
+      });
+    })
+  );
+  return toolOutputs.filter(
+    (output) => output != null
+  );
+}
+function asToolCalls(content) {
+  const parts = content.filter(
+    (part) => part.type === "tool-call"
+  );
+  if (parts.length === 0) {
+    return void 0;
+  }
+  return parts.map((toolCall) => ({
+    toolCallId: toolCall.toolCallId,
+    toolName: toolCall.toolName,
+    input: toolCall.input
+  }));
+}
+function asContent({
+  content,
+  toolCalls,
+  toolOutputs
+}) {
+  return [
+    ...content.map((part) => {
+      switch (part.type) {
+        case "text":
+        case "reasoning":
+        case "source":
+          return part;
+        case "file": {
+          return {
+            type: "file",
+            file: new DefaultGeneratedFile(part)
+          };
+        }
+        case "tool-call": {
+          return toolCalls.find(
+            (toolCall) => toolCall.toolCallId === part.toolCallId
+          );
+        }
+        case "tool-result": {
+          const toolCall = toolCalls.find(
+            (toolCall2) => toolCall2.toolCallId === part.toolCallId
+          );
+          if (toolCall == null) {
+            throw new Error(`Tool call ${part.toolCallId} not found.`);
+          }
+          if (part.isError) {
+            return {
+              type: "tool-error",
+              toolCallId: part.toolCallId,
+              toolName: part.toolName,
+              input: toolCall.input,
+              error: part.result,
+              providerExecuted: true,
+              dynamic: toolCall.dynamic
+            };
+          }
+          return {
+            type: "tool-result",
+            toolCallId: part.toolCallId,
+            toolName: part.toolName,
+            input: toolCall.input,
+            output: part.result,
+            providerExecuted: true,
+            dynamic: toolCall.dynamic
+          };
+        }
+      }
+    }),
+    ...toolOutputs
+  ];
+}
+function prepareHeaders(headers, defaultHeaders) {
+  const responseHeaders = new Headers(headers != null ? headers : {});
+  for (const [key, value2] of Object.entries(defaultHeaders)) {
+    if (!responseHeaders.has(key)) {
+      responseHeaders.set(key, value2);
+    }
+  }
+  return responseHeaders;
+}
+function createTextStreamResponse({
+  status,
+  statusText,
+  headers,
+  textStream
+}) {
+  return new Response(textStream.pipeThrough(new TextEncoderStream()), {
+    status: status != null ? status : 200,
+    statusText,
+    headers: prepareHeaders(headers, {
+      "content-type": "text/plain; charset=utf-8"
+    })
+  });
+}
+function writeToServerResponse({
+  response,
+  status,
+  statusText,
+  headers,
+  stream
+}) {
+  response.writeHead(status != null ? status : 200, statusText, headers);
+  const reader = stream.getReader();
+  const read = async () => {
+    try {
+      while (true) {
+        const { done, value: value2 } = await reader.read();
+        if (done)
+          break;
+        const canContinue = response.write(value2);
+        if (!canContinue) {
+          await new Promise((resolve22) => {
+            response.once("drain", resolve22);
+          });
+        }
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      response.end();
+    }
+  };
+  read();
+}
+function pipeTextStreamToResponse({
+  response,
+  status,
+  statusText,
+  headers,
+  textStream
+}) {
+  writeToServerResponse({
+    response,
+    status,
+    statusText,
+    headers: Object.fromEntries(
+      prepareHeaders(headers, {
+        "content-type": "text/plain; charset=utf-8"
+      }).entries()
+    ),
+    stream: textStream.pipeThrough(new TextEncoderStream())
+  });
+}
+function createUIMessageStreamResponse({
+  status,
+  statusText,
+  headers,
+  stream,
+  consumeSseStream
+}) {
+  let sseStream = stream.pipeThrough(new JsonToSseTransformStream());
+  if (consumeSseStream) {
+    const [stream1, stream2] = sseStream.tee();
+    sseStream = stream1;
+    consumeSseStream({ stream: stream2 });
+  }
+  return new Response(sseStream.pipeThrough(new TextEncoderStream()), {
+    status,
+    statusText,
+    headers: prepareHeaders(headers, UI_MESSAGE_STREAM_HEADERS)
+  });
+}
+function getResponseUIMessageId({
+  originalMessages,
+  responseMessageId
+}) {
+  if (originalMessages == null) {
+    return void 0;
+  }
+  const lastMessage = originalMessages[originalMessages.length - 1];
+  return (lastMessage == null ? void 0 : lastMessage.role) === "assistant" ? lastMessage.id : typeof responseMessageId === "function" ? responseMessageId() : responseMessageId;
+}
+function isDataUIMessageChunk(chunk) {
+  return chunk.type.startsWith("data-");
+}
+function mergeObjects(base, overrides) {
+  if (base === void 0 && overrides === void 0) {
+    return void 0;
+  }
+  if (base === void 0) {
+    return overrides;
+  }
+  if (overrides === void 0) {
+    return base;
+  }
+  const result = { ...base };
+  for (const key in overrides) {
+    if (Object.prototype.hasOwnProperty.call(overrides, key)) {
+      const overridesValue = overrides[key];
+      if (overridesValue === void 0)
+        continue;
+      const baseValue = key in base ? base[key] : void 0;
+      const isSourceObject = overridesValue !== null && typeof overridesValue === "object" && !Array.isArray(overridesValue) && !(overridesValue instanceof Date) && !(overridesValue instanceof RegExp);
+      const isTargetObject = baseValue !== null && baseValue !== void 0 && typeof baseValue === "object" && !Array.isArray(baseValue) && !(baseValue instanceof Date) && !(baseValue instanceof RegExp);
+      if (isSourceObject && isTargetObject) {
+        result[key] = mergeObjects(
+          baseValue,
+          overridesValue
+        );
+      } else {
+        result[key] = overridesValue;
+      }
+    }
+  }
+  return result;
+}
+function fixJson(input) {
+  const stack = ["ROOT"];
+  let lastValidIndex = -1;
+  let literalStart = null;
+  function processValueStart(char, i, swapState) {
+    {
+      switch (char) {
+        case '"': {
+          lastValidIndex = i;
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_STRING");
+          break;
+        }
+        case "f":
+        case "t":
+        case "n": {
+          lastValidIndex = i;
+          literalStart = i;
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_LITERAL");
+          break;
+        }
+        case "-": {
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_NUMBER");
+          break;
+        }
+        case "0":
+        case "1":
+        case "2":
+        case "3":
+        case "4":
+        case "5":
+        case "6":
+        case "7":
+        case "8":
+        case "9": {
+          lastValidIndex = i;
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_NUMBER");
+          break;
+        }
+        case "{": {
+          lastValidIndex = i;
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_OBJECT_START");
+          break;
+        }
+        case "[": {
+          lastValidIndex = i;
+          stack.pop();
+          stack.push(swapState);
+          stack.push("INSIDE_ARRAY_START");
+          break;
+        }
+      }
+    }
+  }
+  function processAfterObjectValue(char, i) {
+    switch (char) {
+      case ",": {
+        stack.pop();
+        stack.push("INSIDE_OBJECT_AFTER_COMMA");
+        break;
+      }
+      case "}": {
+        lastValidIndex = i;
+        stack.pop();
+        break;
+      }
+    }
+  }
+  function processAfterArrayValue(char, i) {
+    switch (char) {
+      case ",": {
+        stack.pop();
+        stack.push("INSIDE_ARRAY_AFTER_COMMA");
+        break;
+      }
+      case "]": {
+        lastValidIndex = i;
+        stack.pop();
+        break;
+      }
+    }
+  }
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    const currentState = stack[stack.length - 1];
+    switch (currentState) {
+      case "ROOT":
+        processValueStart(char, i, "FINISH");
+        break;
+      case "INSIDE_OBJECT_START": {
+        switch (char) {
+          case '"': {
+            stack.pop();
+            stack.push("INSIDE_OBJECT_KEY");
+            break;
+          }
+          case "}": {
+            lastValidIndex = i;
+            stack.pop();
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_OBJECT_AFTER_COMMA": {
+        switch (char) {
+          case '"': {
+            stack.pop();
+            stack.push("INSIDE_OBJECT_KEY");
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_OBJECT_KEY": {
+        switch (char) {
+          case '"': {
+            stack.pop();
+            stack.push("INSIDE_OBJECT_AFTER_KEY");
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_OBJECT_AFTER_KEY": {
+        switch (char) {
+          case ":": {
+            stack.pop();
+            stack.push("INSIDE_OBJECT_BEFORE_VALUE");
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_OBJECT_BEFORE_VALUE": {
+        processValueStart(char, i, "INSIDE_OBJECT_AFTER_VALUE");
+        break;
+      }
+      case "INSIDE_OBJECT_AFTER_VALUE": {
+        processAfterObjectValue(char, i);
+        break;
+      }
+      case "INSIDE_STRING": {
+        switch (char) {
+          case '"': {
+            stack.pop();
+            lastValidIndex = i;
+            break;
+          }
+          case "\\": {
+            stack.push("INSIDE_STRING_ESCAPE");
+            break;
+          }
+          default: {
+            lastValidIndex = i;
+          }
+        }
+        break;
+      }
+      case "INSIDE_ARRAY_START": {
+        switch (char) {
+          case "]": {
+            lastValidIndex = i;
+            stack.pop();
+            break;
+          }
+          default: {
+            lastValidIndex = i;
+            processValueStart(char, i, "INSIDE_ARRAY_AFTER_VALUE");
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_ARRAY_AFTER_VALUE": {
+        switch (char) {
+          case ",": {
+            stack.pop();
+            stack.push("INSIDE_ARRAY_AFTER_COMMA");
+            break;
+          }
+          case "]": {
+            lastValidIndex = i;
+            stack.pop();
+            break;
+          }
+          default: {
+            lastValidIndex = i;
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_ARRAY_AFTER_COMMA": {
+        processValueStart(char, i, "INSIDE_ARRAY_AFTER_VALUE");
+        break;
+      }
+      case "INSIDE_STRING_ESCAPE": {
+        stack.pop();
+        lastValidIndex = i;
+        break;
+      }
+      case "INSIDE_NUMBER": {
+        switch (char) {
+          case "0":
+          case "1":
+          case "2":
+          case "3":
+          case "4":
+          case "5":
+          case "6":
+          case "7":
+          case "8":
+          case "9": {
+            lastValidIndex = i;
+            break;
+          }
+          case "e":
+          case "E":
+          case "-":
+          case ".": {
+            break;
+          }
+          case ",": {
+            stack.pop();
+            if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
+              processAfterArrayValue(char, i);
+            }
+            if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
+              processAfterObjectValue(char, i);
+            }
+            break;
+          }
+          case "}": {
+            stack.pop();
+            if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
+              processAfterObjectValue(char, i);
+            }
+            break;
+          }
+          case "]": {
+            stack.pop();
+            if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
+              processAfterArrayValue(char, i);
+            }
+            break;
+          }
+          default: {
+            stack.pop();
+            break;
+          }
+        }
+        break;
+      }
+      case "INSIDE_LITERAL": {
+        const partialLiteral = input.substring(literalStart, i + 1);
+        if (!"false".startsWith(partialLiteral) && !"true".startsWith(partialLiteral) && !"null".startsWith(partialLiteral)) {
+          stack.pop();
+          if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
+            processAfterObjectValue(char, i);
+          } else if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
+            processAfterArrayValue(char, i);
+          }
+        } else {
+          lastValidIndex = i;
+        }
+        break;
+      }
+    }
+  }
+  let result = input.slice(0, lastValidIndex + 1);
+  for (let i = stack.length - 1; i >= 0; i--) {
+    const state = stack[i];
+    switch (state) {
+      case "INSIDE_STRING": {
+        result += '"';
+        break;
+      }
+      case "INSIDE_OBJECT_KEY":
+      case "INSIDE_OBJECT_AFTER_KEY":
+      case "INSIDE_OBJECT_AFTER_COMMA":
+      case "INSIDE_OBJECT_START":
+      case "INSIDE_OBJECT_BEFORE_VALUE":
+      case "INSIDE_OBJECT_AFTER_VALUE": {
+        result += "}";
+        break;
+      }
+      case "INSIDE_ARRAY_START":
+      case "INSIDE_ARRAY_AFTER_COMMA":
+      case "INSIDE_ARRAY_AFTER_VALUE": {
+        result += "]";
+        break;
+      }
+      case "INSIDE_LITERAL": {
+        const partialLiteral = input.substring(literalStart, input.length);
+        if ("true".startsWith(partialLiteral)) {
+          result += "true".slice(partialLiteral.length);
+        } else if ("false".startsWith(partialLiteral)) {
+          result += "false".slice(partialLiteral.length);
+        } else if ("null".startsWith(partialLiteral)) {
+          result += "null".slice(partialLiteral.length);
+        }
+      }
+    }
+  }
+  return result;
+}
+async function parsePartialJson(jsonText) {
+  if (jsonText === void 0) {
+    return { value: void 0, state: "undefined-input" };
+  }
+  let result = await safeParseJSON({ text: jsonText });
+  if (result.success) {
+    return { value: result.value, state: "successful-parse" };
+  }
+  result = await safeParseJSON({ text: fixJson(jsonText) });
+  if (result.success) {
+    return { value: result.value, state: "repaired-parse" };
+  }
+  return { value: void 0, state: "failed-parse" };
+}
+function isDataUIPart(part) {
+  return part.type.startsWith("data-");
+}
+function isTextUIPart(part) {
+  return part.type === "text";
+}
+function isFileUIPart(part) {
+  return part.type === "file";
+}
+function isReasoningUIPart(part) {
+  return part.type === "reasoning";
+}
+function isToolUIPart(part) {
+  return part.type.startsWith("tool-");
+}
+function isDynamicToolUIPart(part) {
+  return part.type === "dynamic-tool";
+}
+function isToolOrDynamicToolUIPart(part) {
+  return isToolUIPart(part) || isDynamicToolUIPart(part);
+}
+function getToolName(part) {
+  return part.type.split("-").slice(1).join("-");
+}
+function getToolOrDynamicToolName(part) {
+  return isDynamicToolUIPart(part) ? part.toolName : getToolName(part);
+}
+function createStreamingUIMessageState({
+  lastMessage,
+  messageId
+}) {
+  return {
+    message: (lastMessage == null ? void 0 : lastMessage.role) === "assistant" ? lastMessage : {
+      id: messageId,
+      metadata: void 0,
+      role: "assistant",
+      parts: []
+    },
+    activeTextParts: {},
+    activeReasoningParts: {},
+    partialToolCalls: {}
+  };
+}
+function processUIMessageStream({
+  stream,
+  messageMetadataSchema,
+  dataPartSchemas,
+  runUpdateMessageJob,
+  onError: onError2,
+  onToolCall,
+  onData
+}) {
+  return stream.pipeThrough(
+    new TransformStream({
+      async transform(chunk, controller) {
+        await runUpdateMessageJob(async ({ state, write }) => {
+          var _a162, _b8, _c, _d;
+          function getToolInvocation(toolCallId) {
+            const toolInvocations = state.message.parts.filter(isToolUIPart);
+            const toolInvocation = toolInvocations.find(
+              (invocation) => invocation.toolCallId === toolCallId
+            );
+            if (toolInvocation == null) {
+              throw new Error(
+                "tool-output-error must be preceded by a tool-input-available"
+              );
+            }
+            return toolInvocation;
+          }
+          function getDynamicToolInvocation(toolCallId) {
+            const toolInvocations = state.message.parts.filter(
+              (part) => part.type === "dynamic-tool"
+            );
+            const toolInvocation = toolInvocations.find(
+              (invocation) => invocation.toolCallId === toolCallId
+            );
+            if (toolInvocation == null) {
+              throw new Error(
+                "tool-output-error must be preceded by a tool-input-available"
+              );
+            }
+            return toolInvocation;
+          }
+          function updateToolPart(options) {
+            var _a17;
+            const part = state.message.parts.find(
+              (part2) => isToolUIPart(part2) && part2.toolCallId === options.toolCallId
+            );
+            const anyOptions = options;
+            const anyPart = part;
+            if (part != null) {
+              part.state = options.state;
+              anyPart.input = anyOptions.input;
+              anyPart.output = anyOptions.output;
+              anyPart.errorText = anyOptions.errorText;
+              anyPart.rawInput = anyOptions.rawInput;
+              anyPart.preliminary = anyOptions.preliminary;
+              anyPart.providerExecuted = (_a17 = anyOptions.providerExecuted) != null ? _a17 : part.providerExecuted;
+              if (anyOptions.providerMetadata != null && part.state === "input-available") {
+                part.callProviderMetadata = anyOptions.providerMetadata;
+              }
+            } else {
+              state.message.parts.push({
+                type: `tool-${options.toolName}`,
+                toolCallId: options.toolCallId,
+                state: options.state,
+                input: anyOptions.input,
+                output: anyOptions.output,
+                rawInput: anyOptions.rawInput,
+                errorText: anyOptions.errorText,
+                providerExecuted: anyOptions.providerExecuted,
+                preliminary: anyOptions.preliminary,
+                ...anyOptions.providerMetadata != null ? { callProviderMetadata: anyOptions.providerMetadata } : {}
+              });
+            }
+          }
+          function updateDynamicToolPart(options) {
+            var _a17, _b22;
+            const part = state.message.parts.find(
+              (part2) => part2.type === "dynamic-tool" && part2.toolCallId === options.toolCallId
+            );
+            const anyOptions = options;
+            const anyPart = part;
+            if (part != null) {
+              part.state = options.state;
+              anyPart.toolName = options.toolName;
+              anyPart.input = anyOptions.input;
+              anyPart.output = anyOptions.output;
+              anyPart.errorText = anyOptions.errorText;
+              anyPart.rawInput = (_a17 = anyOptions.rawInput) != null ? _a17 : anyPart.rawInput;
+              anyPart.preliminary = anyOptions.preliminary;
+              anyPart.providerExecuted = (_b22 = anyOptions.providerExecuted) != null ? _b22 : part.providerExecuted;
+              if (anyOptions.providerMetadata != null && part.state === "input-available") {
+                part.callProviderMetadata = anyOptions.providerMetadata;
+              }
+            } else {
+              state.message.parts.push({
+                type: "dynamic-tool",
+                toolName: options.toolName,
+                toolCallId: options.toolCallId,
+                state: options.state,
+                input: anyOptions.input,
+                output: anyOptions.output,
+                errorText: anyOptions.errorText,
+                preliminary: anyOptions.preliminary,
+                providerExecuted: anyOptions.providerExecuted,
+                ...anyOptions.providerMetadata != null ? { callProviderMetadata: anyOptions.providerMetadata } : {}
+              });
+            }
+          }
+          async function updateMessageMetadata(metadata) {
+            if (metadata != null) {
+              const mergedMetadata = state.message.metadata != null ? mergeObjects(state.message.metadata, metadata) : metadata;
+              if (messageMetadataSchema != null) {
+                await validateTypes({
+                  value: mergedMetadata,
+                  schema: messageMetadataSchema
+                });
+              }
+              state.message.metadata = mergedMetadata;
+            }
+          }
+          switch (chunk.type) {
+            case "text-start": {
+              const textPart = {
+                type: "text",
+                text: "",
+                providerMetadata: chunk.providerMetadata,
+                state: "streaming"
+              };
+              state.activeTextParts[chunk.id] = textPart;
+              state.message.parts.push(textPart);
+              write();
+              break;
+            }
+            case "text-delta": {
+              const textPart = state.activeTextParts[chunk.id];
+              textPart.text += chunk.delta;
+              textPart.providerMetadata = (_a162 = chunk.providerMetadata) != null ? _a162 : textPart.providerMetadata;
+              write();
+              break;
+            }
+            case "text-end": {
+              const textPart = state.activeTextParts[chunk.id];
+              textPart.state = "done";
+              textPart.providerMetadata = (_b8 = chunk.providerMetadata) != null ? _b8 : textPart.providerMetadata;
+              delete state.activeTextParts[chunk.id];
+              write();
+              break;
+            }
+            case "reasoning-start": {
+              const reasoningPart = {
+                type: "reasoning",
+                text: "",
+                providerMetadata: chunk.providerMetadata,
+                state: "streaming"
+              };
+              state.activeReasoningParts[chunk.id] = reasoningPart;
+              state.message.parts.push(reasoningPart);
+              write();
+              break;
+            }
+            case "reasoning-delta": {
+              const reasoningPart = state.activeReasoningParts[chunk.id];
+              reasoningPart.text += chunk.delta;
+              reasoningPart.providerMetadata = (_c = chunk.providerMetadata) != null ? _c : reasoningPart.providerMetadata;
+              write();
+              break;
+            }
+            case "reasoning-end": {
+              const reasoningPart = state.activeReasoningParts[chunk.id];
+              reasoningPart.providerMetadata = (_d = chunk.providerMetadata) != null ? _d : reasoningPart.providerMetadata;
+              reasoningPart.state = "done";
+              delete state.activeReasoningParts[chunk.id];
+              write();
+              break;
+            }
+            case "file": {
+              state.message.parts.push({
+                type: "file",
+                mediaType: chunk.mediaType,
+                url: chunk.url
+              });
+              write();
+              break;
+            }
+            case "source-url": {
+              state.message.parts.push({
+                type: "source-url",
+                sourceId: chunk.sourceId,
+                url: chunk.url,
+                title: chunk.title,
+                providerMetadata: chunk.providerMetadata
+              });
+              write();
+              break;
+            }
+            case "source-document": {
+              state.message.parts.push({
+                type: "source-document",
+                sourceId: chunk.sourceId,
+                mediaType: chunk.mediaType,
+                title: chunk.title,
+                filename: chunk.filename,
+                providerMetadata: chunk.providerMetadata
+              });
+              write();
+              break;
+            }
+            case "tool-input-start": {
+              const toolInvocations = state.message.parts.filter(isToolUIPart);
+              state.partialToolCalls[chunk.toolCallId] = {
+                text: "",
+                toolName: chunk.toolName,
+                index: toolInvocations.length,
+                dynamic: chunk.dynamic
+              };
+              if (chunk.dynamic) {
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "input-streaming",
+                  input: void 0,
+                  providerExecuted: chunk.providerExecuted
+                });
+              } else {
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "input-streaming",
+                  input: void 0,
+                  providerExecuted: chunk.providerExecuted
+                });
+              }
+              write();
+              break;
+            }
+            case "tool-input-delta": {
+              const partialToolCall = state.partialToolCalls[chunk.toolCallId];
+              partialToolCall.text += chunk.inputTextDelta;
+              const { value: partialArgs } = await parsePartialJson(
+                partialToolCall.text
+              );
+              if (partialToolCall.dynamic) {
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: partialToolCall.toolName,
+                  state: "input-streaming",
+                  input: partialArgs
+                });
+              } else {
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: partialToolCall.toolName,
+                  state: "input-streaming",
+                  input: partialArgs
+                });
+              }
+              write();
+              break;
+            }
+            case "tool-input-available": {
+              if (chunk.dynamic) {
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "input-available",
+                  input: chunk.input,
+                  providerExecuted: chunk.providerExecuted,
+                  providerMetadata: chunk.providerMetadata
+                });
+              } else {
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "input-available",
+                  input: chunk.input,
+                  providerExecuted: chunk.providerExecuted,
+                  providerMetadata: chunk.providerMetadata
+                });
+              }
+              write();
+              if (onToolCall && !chunk.providerExecuted) {
+                await onToolCall({
+                  toolCall: chunk
+                });
+              }
+              break;
+            }
+            case "tool-input-error": {
+              if (chunk.dynamic) {
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "output-error",
+                  input: chunk.input,
+                  errorText: chunk.errorText,
+                  providerExecuted: chunk.providerExecuted,
+                  providerMetadata: chunk.providerMetadata
+                });
+              } else {
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: chunk.toolName,
+                  state: "output-error",
+                  input: void 0,
+                  rawInput: chunk.input,
+                  errorText: chunk.errorText,
+                  providerExecuted: chunk.providerExecuted,
+                  providerMetadata: chunk.providerMetadata
+                });
+              }
+              write();
+              break;
+            }
+            case "tool-output-available": {
+              if (chunk.dynamic) {
+                const toolInvocation = getDynamicToolInvocation(
+                  chunk.toolCallId
+                );
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: toolInvocation.toolName,
+                  state: "output-available",
+                  input: toolInvocation.input,
+                  output: chunk.output,
+                  preliminary: chunk.preliminary
+                });
+              } else {
+                const toolInvocation = getToolInvocation(chunk.toolCallId);
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: getToolName(toolInvocation),
+                  state: "output-available",
+                  input: toolInvocation.input,
+                  output: chunk.output,
+                  providerExecuted: chunk.providerExecuted,
+                  preliminary: chunk.preliminary
+                });
+              }
+              write();
+              break;
+            }
+            case "tool-output-error": {
+              if (chunk.dynamic) {
+                const toolInvocation = getDynamicToolInvocation(
+                  chunk.toolCallId
+                );
+                updateDynamicToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: toolInvocation.toolName,
+                  state: "output-error",
+                  input: toolInvocation.input,
+                  errorText: chunk.errorText,
+                  providerExecuted: chunk.providerExecuted
+                });
+              } else {
+                const toolInvocation = getToolInvocation(chunk.toolCallId);
+                updateToolPart({
+                  toolCallId: chunk.toolCallId,
+                  toolName: getToolName(toolInvocation),
+                  state: "output-error",
+                  input: toolInvocation.input,
+                  rawInput: toolInvocation.rawInput,
+                  errorText: chunk.errorText,
+                  providerExecuted: chunk.providerExecuted
+                });
+              }
+              write();
+              break;
+            }
+            case "start-step": {
+              state.message.parts.push({ type: "step-start" });
+              break;
+            }
+            case "finish-step": {
+              state.activeTextParts = {};
+              state.activeReasoningParts = {};
+              break;
+            }
+            case "start": {
+              if (chunk.messageId != null) {
+                state.message.id = chunk.messageId;
+              }
+              await updateMessageMetadata(chunk.messageMetadata);
+              if (chunk.messageId != null || chunk.messageMetadata != null) {
+                write();
+              }
+              break;
+            }
+            case "finish": {
+              if (chunk.finishReason != null) {
+                state.finishReason = chunk.finishReason;
+              }
+              await updateMessageMetadata(chunk.messageMetadata);
+              if (chunk.messageMetadata != null) {
+                write();
+              }
+              break;
+            }
+            case "message-metadata": {
+              await updateMessageMetadata(chunk.messageMetadata);
+              if (chunk.messageMetadata != null) {
+                write();
+              }
+              break;
+            }
+            case "error": {
+              onError2 == null ? void 0 : onError2(new Error(chunk.errorText));
+              break;
+            }
+            default: {
+              if (isDataUIMessageChunk(chunk)) {
+                if ((dataPartSchemas == null ? void 0 : dataPartSchemas[chunk.type]) != null) {
+                  await validateTypes({
+                    value: chunk.data,
+                    schema: dataPartSchemas[chunk.type]
+                  });
+                }
+                const dataChunk = chunk;
+                if (dataChunk.transient) {
+                  onData == null ? void 0 : onData(dataChunk);
+                  break;
+                }
+                const existingUIPart = dataChunk.id != null ? state.message.parts.find(
+                  (chunkArg) => dataChunk.type === chunkArg.type && dataChunk.id === chunkArg.id
+                ) : void 0;
+                if (existingUIPart != null) {
+                  existingUIPart.data = dataChunk.data;
+                } else {
+                  state.message.parts.push(dataChunk);
+                }
+                onData == null ? void 0 : onData(dataChunk);
+                write();
+              }
+            }
+          }
+          controller.enqueue(chunk);
+        });
+      }
+    })
+  );
+}
+function handleUIMessageStreamFinish({
+  messageId,
+  originalMessages = [],
+  onFinish: onFinish2,
+  onError: onError2,
+  stream
+}) {
+  let lastMessage = originalMessages == null ? void 0 : originalMessages[originalMessages.length - 1];
+  if ((lastMessage == null ? void 0 : lastMessage.role) !== "assistant") {
+    lastMessage = void 0;
+  } else {
+    messageId = lastMessage.id;
+  }
+  let isAborted = false;
+  const idInjectedStream = stream.pipeThrough(
+    new TransformStream({
+      transform(chunk, controller) {
+        if (chunk.type === "start") {
+          const startChunk = chunk;
+          if (startChunk.messageId == null && messageId != null) {
+            startChunk.messageId = messageId;
+          }
+        }
+        if (chunk.type === "abort") {
+          isAborted = true;
+        }
+        controller.enqueue(chunk);
+      }
+    })
+  );
+  if (onFinish2 == null) {
+    return idInjectedStream;
+  }
+  const state = createStreamingUIMessageState({
+    lastMessage: lastMessage ? structuredClone(lastMessage) : void 0,
+    messageId: messageId != null ? messageId : ""
+    // will be overridden by the stream
+  });
+  const runUpdateMessageJob = async (job) => {
+    await job({ state, write: () => {
+    } });
+  };
+  let finishCalled = false;
+  const callOnFinish = async () => {
+    if (finishCalled || !onFinish2) {
+      return;
+    }
+    finishCalled = true;
+    const isContinuation = state.message.id === (lastMessage == null ? void 0 : lastMessage.id);
+    await onFinish2({
+      isAborted,
+      isContinuation,
+      responseMessage: state.message,
+      messages: [
+        ...isContinuation ? originalMessages.slice(0, -1) : originalMessages,
+        state.message
+      ],
+      finishReason: state.finishReason
+    });
+  };
+  return processUIMessageStream({
+    stream: idInjectedStream,
+    runUpdateMessageJob,
+    onError: onError2
+  }).pipeThrough(
+    new TransformStream({
+      transform(chunk, controller) {
+        controller.enqueue(chunk);
+      },
+      // @ts-expect-error cancel is still new and missing from types https://developer.mozilla.org/en-US/docs/Web/API/TransformStream#browser_compatibility
+      async cancel() {
+        await callOnFinish();
+      },
+      async flush() {
+        await callOnFinish();
+      }
+    })
+  );
+}
+function pipeUIMessageStreamToResponse({
+  response,
+  status,
+  statusText,
+  headers,
+  stream,
+  consumeSseStream
+}) {
+  let sseStream = stream.pipeThrough(new JsonToSseTransformStream());
+  if (consumeSseStream) {
+    const [stream1, stream2] = sseStream.tee();
+    sseStream = stream1;
+    consumeSseStream({ stream: stream2 });
+  }
+  writeToServerResponse({
+    response,
+    status,
+    statusText,
+    headers: Object.fromEntries(
+      prepareHeaders(headers, UI_MESSAGE_STREAM_HEADERS).entries()
+    ),
+    stream: sseStream.pipeThrough(new TextEncoderStream())
+  });
+}
+function createAsyncIterableStream(source) {
+  const stream = source.pipeThrough(new TransformStream());
+  stream[Symbol.asyncIterator] = function() {
+    const reader = this.getReader();
+    let finished = false;
+    async function cleanup(cancelStream) {
+      var _a162;
+      finished = true;
+      try {
+        if (cancelStream) {
+          await ((_a162 = reader.cancel) == null ? void 0 : _a162.call(reader));
+        }
+      } finally {
+        try {
+          reader.releaseLock();
+        } catch (e) {
+        }
+      }
+    }
+    return {
+      /**
+       * Reads the next chunk from the stream.
+       * @returns A promise resolving to the next IteratorResult.
+       */
+      async next() {
+        if (finished) {
+          return { done: true, value: void 0 };
+        }
+        const { done, value: value2 } = await reader.read();
+        if (done) {
+          await cleanup(true);
+          return { done: true, value: void 0 };
+        }
+        return { done: false, value: value2 };
+      },
+      /**
+       * Called on early exit (e.g., break from for-await).
+       * Ensures the stream is cancelled and resources are released.
+       * @returns A promise resolving to a completed IteratorResult.
+       */
+      async return() {
+        await cleanup(true);
+        return { done: true, value: void 0 };
+      },
+      /**
+       * Called on early exit with error.
+       * Ensures the stream is cancelled and resources are released, then rethrows the error.
+       * @param err The error to throw.
+       * @returns A promise that rejects with the provided error.
+       */
+      async throw(err) {
+        await cleanup(true);
+        throw err;
+      }
+    };
+  };
+  return stream;
+}
+async function consumeStream({
+  stream,
+  onError: onError2
+}) {
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      const { done } = await reader.read();
+      if (done)
+        break;
+    }
+  } catch (error) {
+    onError2 == null ? void 0 : onError2(error);
+  } finally {
+    reader.releaseLock();
+  }
+}
+function createResolvablePromise() {
+  let resolve22;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve22 = res;
+    reject = rej;
+  });
+  return {
+    promise,
+    resolve: resolve22,
+    reject
+  };
+}
+function createStitchableStream() {
+  let innerStreamReaders = [];
+  let controller = null;
+  let isClosed = false;
+  let waitForNewStream = createResolvablePromise();
+  const terminate = () => {
+    isClosed = true;
+    waitForNewStream.resolve();
+    innerStreamReaders.forEach((reader) => reader.cancel());
+    innerStreamReaders = [];
+    controller == null ? void 0 : controller.close();
+  };
+  const processPull = async () => {
+    if (isClosed && innerStreamReaders.length === 0) {
+      controller == null ? void 0 : controller.close();
+      return;
+    }
+    if (innerStreamReaders.length === 0) {
+      waitForNewStream = createResolvablePromise();
+      await waitForNewStream.promise;
+      return processPull();
+    }
+    try {
+      const { value: value2, done } = await innerStreamReaders[0].read();
+      if (done) {
+        innerStreamReaders.shift();
+        if (innerStreamReaders.length > 0) {
+          await processPull();
+        } else if (isClosed) {
+          controller == null ? void 0 : controller.close();
+        }
+      } else {
+        controller == null ? void 0 : controller.enqueue(value2);
+      }
+    } catch (error) {
+      controller == null ? void 0 : controller.error(error);
+      innerStreamReaders.shift();
+      terminate();
+    }
+  };
+  return {
+    stream: new ReadableStream({
+      start(controllerParam) {
+        controller = controllerParam;
+      },
+      pull: processPull,
+      async cancel() {
+        for (const reader of innerStreamReaders) {
+          await reader.cancel();
+        }
+        innerStreamReaders = [];
+        isClosed = true;
+      }
+    }),
+    addStream: (innerStream) => {
+      if (isClosed) {
+        throw new Error("Cannot add inner stream: outer stream is closed");
+      }
+      innerStreamReaders.push(innerStream.getReader());
+      waitForNewStream.resolve();
+    },
+    /**
+     * Gracefully close the outer stream. This will let the inner streams
+     * finish processing and then close the outer stream.
+     */
+    close: () => {
+      isClosed = true;
+      waitForNewStream.resolve();
+      if (innerStreamReaders.length === 0) {
+        controller == null ? void 0 : controller.close();
+      }
+    },
+    /**
+     * Immediately close the outer stream. This will cancel all inner streams
+     * and close the outer stream.
+     */
+    terminate
+  };
+}
+function now() {
+  var _a162, _b8;
+  return (_b8 = (_a162 = globalThis == null ? void 0 : globalThis.performance) == null ? void 0 : _a162.now()) != null ? _b8 : Date.now();
+}
+function runToolsTransformation({
+  tools,
+  generatorStream,
+  tracer,
+  telemetry: telemetry2,
+  system,
+  messages,
+  abortSignal,
+  repairToolCall,
+  experimental_context
+}) {
+  let toolResultsStreamController = null;
+  const toolResultsStream = new ReadableStream({
+    start(controller) {
+      toolResultsStreamController = controller;
+    }
+  });
+  const outstandingToolResults = /* @__PURE__ */ new Set();
+  const toolInputs = /* @__PURE__ */ new Map();
+  let canClose = false;
+  let finishChunk = void 0;
+  function attemptClose() {
+    if (canClose && outstandingToolResults.size === 0) {
+      if (finishChunk != null) {
+        toolResultsStreamController.enqueue(finishChunk);
+      }
+      toolResultsStreamController.close();
+    }
+  }
+  const forwardStream = new TransformStream({
+    async transform(chunk, controller) {
+      const chunkType = chunk.type;
+      switch (chunkType) {
+        case "stream-start":
+        case "text-start":
+        case "text-delta":
+        case "text-end":
+        case "reasoning-start":
+        case "reasoning-delta":
+        case "reasoning-end":
+        case "tool-input-start":
+        case "tool-input-delta":
+        case "tool-input-end":
+        case "source":
+        case "response-metadata":
+        case "error":
+        case "raw": {
+          controller.enqueue(chunk);
+          break;
+        }
+        case "file": {
+          controller.enqueue({
+            type: "file",
+            file: new DefaultGeneratedFileWithType({
+              data: chunk.data,
+              mediaType: chunk.mediaType
+            })
+          });
+          break;
+        }
+        case "finish": {
+          finishChunk = {
+            type: "finish",
+            finishReason: chunk.finishReason,
+            usage: chunk.usage,
+            providerMetadata: chunk.providerMetadata
+          };
+          break;
+        }
+        case "tool-call": {
+          try {
+            const toolCall = await parseToolCall({
+              toolCall: chunk,
+              tools,
+              repairToolCall,
+              system,
+              messages
+            });
+            controller.enqueue(toolCall);
+            if (toolCall.invalid) {
+              toolResultsStreamController.enqueue({
+                type: "tool-error",
+                toolCallId: toolCall.toolCallId,
+                toolName: toolCall.toolName,
+                input: toolCall.input,
+                error: getErrorMessage2(toolCall.error),
+                dynamic: true
+              });
+              break;
+            }
+            const tool2 = tools[toolCall.toolName];
+            toolInputs.set(toolCall.toolCallId, toolCall.input);
+            if (tool2.onInputAvailable != null) {
+              await tool2.onInputAvailable({
+                input: toolCall.input,
+                toolCallId: toolCall.toolCallId,
+                messages,
+                abortSignal,
+                experimental_context
+              });
+            }
+            if (tool2.execute != null && toolCall.providerExecuted !== true) {
+              const toolExecutionId = generateId();
+              outstandingToolResults.add(toolExecutionId);
+              recordSpan({
+                name: "ai.toolCall",
+                attributes: selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    ...assembleOperationName({
+                      operationId: "ai.toolCall",
+                      telemetry: telemetry2
+                    }),
+                    "ai.toolCall.name": toolCall.toolName,
+                    "ai.toolCall.id": toolCall.toolCallId,
+                    "ai.toolCall.args": {
+                      output: () => JSON.stringify(toolCall.input)
+                    }
+                  }
+                }),
+                tracer,
+                fn: async (span) => {
+                  let output;
+                  try {
+                    const stream = executeTool({
+                      execute: tool2.execute.bind(tool2),
+                      input: toolCall.input,
+                      options: {
+                        toolCallId: toolCall.toolCallId,
+                        messages,
+                        abortSignal,
+                        experimental_context
+                      }
+                    });
+                    for await (const part of stream) {
+                      toolResultsStreamController.enqueue({
+                        ...toolCall,
+                        type: "tool-result",
+                        output: part.output,
+                        ...part.type === "preliminary" && {
+                          preliminary: true
+                        }
+                      });
+                      if (part.type === "final") {
+                        output = part.output;
+                      }
+                    }
+                  } catch (error) {
+                    recordErrorOnSpan(span, error);
+                    toolResultsStreamController.enqueue({
+                      ...toolCall,
+                      type: "tool-error",
+                      error
+                    });
+                    outstandingToolResults.delete(toolExecutionId);
+                    attemptClose();
+                    return;
+                  }
+                  outstandingToolResults.delete(toolExecutionId);
+                  attemptClose();
+                  try {
+                    span.setAttributes(
+                      selectTelemetryAttributes({
+                        telemetry: telemetry2,
+                        attributes: {
+                          "ai.toolCall.result": {
+                            output: () => JSON.stringify(output)
+                          }
+                        }
+                      })
+                    );
+                  } catch (ignored) {
+                  }
+                }
+              });
+            }
+          } catch (error) {
+            toolResultsStreamController.enqueue({ type: "error", error });
+          }
+          break;
+        }
+        case "tool-result": {
+          const toolName = chunk.toolName;
+          if (chunk.isError) {
+            toolResultsStreamController.enqueue({
+              type: "tool-error",
+              toolCallId: chunk.toolCallId,
+              toolName,
+              input: toolInputs.get(chunk.toolCallId),
+              providerExecuted: chunk.providerExecuted,
+              error: chunk.result
+            });
+          } else {
+            controller.enqueue({
+              type: "tool-result",
+              toolCallId: chunk.toolCallId,
+              toolName,
+              input: toolInputs.get(chunk.toolCallId),
+              output: chunk.result,
+              providerExecuted: chunk.providerExecuted
+            });
+          }
+          break;
+        }
+        default: {
+          const _exhaustiveCheck = chunkType;
+          throw new Error(`Unhandled chunk type: ${_exhaustiveCheck}`);
+        }
+      }
+    },
+    flush() {
+      canClose = true;
+      attemptClose();
+    }
+  });
+  return new ReadableStream({
+    async start(controller) {
+      return Promise.all([
+        generatorStream.pipeThrough(forwardStream).pipeTo(
+          new WritableStream({
+            write(chunk) {
+              controller.enqueue(chunk);
+            },
+            close() {
+            }
+          })
+        ),
+        toolResultsStream.pipeTo(
+          new WritableStream({
+            write(chunk) {
+              controller.enqueue(chunk);
+            },
+            close() {
+              controller.close();
+            }
+          })
+        )
+      ]);
+    }
+  });
+}
+function streamText({
+  model,
+  tools,
+  toolChoice,
+  system,
+  prompt,
+  messages,
+  maxRetries,
+  abortSignal,
+  headers,
+  stopWhen = stepCountIs(1),
+  experimental_output: output,
+  experimental_telemetry: telemetry2,
+  prepareStep,
+  providerOptions,
+  experimental_activeTools,
+  activeTools = experimental_activeTools,
+  experimental_repairToolCall: repairToolCall,
+  experimental_transform: transform,
+  experimental_download: download2,
+  includeRawChunks = false,
+  onChunk,
+  onError: onError2 = ({ error }) => {
+    console.error(error);
+  },
+  onFinish: onFinish2,
+  onAbort,
+  onStepFinish,
+  experimental_context,
+  _internal: {
+    now: now2 = now,
+    generateId: generateId3 = originalGenerateId2,
+    currentDate = () => /* @__PURE__ */ new Date()
+  } = {},
+  ...settings
+}) {
+  return new DefaultStreamTextResult({
+    model: resolveLanguageModel(model),
+    telemetry: telemetry2,
+    headers,
+    settings,
+    maxRetries,
+    abortSignal,
+    system,
+    prompt,
+    messages,
+    tools,
+    toolChoice,
+    transforms: asArray(transform),
+    activeTools,
+    repairToolCall,
+    stopConditions: asArray(stopWhen),
+    output,
+    providerOptions,
+    prepareStep,
+    includeRawChunks,
+    onChunk,
+    onError: onError2,
+    onFinish: onFinish2,
+    onAbort,
+    onStepFinish,
+    now: now2,
+    currentDate,
+    generateId: generateId3,
+    experimental_context,
+    download: download2
+  });
+}
+function createOutputTransformStream(output) {
+  if (!output) {
+    return new TransformStream({
+      transform(chunk, controller) {
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
+      }
+    });
+  }
+  let firstTextChunkId = void 0;
+  let text2 = "";
+  let textChunk = "";
+  let lastPublishedJson = "";
+  function publishTextChunk({
+    controller,
+    partialOutput = void 0
+  }) {
+    controller.enqueue({
+      part: {
+        type: "text-delta",
+        id: firstTextChunkId,
+        text: textChunk
+      },
+      partialOutput
+    });
+    textChunk = "";
+  }
+  return new TransformStream({
+    async transform(chunk, controller) {
+      if (chunk.type === "finish-step" && textChunk.length > 0) {
+        publishTextChunk({ controller });
+      }
+      if (chunk.type !== "text-delta" && chunk.type !== "text-start" && chunk.type !== "text-end") {
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
+        return;
+      }
+      if (firstTextChunkId == null) {
+        firstTextChunkId = chunk.id;
+      } else if (chunk.id !== firstTextChunkId) {
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
+        return;
+      }
+      if (chunk.type === "text-start") {
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
+        return;
+      }
+      if (chunk.type === "text-end") {
+        if (textChunk.length > 0) {
+          publishTextChunk({ controller });
+        }
+        controller.enqueue({ part: chunk, partialOutput: void 0 });
+        return;
+      }
+      text2 += chunk.text;
+      textChunk += chunk.text;
+      const result = await output.parsePartial({ text: text2 });
+      if (result != null) {
+        const currentJson = JSON.stringify(result.partial);
+        if (currentJson !== lastPublishedJson) {
+          publishTextChunk({ controller, partialOutput: result.partial });
+          lastPublishedJson = currentJson;
+        }
+      }
+    }
+  });
+}
+function convertToModelMessages(messages, options) {
+  const modelMessages = [];
+  if (options == null ? void 0 : options.ignoreIncompleteToolCalls) {
+    messages = messages.map((message) => ({
+      ...message,
+      parts: message.parts.filter(
+        (part) => !isToolOrDynamicToolUIPart(part) || part.state !== "input-streaming" && part.state !== "input-available"
+      )
+    }));
+  }
+  for (const message of messages) {
+    switch (message.role) {
+      case "system": {
+        const textParts = message.parts.filter(
+          (part) => part.type === "text"
+        );
+        const providerMetadata = textParts.reduce((acc, part) => {
+          if (part.providerMetadata != null) {
+            return { ...acc, ...part.providerMetadata };
+          }
+          return acc;
+        }, {});
+        modelMessages.push({
+          role: "system",
+          content: textParts.map((part) => part.text).join(""),
+          ...Object.keys(providerMetadata).length > 0 ? { providerOptions: providerMetadata } : {}
+        });
+        break;
+      }
+      case "user": {
+        modelMessages.push({
+          role: "user",
+          content: message.parts.map((part) => {
+            var _a162;
+            if (isTextUIPart(part)) {
+              return {
+                type: "text",
+                text: part.text,
+                ...part.providerMetadata != null ? { providerOptions: part.providerMetadata } : {}
+              };
+            }
+            if (isFileUIPart(part)) {
+              return {
+                type: "file",
+                mediaType: part.mediaType,
+                filename: part.filename,
+                data: part.url,
+                ...part.providerMetadata != null ? { providerOptions: part.providerMetadata } : {}
+              };
+            }
+            if (isDataUIPart(part)) {
+              return (_a162 = options == null ? void 0 : options.convertDataPart) == null ? void 0 : _a162.call(
+                options,
+                part
+              );
+            }
+          }).filter((part) => part != null)
+        });
+        break;
+      }
+      case "assistant": {
+        if (message.parts != null) {
+          let processBlock2 = function() {
+            var _a162, _b8, _c;
+            if (block.length === 0) {
+              return;
+            }
+            const content = [];
+            for (const part of block) {
+              if (isTextUIPart(part)) {
+                content.push({
+                  type: "text",
+                  text: part.text,
+                  ...part.providerMetadata != null ? { providerOptions: part.providerMetadata } : {}
+                });
+              } else if (isFileUIPart(part)) {
+                content.push({
+                  type: "file",
+                  mediaType: part.mediaType,
+                  filename: part.filename,
+                  data: part.url
+                });
+              } else if (isReasoningUIPart(part)) {
+                content.push({
+                  type: "reasoning",
+                  text: part.text,
+                  providerOptions: part.providerMetadata
+                });
+              } else if (isDynamicToolUIPart(part)) {
+                const toolName = part.toolName;
+                if (part.state !== "input-streaming") {
+                  content.push({
+                    type: "tool-call",
+                    toolCallId: part.toolCallId,
+                    toolName,
+                    input: part.input,
+                    ...part.callProviderMetadata != null ? { providerOptions: part.callProviderMetadata } : {}
+                  });
+                }
+              } else if (isToolUIPart(part)) {
+                const toolName = getToolName(part);
+                if (part.state !== "input-streaming") {
+                  content.push({
+                    type: "tool-call",
+                    toolCallId: part.toolCallId,
+                    toolName,
+                    input: part.state === "output-error" ? (_a162 = part.input) != null ? _a162 : part.rawInput : part.input,
+                    providerExecuted: part.providerExecuted,
+                    ...part.callProviderMetadata != null ? { providerOptions: part.callProviderMetadata } : {}
+                  });
+                  if (part.providerExecuted === true && (part.state === "output-available" || part.state === "output-error")) {
+                    content.push({
+                      type: "tool-result",
+                      toolCallId: part.toolCallId,
+                      toolName,
+                      output: createToolModelOutput({
+                        output: part.state === "output-error" ? part.errorText : part.output,
+                        tool: (_b8 = options == null ? void 0 : options.tools) == null ? void 0 : _b8[toolName],
+                        errorMode: part.state === "output-error" ? "json" : "none"
+                      }),
+                      ...part.callProviderMetadata != null ? { providerOptions: part.callProviderMetadata } : {}
+                    });
+                  }
+                }
+              } else if (isDataUIPart(part)) {
+                const dataPart = (_c = options == null ? void 0 : options.convertDataPart) == null ? void 0 : _c.call(
+                  options,
+                  part
+                );
+                if (dataPart != null) {
+                  content.push(dataPart);
+                }
+              } else {
+                const _exhaustiveCheck = part;
+                throw new Error(`Unsupported part: ${_exhaustiveCheck}`);
+              }
+            }
+            modelMessages.push({
+              role: "assistant",
+              content
+            });
+            const toolParts = block.filter(
+              (part) => isToolUIPart(part) && part.providerExecuted !== true || part.type === "dynamic-tool"
+            );
+            if (toolParts.length > 0) {
+              modelMessages.push({
+                role: "tool",
+                content: toolParts.map((toolPart) => {
+                  var _a17;
+                  switch (toolPart.state) {
+                    case "output-error":
+                    case "output-available": {
+                      const toolName = getToolOrDynamicToolName(toolPart);
+                      return {
+                        type: "tool-result",
+                        toolCallId: toolPart.toolCallId,
+                        toolName,
+                        output: createToolModelOutput({
+                          output: toolPart.state === "output-error" ? toolPart.errorText : toolPart.output,
+                          tool: (_a17 = options == null ? void 0 : options.tools) == null ? void 0 : _a17[toolName],
+                          errorMode: toolPart.state === "output-error" ? "text" : "none"
+                        }),
+                        ...toolPart.callProviderMetadata != null ? { providerOptions: toolPart.callProviderMetadata } : {}
+                      };
+                    }
+                    default: {
+                      return null;
+                    }
+                  }
+                }).filter(
+                  (output) => output != null
+                )
+              });
+            }
+            block = [];
+          };
+          var processBlock = processBlock2;
+          let block = [];
+          for (const part of message.parts) {
+            if (isTextUIPart(part) || isReasoningUIPart(part) || isFileUIPart(part) || isToolOrDynamicToolUIPart(part) || isDataUIPart(part)) {
+              block.push(part);
+            } else if (part.type === "step-start") {
+              processBlock2();
+            }
+          }
+          processBlock2();
+          break;
+        }
+        break;
+      }
+      default: {
+        const _exhaustiveCheck = message.role;
+        throw new MessageConversionError({
+          originalMessage: message,
+          message: `Unsupported role: ${_exhaustiveCheck}`
+        });
+      }
+    }
+  }
+  return modelMessages;
+}
+async function embed({
+  model: modelArg,
+  value: value2,
+  providerOptions,
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers,
+  experimental_telemetry: telemetry2
+}) {
+  const model = resolveEmbeddingModel(modelArg);
+  const { maxRetries, retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const baseTelemetryAttributes = getBaseTelemetryAttributes({
+    model,
+    telemetry: telemetry2,
+    headers: headersWithUserAgent,
+    settings: { maxRetries }
+  });
+  const tracer = getTracer(telemetry2);
+  return recordSpan({
+    name: "ai.embed",
+    attributes: selectTelemetryAttributes({
+      telemetry: telemetry2,
+      attributes: {
+        ...assembleOperationName({ operationId: "ai.embed", telemetry: telemetry2 }),
+        ...baseTelemetryAttributes,
+        "ai.value": { input: () => JSON.stringify(value2) }
+      }
+    }),
+    tracer,
+    fn: async (span) => {
+      const { embedding, usage, response, providerMetadata } = await retry(
+        () => (
+          // nested spans to align with the embedMany telemetry data:
+          recordSpan({
+            name: "ai.embed.doEmbed",
+            attributes: selectTelemetryAttributes({
+              telemetry: telemetry2,
+              attributes: {
+                ...assembleOperationName({
+                  operationId: "ai.embed.doEmbed",
+                  telemetry: telemetry2
+                }),
+                ...baseTelemetryAttributes,
+                // specific settings that only make sense on the outer level:
+                "ai.values": { input: () => [JSON.stringify(value2)] }
+              }
+            }),
+            tracer,
+            fn: async (doEmbedSpan) => {
+              var _a162;
+              const modelResponse = await model.doEmbed({
+                values: [value2],
+                abortSignal,
+                headers: headersWithUserAgent,
+                providerOptions
+              });
+              const embedding2 = modelResponse.embeddings[0];
+              const usage2 = (_a162 = modelResponse.usage) != null ? _a162 : { tokens: NaN };
+              doEmbedSpan.setAttributes(
+                selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    "ai.embeddings": {
+                      output: () => modelResponse.embeddings.map(
+                        (embedding3) => JSON.stringify(embedding3)
+                      )
+                    },
+                    "ai.usage.tokens": usage2.tokens
+                  }
+                })
+              );
+              return {
+                embedding: embedding2,
+                usage: usage2,
+                providerMetadata: modelResponse.providerMetadata,
+                response: modelResponse.response
+              };
+            }
+          })
+        )
+      );
+      span.setAttributes(
+        selectTelemetryAttributes({
+          telemetry: telemetry2,
+          attributes: {
+            "ai.embedding": { output: () => JSON.stringify(embedding) },
+            "ai.usage.tokens": usage.tokens
+          }
+        })
+      );
+      return new DefaultEmbedResult({
+        value: value2,
+        embedding,
+        usage,
+        providerMetadata,
+        response
+      });
+    }
+  });
+}
+function splitArray(array, chunkSize) {
+  if (chunkSize <= 0) {
+    throw new Error("chunkSize must be greater than 0");
+  }
+  const result = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    result.push(array.slice(i, i + chunkSize));
+  }
+  return result;
+}
+async function embedMany({
+  model: modelArg,
+  values,
+  maxParallelCalls = Infinity,
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers,
+  providerOptions,
+  experimental_telemetry: telemetry2
+}) {
+  const model = resolveEmbeddingModel(modelArg);
+  const { maxRetries, retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const baseTelemetryAttributes = getBaseTelemetryAttributes({
+    model,
+    telemetry: telemetry2,
+    headers: headersWithUserAgent,
+    settings: { maxRetries }
+  });
+  const tracer = getTracer(telemetry2);
+  return recordSpan({
+    name: "ai.embedMany",
+    attributes: selectTelemetryAttributes({
+      telemetry: telemetry2,
+      attributes: {
+        ...assembleOperationName({ operationId: "ai.embedMany", telemetry: telemetry2 }),
+        ...baseTelemetryAttributes,
+        // specific settings that only make sense on the outer level:
+        "ai.values": {
+          input: () => values.map((value2) => JSON.stringify(value2))
+        }
+      }
+    }),
+    tracer,
+    fn: async (span) => {
+      var _a162;
+      const [maxEmbeddingsPerCall, supportsParallelCalls] = await Promise.all([
+        model.maxEmbeddingsPerCall,
+        model.supportsParallelCalls
+      ]);
+      if (maxEmbeddingsPerCall == null || maxEmbeddingsPerCall === Infinity) {
+        const { embeddings: embeddings2, usage, response, providerMetadata: providerMetadata2 } = await retry(
+          () => {
+            return recordSpan({
+              name: "ai.embedMany.doEmbed",
+              attributes: selectTelemetryAttributes({
+                telemetry: telemetry2,
+                attributes: {
+                  ...assembleOperationName({
+                    operationId: "ai.embedMany.doEmbed",
+                    telemetry: telemetry2
+                  }),
+                  ...baseTelemetryAttributes,
+                  // specific settings that only make sense on the outer level:
+                  "ai.values": {
+                    input: () => values.map((value2) => JSON.stringify(value2))
+                  }
+                }
+              }),
+              tracer,
+              fn: async (doEmbedSpan) => {
+                var _a17;
+                const modelResponse = await model.doEmbed({
+                  values,
+                  abortSignal,
+                  headers: headersWithUserAgent,
+                  providerOptions
+                });
+                const embeddings3 = modelResponse.embeddings;
+                const usage2 = (_a17 = modelResponse.usage) != null ? _a17 : { tokens: NaN };
+                doEmbedSpan.setAttributes(
+                  selectTelemetryAttributes({
+                    telemetry: telemetry2,
+                    attributes: {
+                      "ai.embeddings": {
+                        output: () => embeddings3.map(
+                          (embedding) => JSON.stringify(embedding)
+                        )
+                      },
+                      "ai.usage.tokens": usage2.tokens
+                    }
+                  })
+                );
+                return {
+                  embeddings: embeddings3,
+                  usage: usage2,
+                  providerMetadata: modelResponse.providerMetadata,
+                  response: modelResponse.response
+                };
+              }
+            });
+          }
+        );
+        span.setAttributes(
+          selectTelemetryAttributes({
+            telemetry: telemetry2,
+            attributes: {
+              "ai.embeddings": {
+                output: () => embeddings2.map((embedding) => JSON.stringify(embedding))
+              },
+              "ai.usage.tokens": usage.tokens
+            }
+          })
+        );
+        return new DefaultEmbedManyResult({
+          values,
+          embeddings: embeddings2,
+          usage,
+          providerMetadata: providerMetadata2,
+          responses: [response]
+        });
+      }
+      const valueChunks = splitArray(values, maxEmbeddingsPerCall);
+      const embeddings = [];
+      const responses = [];
+      let tokens = 0;
+      let providerMetadata;
+      const parallelChunks = splitArray(
+        valueChunks,
+        supportsParallelCalls ? maxParallelCalls : 1
+      );
+      for (const parallelChunk of parallelChunks) {
+        const results = await Promise.all(
+          parallelChunk.map((chunk) => {
+            return retry(() => {
+              return recordSpan({
+                name: "ai.embedMany.doEmbed",
+                attributes: selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    ...assembleOperationName({
+                      operationId: "ai.embedMany.doEmbed",
+                      telemetry: telemetry2
+                    }),
+                    ...baseTelemetryAttributes,
+                    // specific settings that only make sense on the outer level:
+                    "ai.values": {
+                      input: () => chunk.map((value2) => JSON.stringify(value2))
+                    }
+                  }
+                }),
+                tracer,
+                fn: async (doEmbedSpan) => {
+                  var _a17;
+                  const modelResponse = await model.doEmbed({
+                    values: chunk,
+                    abortSignal,
+                    headers: headersWithUserAgent,
+                    providerOptions
+                  });
+                  const embeddings2 = modelResponse.embeddings;
+                  const usage = (_a17 = modelResponse.usage) != null ? _a17 : { tokens: NaN };
+                  doEmbedSpan.setAttributes(
+                    selectTelemetryAttributes({
+                      telemetry: telemetry2,
+                      attributes: {
+                        "ai.embeddings": {
+                          output: () => embeddings2.map(
+                            (embedding) => JSON.stringify(embedding)
+                          )
+                        },
+                        "ai.usage.tokens": usage.tokens
+                      }
+                    })
+                  );
+                  return {
+                    embeddings: embeddings2,
+                    usage,
+                    providerMetadata: modelResponse.providerMetadata,
+                    response: modelResponse.response
+                  };
+                }
+              });
+            });
+          })
+        );
+        for (const result of results) {
+          embeddings.push(...result.embeddings);
+          responses.push(result.response);
+          tokens += result.usage.tokens;
+          if (result.providerMetadata) {
+            if (!providerMetadata) {
+              providerMetadata = { ...result.providerMetadata };
+            } else {
+              for (const [providerName, metadata] of Object.entries(
+                result.providerMetadata
+              )) {
+                providerMetadata[providerName] = {
+                  ...(_a162 = providerMetadata[providerName]) != null ? _a162 : {},
+                  ...metadata
+                };
+              }
+            }
+          }
+        }
+      }
+      span.setAttributes(
+        selectTelemetryAttributes({
+          telemetry: telemetry2,
+          attributes: {
+            "ai.embeddings": {
+              output: () => embeddings.map((embedding) => JSON.stringify(embedding))
+            },
+            "ai.usage.tokens": tokens
+          }
+        })
+      );
+      return new DefaultEmbedManyResult({
+        values,
+        embeddings,
+        usage: { tokens },
+        providerMetadata,
+        responses
+      });
+    }
+  });
+}
+async function generateImage({
+  model: modelArg,
+  prompt,
+  n = 1,
+  maxImagesPerCall,
+  size,
+  aspectRatio,
+  seed,
+  providerOptions,
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers
+}) {
+  var _a162, _b8;
+  const model = resolveImageModel(modelArg);
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const { retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const maxImagesPerCallWithDefault = (_a162 = maxImagesPerCall != null ? maxImagesPerCall : await invokeModelMaxImagesPerCall(model)) != null ? _a162 : 1;
+  const callCount = Math.ceil(n / maxImagesPerCallWithDefault);
+  const callImageCounts = Array.from({ length: callCount }, (_, i) => {
+    if (i < callCount - 1) {
+      return maxImagesPerCallWithDefault;
+    }
+    const remainder = n % maxImagesPerCallWithDefault;
+    return remainder === 0 ? maxImagesPerCallWithDefault : remainder;
+  });
+  const results = await Promise.all(
+    callImageCounts.map(
+      async (callImageCount) => retry(
+        () => model.doGenerate({
+          prompt,
+          n: callImageCount,
+          abortSignal,
+          headers: headersWithUserAgent,
+          size,
+          aspectRatio,
+          seed,
+          providerOptions: providerOptions != null ? providerOptions : {}
+        })
+      )
+    )
+  );
+  const images = [];
+  const warnings = [];
+  const responses = [];
+  const providerMetadata = {};
+  for (const result of results) {
+    images.push(
+      ...result.images.map(
+        (image) => {
+          var _a17;
+          return new DefaultGeneratedFile({
+            data: image,
+            mediaType: (_a17 = detectMediaType({
+              data: image,
+              signatures: imageMediaTypeSignatures
+            })) != null ? _a17 : "image/png"
+          });
+        }
+      )
+    );
+    warnings.push(...result.warnings);
+    if (result.providerMetadata) {
+      for (const [providerName, metadata] of Object.entries(result.providerMetadata)) {
+        if (providerName === "gateway") {
+          const currentEntry = providerMetadata[providerName];
+          if (currentEntry != null && typeof currentEntry === "object") {
+            providerMetadata[providerName] = {
+              ...currentEntry,
+              ...metadata
+            };
+          } else {
+            providerMetadata[providerName] = metadata;
+          }
+          const imagesValue = providerMetadata[providerName].images;
+          if (Array.isArray(imagesValue) && imagesValue.length === 0) {
+            delete providerMetadata[providerName].images;
+          }
+        } else {
+          (_b8 = providerMetadata[providerName]) != null ? _b8 : providerMetadata[providerName] = { images: [] };
+          providerMetadata[providerName].images.push(
+            ...result.providerMetadata[providerName].images
+          );
+        }
+      }
+    }
+    responses.push(result.response);
+  }
+  logWarnings(warnings);
+  if (!images.length) {
+    throw new NoImageGeneratedError({ responses });
+  }
+  return new DefaultGenerateImageResult({
+    images,
+    warnings,
+    responses,
+    providerMetadata
+  });
+}
+async function invokeModelMaxImagesPerCall(model) {
+  const isFunction = model.maxImagesPerCall instanceof Function;
+  if (!isFunction) {
+    return model.maxImagesPerCall;
+  }
+  return model.maxImagesPerCall({
+    modelId: model.modelId
+  });
+}
+function extractReasoningContent(content) {
+  const parts = content.filter(
+    (content2) => content2.type === "reasoning"
+  );
+  return parts.length === 0 ? void 0 : parts.map((content2) => content2.text).join("\n");
+}
+function getOutputStrategy({
+  output,
+  schema,
+  enumValues
+}) {
+  switch (output) {
+    case "object":
+      return objectOutputStrategy(asSchema(schema));
+    case "array":
+      return arrayOutputStrategy(asSchema(schema));
+    case "enum":
+      return enumOutputStrategy(enumValues);
+    case "no-schema":
+      return noSchemaOutputStrategy;
+    default: {
+      const _exhaustiveCheck = output;
+      throw new Error(`Unsupported output: ${_exhaustiveCheck}`);
+    }
+  }
+}
+async function parseAndValidateObjectResult(result, outputStrategy, context) {
+  const parseResult = await safeParseJSON({ text: result });
+  if (!parseResult.success) {
+    throw new NoObjectGeneratedError({
+      message: "No object generated: could not parse the response.",
+      cause: parseResult.error,
+      text: result,
+      response: context.response,
+      usage: context.usage,
+      finishReason: context.finishReason
+    });
+  }
+  const validationResult = await outputStrategy.validateFinalResult(
+    parseResult.value,
+    {
+      text: result,
+      response: context.response,
+      usage: context.usage
+    }
+  );
+  if (!validationResult.success) {
+    throw new NoObjectGeneratedError({
+      message: "No object generated: response did not match schema.",
+      cause: validationResult.error,
+      text: result,
+      response: context.response,
+      usage: context.usage,
+      finishReason: context.finishReason
+    });
+  }
+  return validationResult.value;
+}
+async function parseAndValidateObjectResultWithRepair(result, outputStrategy, repairText, context) {
+  try {
+    return await parseAndValidateObjectResult(result, outputStrategy, context);
+  } catch (error) {
+    if (repairText != null && NoObjectGeneratedError.isInstance(error) && (JSONParseError.isInstance(error.cause) || TypeValidationError.isInstance(error.cause))) {
+      const repairedText = await repairText({
+        text: result,
+        error: error.cause
+      });
+      if (repairedText === null) {
+        throw error;
+      }
+      return await parseAndValidateObjectResult(
+        repairedText,
+        outputStrategy,
+        context
+      );
+    }
+    throw error;
+  }
+}
+function validateObjectGenerationInput({
+  output,
+  schema,
+  schemaName,
+  schemaDescription,
+  enumValues
+}) {
+  if (output != null && output !== "object" && output !== "array" && output !== "enum" && output !== "no-schema") {
+    throw new InvalidArgumentError3({
+      parameter: "output",
+      value: output,
+      message: "Invalid output type."
+    });
+  }
+  if (output === "no-schema") {
+    if (schema != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schema",
+        value: schema,
+        message: "Schema is not supported for no-schema output."
+      });
+    }
+    if (schemaDescription != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schemaDescription",
+        value: schemaDescription,
+        message: "Schema description is not supported for no-schema output."
+      });
+    }
+    if (schemaName != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schemaName",
+        value: schemaName,
+        message: "Schema name is not supported for no-schema output."
+      });
+    }
+    if (enumValues != null) {
+      throw new InvalidArgumentError3({
+        parameter: "enumValues",
+        value: enumValues,
+        message: "Enum values are not supported for no-schema output."
+      });
+    }
+  }
+  if (output === "object") {
+    if (schema == null) {
+      throw new InvalidArgumentError3({
+        parameter: "schema",
+        value: schema,
+        message: "Schema is required for object output."
+      });
+    }
+    if (enumValues != null) {
+      throw new InvalidArgumentError3({
+        parameter: "enumValues",
+        value: enumValues,
+        message: "Enum values are not supported for object output."
+      });
+    }
+  }
+  if (output === "array") {
+    if (schema == null) {
+      throw new InvalidArgumentError3({
+        parameter: "schema",
+        value: schema,
+        message: "Element schema is required for array output."
+      });
+    }
+    if (enumValues != null) {
+      throw new InvalidArgumentError3({
+        parameter: "enumValues",
+        value: enumValues,
+        message: "Enum values are not supported for array output."
+      });
+    }
+  }
+  if (output === "enum") {
+    if (schema != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schema",
+        value: schema,
+        message: "Schema is not supported for enum output."
+      });
+    }
+    if (schemaDescription != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schemaDescription",
+        value: schemaDescription,
+        message: "Schema description is not supported for enum output."
+      });
+    }
+    if (schemaName != null) {
+      throw new InvalidArgumentError3({
+        parameter: "schemaName",
+        value: schemaName,
+        message: "Schema name is not supported for enum output."
+      });
+    }
+    if (enumValues == null) {
+      throw new InvalidArgumentError3({
+        parameter: "enumValues",
+        value: enumValues,
+        message: "Enum values are required for enum output."
+      });
+    }
+    for (const value2 of enumValues) {
+      if (typeof value2 !== "string") {
+        throw new InvalidArgumentError3({
+          parameter: "enumValues",
+          value: value2,
+          message: "Enum values must be strings."
+        });
+      }
+    }
+  }
+}
+async function generateObject(options) {
+  const {
+    model: modelArg,
+    output = "object",
+    system,
+    prompt,
+    messages,
+    maxRetries: maxRetriesArg,
+    abortSignal,
+    headers,
+    experimental_repairText: repairText,
+    experimental_telemetry: telemetry2,
+    experimental_download: download2,
+    providerOptions,
+    _internal: {
+      generateId: generateId3 = originalGenerateId3,
+      currentDate = () => /* @__PURE__ */ new Date()
+    } = {},
+    ...settings
+  } = options;
+  const model = resolveLanguageModel(modelArg);
+  const enumValues = "enum" in options ? options.enum : void 0;
+  const {
+    schema: inputSchema,
+    schemaDescription,
+    schemaName
+  } = "schema" in options ? options : {};
+  validateObjectGenerationInput({
+    output,
+    schema: inputSchema,
+    schemaName,
+    schemaDescription,
+    enumValues
+  });
+  const { maxRetries, retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const outputStrategy = getOutputStrategy({
+    output,
+    schema: inputSchema,
+    enumValues
+  });
+  const callSettings = prepareCallSettings(settings);
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const baseTelemetryAttributes = getBaseTelemetryAttributes({
+    model,
+    telemetry: telemetry2,
+    headers: headersWithUserAgent,
+    settings: { ...callSettings, maxRetries }
+  });
+  const tracer = getTracer(telemetry2);
+  try {
+    return await recordSpan({
+      name: "ai.generateObject",
+      attributes: selectTelemetryAttributes({
+        telemetry: telemetry2,
+        attributes: {
+          ...assembleOperationName({
+            operationId: "ai.generateObject",
+            telemetry: telemetry2
+          }),
+          ...baseTelemetryAttributes,
+          // specific settings that only make sense on the outer level:
+          "ai.prompt": {
+            input: () => JSON.stringify({ system, prompt, messages })
+          },
+          "ai.schema": outputStrategy.jsonSchema != null ? { input: () => JSON.stringify(outputStrategy.jsonSchema) } : void 0,
+          "ai.schema.name": schemaName,
+          "ai.schema.description": schemaDescription,
+          "ai.settings.output": outputStrategy.type
+        }
+      }),
+      tracer,
+      fn: async (span) => {
+        var _a162;
+        let result;
+        let finishReason;
+        let usage;
+        let warnings;
+        let response;
+        let request;
+        let resultProviderMetadata;
+        let reasoning;
+        const standardizedPrompt = await standardizePrompt({
+          system,
+          prompt,
+          messages
+        });
+        const promptMessages = await convertToLanguageModelPrompt({
+          prompt: standardizedPrompt,
+          supportedUrls: await model.supportedUrls,
+          download: download2
+        });
+        const generateResult = await retry(
+          () => recordSpan({
+            name: "ai.generateObject.doGenerate",
+            attributes: selectTelemetryAttributes({
+              telemetry: telemetry2,
+              attributes: {
+                ...assembleOperationName({
+                  operationId: "ai.generateObject.doGenerate",
+                  telemetry: telemetry2
+                }),
+                ...baseTelemetryAttributes,
+                "ai.prompt.messages": {
+                  input: () => stringifyForTelemetry(promptMessages)
+                },
+                // standardized gen-ai llm span attributes:
+                "gen_ai.system": model.provider,
+                "gen_ai.request.model": model.modelId,
+                "gen_ai.request.frequency_penalty": callSettings.frequencyPenalty,
+                "gen_ai.request.max_tokens": callSettings.maxOutputTokens,
+                "gen_ai.request.presence_penalty": callSettings.presencePenalty,
+                "gen_ai.request.temperature": callSettings.temperature,
+                "gen_ai.request.top_k": callSettings.topK,
+                "gen_ai.request.top_p": callSettings.topP
+              }
+            }),
+            tracer,
+            fn: async (span2) => {
+              var _a17, _b8, _c, _d, _e, _f, _g, _h;
+              const result2 = await model.doGenerate({
+                responseFormat: {
+                  type: "json",
+                  schema: outputStrategy.jsonSchema,
+                  name: schemaName,
+                  description: schemaDescription
+                },
+                ...prepareCallSettings(settings),
+                prompt: promptMessages,
+                providerOptions,
+                abortSignal,
+                headers: headersWithUserAgent
+              });
+              const responseData = {
+                id: (_b8 = (_a17 = result2.response) == null ? void 0 : _a17.id) != null ? _b8 : generateId3(),
+                timestamp: (_d = (_c = result2.response) == null ? void 0 : _c.timestamp) != null ? _d : currentDate(),
+                modelId: (_f = (_e = result2.response) == null ? void 0 : _e.modelId) != null ? _f : model.modelId,
+                headers: (_g = result2.response) == null ? void 0 : _g.headers,
+                body: (_h = result2.response) == null ? void 0 : _h.body
+              };
+              const text2 = extractTextContent(result2.content);
+              const reasoning2 = extractReasoningContent(result2.content);
+              if (text2 === void 0) {
+                throw new NoObjectGeneratedError({
+                  message: "No object generated: the model did not return a response.",
+                  response: responseData,
+                  usage: result2.usage,
+                  finishReason: result2.finishReason
+                });
+              }
+              span2.setAttributes(
+                selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    "ai.response.finishReason": result2.finishReason,
+                    "ai.response.object": { output: () => text2 },
+                    "ai.response.id": responseData.id,
+                    "ai.response.model": responseData.modelId,
+                    "ai.response.timestamp": responseData.timestamp.toISOString(),
+                    "ai.response.providerMetadata": JSON.stringify(
+                      result2.providerMetadata
+                    ),
+                    // TODO rename telemetry attributes to inputTokens and outputTokens
+                    "ai.usage.promptTokens": result2.usage.inputTokens,
+                    "ai.usage.completionTokens": result2.usage.outputTokens,
+                    // standardized gen-ai llm span attributes:
+                    "gen_ai.response.finish_reasons": [result2.finishReason],
+                    "gen_ai.response.id": responseData.id,
+                    "gen_ai.response.model": responseData.modelId,
+                    "gen_ai.usage.input_tokens": result2.usage.inputTokens,
+                    "gen_ai.usage.output_tokens": result2.usage.outputTokens
+                  }
+                })
+              );
+              return {
+                ...result2,
+                objectText: text2,
+                reasoning: reasoning2,
+                responseData
+              };
+            }
+          })
+        );
+        result = generateResult.objectText;
+        finishReason = generateResult.finishReason;
+        usage = generateResult.usage;
+        warnings = generateResult.warnings;
+        resultProviderMetadata = generateResult.providerMetadata;
+        request = (_a162 = generateResult.request) != null ? _a162 : {};
+        response = generateResult.responseData;
+        reasoning = generateResult.reasoning;
+        logWarnings(warnings);
+        const object2 = await parseAndValidateObjectResultWithRepair(
+          result,
+          outputStrategy,
+          repairText,
+          {
+            response,
+            usage,
+            finishReason
+          }
+        );
+        span.setAttributes(
+          selectTelemetryAttributes({
+            telemetry: telemetry2,
+            attributes: {
+              "ai.response.finishReason": finishReason,
+              "ai.response.object": {
+                output: () => JSON.stringify(object2)
+              },
+              "ai.response.providerMetadata": JSON.stringify(
+                resultProviderMetadata
+              ),
+              // TODO rename telemetry attributes to inputTokens and outputTokens
+              "ai.usage.promptTokens": usage.inputTokens,
+              "ai.usage.completionTokens": usage.outputTokens
+            }
+          })
+        );
+        return new DefaultGenerateObjectResult({
+          object: object2,
+          reasoning,
+          finishReason,
+          usage,
+          warnings,
+          request,
+          response,
+          providerMetadata: resultProviderMetadata
+        });
+      }
+    });
+  } catch (error) {
+    throw wrapGatewayError(error);
+  }
+}
+function cosineSimilarity(vector1, vector2) {
+  if (vector1.length !== vector2.length) {
+    throw new InvalidArgumentError3({
+      parameter: "vector1,vector2",
+      value: { vector1Length: vector1.length, vector2Length: vector2.length },
+      message: `Vectors must have the same length`
+    });
+  }
+  const n = vector1.length;
+  if (n === 0) {
+    return 0;
+  }
+  let magnitudeSquared1 = 0;
+  let magnitudeSquared2 = 0;
+  let dotProduct = 0;
+  for (let i = 0; i < n; i++) {
+    const value1 = vector1[i];
+    const value2 = vector2[i];
+    magnitudeSquared1 += value1 * value1;
+    magnitudeSquared2 += value2 * value2;
+    dotProduct += value1 * value2;
+  }
+  return magnitudeSquared1 === 0 || magnitudeSquared2 === 0 ? 0 : dotProduct / (Math.sqrt(magnitudeSquared1) * Math.sqrt(magnitudeSquared2));
+}
+function getTextFromDataUrl(dataUrl) {
+  const [header, base64Content] = dataUrl.split(",");
+  const mediaType = header.split(";")[0].split(":")[1];
+  if (mediaType == null || base64Content == null) {
+    throw new Error("Invalid data URL format");
+  }
+  try {
+    return window.atob(base64Content);
+  } catch (error) {
+    throw new Error(`Error decoding data URL`);
+  }
+}
+function isDeepEqualData(obj1, obj2) {
+  if (obj1 === obj2)
+    return true;
+  if (obj1 == null || obj2 == null)
+    return false;
+  if (typeof obj1 !== "object" && typeof obj2 !== "object")
+    return obj1 === obj2;
+  if (obj1.constructor !== obj2.constructor)
+    return false;
+  if (obj1 instanceof Date && obj2 instanceof Date) {
+    return obj1.getTime() === obj2.getTime();
+  }
+  if (Array.isArray(obj1)) {
+    if (obj1.length !== obj2.length)
+      return false;
+    for (let i = 0; i < obj1.length; i++) {
+      if (!isDeepEqualData(obj1[i], obj2[i]))
+        return false;
+    }
+    return true;
+  }
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  if (keys1.length !== keys2.length)
+    return false;
+  for (const key of keys1) {
+    if (!keys2.includes(key))
+      return false;
+    if (!isDeepEqualData(obj1[key], obj2[key]))
+      return false;
+  }
+  return true;
+}
+function simulateReadableStream({
+  chunks,
+  initialDelayInMs = 0,
+  chunkDelayInMs = 0,
+  _internal
+}) {
+  var _a162;
+  const delay2 = (_a162 = _internal == null ? void 0 : _internal.delay) != null ? _a162 : delay;
+  let index = 0;
+  return new ReadableStream({
+    async pull(controller) {
+      if (index < chunks.length) {
+        await delay2(index === 0 ? initialDelayInMs : chunkDelayInMs);
+        controller.enqueue(chunks[index++]);
+      } else {
+        controller.close();
+      }
+    }
+  });
+}
+function streamObject(options) {
+  const {
+    model,
+    output = "object",
+    system,
+    prompt,
+    messages,
+    maxRetries,
+    abortSignal,
+    headers,
+    experimental_repairText: repairText,
+    experimental_telemetry: telemetry2,
+    experimental_download: download2,
+    providerOptions,
+    onError: onError2 = ({ error }) => {
+      console.error(error);
+    },
+    onFinish: onFinish2,
+    _internal: {
+      generateId: generateId3 = originalGenerateId4,
+      currentDate = () => /* @__PURE__ */ new Date(),
+      now: now2 = now
+    } = {},
+    ...settings
+  } = options;
+  const enumValues = "enum" in options && options.enum ? options.enum : void 0;
+  const {
+    schema: inputSchema,
+    schemaDescription,
+    schemaName
+  } = "schema" in options ? options : {};
+  validateObjectGenerationInput({
+    output,
+    schema: inputSchema,
+    schemaName,
+    schemaDescription,
+    enumValues
+  });
+  const outputStrategy = getOutputStrategy({
+    output,
+    schema: inputSchema,
+    enumValues
+  });
+  return new DefaultStreamObjectResult({
+    model,
+    telemetry: telemetry2,
+    headers,
+    settings,
+    maxRetries,
+    abortSignal,
+    outputStrategy,
+    system,
+    prompt,
+    messages,
+    schemaName,
+    schemaDescription,
+    providerOptions,
+    repairText,
+    onError: onError2,
+    onFinish: onFinish2,
+    download: download2,
+    generateId: generateId3,
+    currentDate,
+    now: now2
+  });
+}
+async function generateSpeech({
+  model,
+  text: text2,
+  voice: voice2,
+  outputFormat,
+  instructions,
+  speed,
+  language,
+  providerOptions = {},
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers
+}) {
+  var _a162;
+  if (model.specificationVersion !== "v2") {
+    throw new UnsupportedModelVersionError({
+      version: model.specificationVersion,
+      provider: model.provider,
+      modelId: model.modelId
+    });
+  }
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const { retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const result = await retry(
+    () => model.doGenerate({
+      text: text2,
+      voice: voice2,
+      outputFormat,
+      instructions,
+      speed,
+      language,
+      abortSignal,
+      headers: headersWithUserAgent,
+      providerOptions
+    })
+  );
+  if (!result.audio || result.audio.length === 0) {
+    throw new NoSpeechGeneratedError({ responses: [result.response] });
+  }
+  logWarnings(result.warnings);
+  return new DefaultSpeechResult({
+    audio: new DefaultGeneratedAudioFile({
+      data: result.audio,
+      mediaType: (_a162 = detectMediaType({
+        data: result.audio,
+        signatures: audioMediaTypeSignatures
+      })) != null ? _a162 : "audio/mp3"
+    }),
+    warnings: result.warnings,
+    responses: [result.response],
+    providerMetadata: result.providerMetadata
+  });
+}
+function pruneMessages({
+  messages,
+  reasoning = "none",
+  toolCalls = [],
+  emptyMessages = "remove"
+}) {
+  if (reasoning === "all" || reasoning === "before-last-message") {
+    messages = messages.map((message, messageIndex) => {
+      if (message.role !== "assistant" || typeof message.content === "string" || reasoning === "before-last-message" && messageIndex === messages.length - 1) {
+        return message;
+      }
+      return {
+        ...message,
+        content: message.content.filter((part) => part.type !== "reasoning")
+      };
+    });
+  }
+  if (toolCalls === "none") {
+    toolCalls = [];
+  } else if (toolCalls === "all") {
+    toolCalls = [{ type: "all" }];
+  } else if (toolCalls === "before-last-message") {
+    toolCalls = [{ type: "before-last-message" }];
+  } else if (typeof toolCalls === "string") {
+    toolCalls = [{ type: toolCalls }];
+  }
+  for (const toolCall of toolCalls) {
+    const keepLastMessagesCount = toolCall.type === "all" ? void 0 : toolCall.type === "before-last-message" ? 1 : Number(
+      toolCall.type.slice("before-last-".length).slice(0, -"-messages".length)
+    );
+    const keptToolCallIds = /* @__PURE__ */ new Set();
+    const keptApprovalIds = /* @__PURE__ */ new Set();
+    if (keepLastMessagesCount != null) {
+      for (const message of messages.slice(-keepLastMessagesCount)) {
+        if ((message.role === "assistant" || message.role === "tool") && typeof message.content !== "string") {
+          for (const part of message.content) {
+            if (part.type === "tool-call" || part.type === "tool-result") {
+              keptToolCallIds.add(part.toolCallId);
+            }
+          }
+        }
+      }
+    }
+    messages = messages.map((message, messageIndex) => {
+      if (message.role !== "assistant" && message.role !== "tool" || typeof message.content === "string" || keepLastMessagesCount && messageIndex >= messages.length - keepLastMessagesCount) {
+        return message;
+      }
+      const toolCallIdToToolName = {};
+      return {
+        ...message,
+        content: message.content.filter((part) => {
+          if (part.type !== "tool-call" && part.type !== "tool-result") {
+            return true;
+          }
+          if (part.type === "tool-call") {
+            toolCallIdToToolName[part.toolCallId] = part.toolName;
+          }
+          if ((part.type === "tool-call" || part.type === "tool-result") && keptToolCallIds.has(part.toolCallId)) {
+            return true;
+          }
+          return toolCall.tools != null && !toolCall.tools.includes(part.toolName);
+        })
+      };
+    });
+  }
+  if (emptyMessages === "remove") {
+    messages = messages.filter((message) => message.content.length > 0);
+  }
+  return messages;
+}
+function smoothStream({
+  delayInMs = 10,
+  chunking = "word",
+  _internal: { delay: delay2 = delay } = {}
+} = {}) {
+  let detectChunk;
+  if (typeof chunking === "function") {
+    detectChunk = (buffer) => {
+      const match = chunking(buffer);
+      if (match == null) {
+        return null;
+      }
+      if (!match.length) {
+        throw new Error(`Chunking function must return a non-empty string.`);
+      }
+      if (!buffer.startsWith(match)) {
+        throw new Error(
+          `Chunking function must return a match that is a prefix of the buffer. Received: "${match}" expected to start with "${buffer}"`
+        );
+      }
+      return match;
+    };
+  } else {
+    const chunkingRegex = typeof chunking === "string" ? CHUNKING_REGEXPS[chunking] : chunking;
+    if (chunkingRegex == null) {
+      throw new InvalidArgumentError2({
+        argument: "chunking",
+        message: `Chunking must be "word" or "line" or a RegExp. Received: ${chunking}`
+      });
+    }
+    detectChunk = (buffer) => {
+      const match = chunkingRegex.exec(buffer);
+      if (!match) {
+        return null;
+      }
+      return buffer.slice(0, match.index) + (match == null ? void 0 : match[0]);
+    };
+  }
+  return () => {
+    let buffer = "";
+    let id = "";
+    return new TransformStream({
+      async transform(chunk, controller) {
+        if (chunk.type !== "text-delta") {
+          if (buffer.length > 0) {
+            controller.enqueue({ type: "text-delta", text: buffer, id });
+            buffer = "";
+          }
+          controller.enqueue(chunk);
+          return;
+        }
+        if (chunk.id !== id && buffer.length > 0) {
+          controller.enqueue({ type: "text-delta", text: buffer, id });
+          buffer = "";
+        }
+        buffer += chunk.text;
+        id = chunk.id;
+        let match;
+        while ((match = detectChunk(buffer)) != null) {
+          controller.enqueue({ type: "text-delta", text: match, id });
+          buffer = buffer.slice(match.length);
+          await delay2(delayInMs);
+        }
+      }
+    });
+  };
+}
+function defaultSettingsMiddleware({
+  settings
+}) {
+  return {
+    middlewareVersion: "v2",
+    transformParams: async ({ params }) => {
+      return mergeObjects(settings, params);
+    }
+  };
+}
+function getPotentialStartIndex(text2, searchedText) {
+  if (searchedText.length === 0) {
+    return null;
+  }
+  const directIndex = text2.indexOf(searchedText);
+  if (directIndex !== -1) {
+    return directIndex;
+  }
+  for (let i = text2.length - 1; i >= 0; i--) {
+    const suffix = text2.substring(i);
+    if (searchedText.startsWith(suffix)) {
+      return i;
+    }
+  }
+  return null;
+}
+function extractReasoningMiddleware({
+  tagName,
+  separator = "\n",
+  startWithReasoning = false
+}) {
+  const openingTag = `<${tagName}>`;
+  const closingTag = `</${tagName}>`;
+  return {
+    middlewareVersion: "v2",
+    wrapGenerate: async ({ doGenerate }) => {
+      const { content, ...rest } = await doGenerate();
+      const transformedContent = [];
+      for (const part of content) {
+        if (part.type !== "text") {
+          transformedContent.push(part);
+          continue;
+        }
+        const text2 = startWithReasoning ? openingTag + part.text : part.text;
+        const regexp = new RegExp(`${openingTag}(.*?)${closingTag}`, "gs");
+        const matches = Array.from(text2.matchAll(regexp));
+        if (!matches.length) {
+          transformedContent.push(part);
+          continue;
+        }
+        const reasoningText = matches.map((match) => match[1]).join(separator);
+        let textWithoutReasoning = text2;
+        for (let i = matches.length - 1; i >= 0; i--) {
+          const match = matches[i];
+          const beforeMatch = textWithoutReasoning.slice(0, match.index);
+          const afterMatch = textWithoutReasoning.slice(
+            match.index + match[0].length
+          );
+          textWithoutReasoning = beforeMatch + (beforeMatch.length > 0 && afterMatch.length > 0 ? separator : "") + afterMatch;
+        }
+        transformedContent.push({
+          type: "reasoning",
+          text: reasoningText
+        });
+        transformedContent.push({
+          type: "text",
+          text: textWithoutReasoning
+        });
+      }
+      return { content: transformedContent, ...rest };
+    },
+    wrapStream: async ({ doStream }) => {
+      const { stream, ...rest } = await doStream();
+      const reasoningExtractions = {};
+      let delayedTextStart;
+      return {
+        stream: stream.pipeThrough(
+          new TransformStream({
+            transform: (chunk, controller) => {
+              if (chunk.type === "text-start") {
+                delayedTextStart = chunk;
+                return;
+              }
+              if (chunk.type === "text-end" && delayedTextStart) {
+                controller.enqueue(delayedTextStart);
+                delayedTextStart = void 0;
+              }
+              if (chunk.type !== "text-delta") {
+                controller.enqueue(chunk);
+                return;
+              }
+              if (reasoningExtractions[chunk.id] == null) {
+                reasoningExtractions[chunk.id] = {
+                  isFirstReasoning: true,
+                  isFirstText: true,
+                  afterSwitch: false,
+                  isReasoning: startWithReasoning,
+                  buffer: "",
+                  idCounter: 0,
+                  textId: chunk.id
+                };
+              }
+              const activeExtraction = reasoningExtractions[chunk.id];
+              activeExtraction.buffer += chunk.delta;
+              function publish(text2) {
+                if (text2.length > 0) {
+                  const prefix = activeExtraction.afterSwitch && (activeExtraction.isReasoning ? !activeExtraction.isFirstReasoning : !activeExtraction.isFirstText) ? separator : "";
+                  if (activeExtraction.isReasoning && (activeExtraction.afterSwitch || activeExtraction.isFirstReasoning)) {
+                    controller.enqueue({
+                      type: "reasoning-start",
+                      id: `reasoning-${activeExtraction.idCounter}`
+                    });
+                  }
+                  if (activeExtraction.isReasoning) {
+                    controller.enqueue({
+                      type: "reasoning-delta",
+                      delta: prefix + text2,
+                      id: `reasoning-${activeExtraction.idCounter}`
+                    });
+                  } else {
+                    if (delayedTextStart) {
+                      controller.enqueue(delayedTextStart);
+                      delayedTextStart = void 0;
+                    }
+                    controller.enqueue({
+                      type: "text-delta",
+                      delta: prefix + text2,
+                      id: activeExtraction.textId
+                    });
+                  }
+                  activeExtraction.afterSwitch = false;
+                  if (activeExtraction.isReasoning) {
+                    activeExtraction.isFirstReasoning = false;
+                  } else {
+                    activeExtraction.isFirstText = false;
+                  }
+                }
+              }
+              do {
+                const nextTag = activeExtraction.isReasoning ? closingTag : openingTag;
+                const startIndex = getPotentialStartIndex(
+                  activeExtraction.buffer,
+                  nextTag
+                );
+                if (startIndex == null) {
+                  publish(activeExtraction.buffer);
+                  activeExtraction.buffer = "";
+                  break;
+                }
+                publish(activeExtraction.buffer.slice(0, startIndex));
+                const foundFullMatch = startIndex + nextTag.length <= activeExtraction.buffer.length;
+                if (foundFullMatch) {
+                  activeExtraction.buffer = activeExtraction.buffer.slice(
+                    startIndex + nextTag.length
+                  );
+                  if (activeExtraction.isReasoning) {
+                    controller.enqueue({
+                      type: "reasoning-end",
+                      id: `reasoning-${activeExtraction.idCounter++}`
+                    });
+                  }
+                  activeExtraction.isReasoning = !activeExtraction.isReasoning;
+                  activeExtraction.afterSwitch = true;
+                } else {
+                  activeExtraction.buffer = activeExtraction.buffer.slice(startIndex);
+                  break;
+                }
+              } while (true);
+            }
+          })
+        ),
+        ...rest
+      };
+    }
+  };
+}
+function simulateStreamingMiddleware() {
+  return {
+    middlewareVersion: "v2",
+    wrapStream: async ({ doGenerate }) => {
+      const result = await doGenerate();
+      let id = 0;
+      const simulatedStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue({
+            type: "stream-start",
+            warnings: result.warnings
+          });
+          controller.enqueue({ type: "response-metadata", ...result.response });
+          for (const part of result.content) {
+            switch (part.type) {
+              case "text": {
+                if (part.text.length > 0) {
+                  controller.enqueue({ type: "text-start", id: String(id) });
+                  controller.enqueue({
+                    type: "text-delta",
+                    id: String(id),
+                    delta: part.text
+                  });
+                  controller.enqueue({ type: "text-end", id: String(id) });
+                  id++;
+                }
+                break;
+              }
+              case "reasoning": {
+                controller.enqueue({
+                  type: "reasoning-start",
+                  id: String(id),
+                  providerMetadata: part.providerMetadata
+                });
+                controller.enqueue({
+                  type: "reasoning-delta",
+                  id: String(id),
+                  delta: part.text
+                });
+                controller.enqueue({ type: "reasoning-end", id: String(id) });
+                id++;
+                break;
+              }
+              default: {
+                controller.enqueue(part);
+                break;
+              }
+            }
+          }
+          controller.enqueue({
+            type: "finish",
+            finishReason: result.finishReason,
+            usage: result.usage,
+            providerMetadata: result.providerMetadata
+          });
+          controller.close();
+        }
+      });
+      return {
+        stream: simulatedStream,
+        request: result.request,
+        response: result.response
+      };
+    }
+  };
+}
+function wrapProvider({
+  provider,
+  languageModelMiddleware
+}) {
+  const wrappedProvider = {
+    languageModel(modelId) {
+      let model = provider.languageModel(modelId);
+      model = wrapLanguageModel({
+        model,
+        middleware: languageModelMiddleware
+      });
+      return model;
+    },
+    textEmbeddingModel: provider.textEmbeddingModel,
+    imageModel: provider.imageModel,
+    transcriptionModel: provider.transcriptionModel,
+    speechModel: provider.speechModel
+  };
+  return wrappedProvider;
+}
+function customProvider({
+  languageModels,
+  textEmbeddingModels,
+  imageModels,
+  transcriptionModels,
+  speechModels,
+  fallbackProvider
+}) {
+  return {
+    languageModel(modelId) {
+      if (languageModels != null && modelId in languageModels) {
+        return languageModels[modelId];
+      }
+      if (fallbackProvider) {
+        return fallbackProvider.languageModel(modelId);
+      }
+      throw new NoSuchModelError({ modelId, modelType: "languageModel" });
+    },
+    textEmbeddingModel(modelId) {
+      if (textEmbeddingModels != null && modelId in textEmbeddingModels) {
+        return textEmbeddingModels[modelId];
+      }
+      if (fallbackProvider) {
+        return fallbackProvider.textEmbeddingModel(modelId);
+      }
+      throw new NoSuchModelError({ modelId, modelType: "textEmbeddingModel" });
+    },
+    imageModel(modelId) {
+      if (imageModels != null && modelId in imageModels) {
+        return imageModels[modelId];
+      }
+      if (fallbackProvider == null ? void 0 : fallbackProvider.imageModel) {
+        return fallbackProvider.imageModel(modelId);
+      }
+      throw new NoSuchModelError({ modelId, modelType: "imageModel" });
+    },
+    transcriptionModel(modelId) {
+      if (transcriptionModels != null && modelId in transcriptionModels) {
+        return transcriptionModels[modelId];
+      }
+      if (fallbackProvider == null ? void 0 : fallbackProvider.transcriptionModel) {
+        return fallbackProvider.transcriptionModel(modelId);
+      }
+      throw new NoSuchModelError({ modelId, modelType: "transcriptionModel" });
+    },
+    speechModel(modelId) {
+      if (speechModels != null && modelId in speechModels) {
+        return speechModels[modelId];
+      }
+      if (fallbackProvider == null ? void 0 : fallbackProvider.speechModel) {
+        return fallbackProvider.speechModel(modelId);
+      }
+      throw new NoSuchModelError({ modelId, modelType: "speechModel" });
+    }
+  };
+}
+function createProviderRegistry(providers2, {
+  separator = ":",
+  languageModelMiddleware
+} = {}) {
+  const registry = new DefaultProviderRegistry({
+    separator,
+    languageModelMiddleware
+  });
+  for (const [id, provider] of Object.entries(providers2)) {
+    registry.registerProvider({ id, provider });
+  }
+  return registry;
+}
+async function transcribe({
+  model,
+  audio,
+  providerOptions = {},
+  maxRetries: maxRetriesArg,
+  abortSignal,
+  headers
+}) {
+  if (model.specificationVersion !== "v2") {
+    throw new UnsupportedModelVersionError({
+      version: model.specificationVersion,
+      provider: model.provider,
+      modelId: model.modelId
+    });
+  }
+  const { retry } = prepareRetries({
+    maxRetries: maxRetriesArg,
+    abortSignal
+  });
+  const headersWithUserAgent = withUserAgentSuffix(
+    headers != null ? headers : {},
+    `ai/${VERSION4}`
+  );
+  const audioData = audio instanceof URL ? (await download({ url: audio })).data : convertDataContentToUint8Array(audio);
+  const result = await retry(
+    () => {
+      var _a162;
+      return model.doGenerate({
+        audio: audioData,
+        abortSignal,
+        headers: headersWithUserAgent,
+        providerOptions,
+        mediaType: (_a162 = detectMediaType({
+          data: audioData,
+          signatures: audioMediaTypeSignatures
+        })) != null ? _a162 : "audio/wav"
+      });
+    }
+  );
+  logWarnings(result.warnings);
+  if (!result.text) {
+    throw new NoTranscriptGeneratedError({ responses: [result.response] });
+  }
+  return new DefaultTranscriptionResult({
+    text: result.text,
+    segments: result.segments,
+    language: result.language,
+    durationInSeconds: result.durationInSeconds,
+    warnings: result.warnings,
+    responses: [result.response],
+    providerMetadata: result.providerMetadata
+  });
+}
+async function processTextStream({
+  stream,
+  onTextPart
+}) {
+  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+  while (true) {
+    const { done, value: value2 } = await reader.read();
+    if (done) {
+      break;
+    }
+    await onTextPart(value2);
+  }
+}
+async function callCompletionApi({
+  api,
+  prompt,
+  credentials,
+  headers,
+  body,
+  streamProtocol = "data",
+  setCompletion,
+  setLoading,
+  setError,
+  setAbortController,
+  onFinish: onFinish2,
+  onError: onError2,
+  fetch: fetch2 = getOriginalFetch3()
+}) {
+  var _a162;
+  try {
+    setLoading(true);
+    setError(void 0);
+    const abortController = new AbortController();
+    setAbortController(abortController);
+    setCompletion("");
+    const response = await fetch2(api, {
+      method: "POST",
+      body: JSON.stringify({
+        prompt,
+        ...body
+      }),
+      credentials,
+      headers: withUserAgentSuffix(
+        {
+          "Content-Type": "application/json",
+          ...headers
+        },
+        `ai-sdk/${VERSION4}`,
+        getRuntimeEnvironmentUserAgent()
+      ),
+      signal: abortController.signal
+    }).catch((err) => {
+      throw err;
+    });
+    if (!response.ok) {
+      throw new Error(
+        (_a162 = await response.text()) != null ? _a162 : "Failed to fetch the chat response."
+      );
+    }
+    if (!response.body) {
+      throw new Error("The response body is empty.");
+    }
+    let result = "";
+    switch (streamProtocol) {
+      case "text": {
+        await processTextStream({
+          stream: response.body,
+          onTextPart: (chunk) => {
+            result += chunk;
+            setCompletion(result);
+          }
+        });
+        break;
+      }
+      case "data": {
+        await consumeStream({
+          stream: parseJsonEventStream({
+            stream: response.body,
+            schema: uiMessageChunkSchema
+          }).pipeThrough(
+            new TransformStream({
+              async transform(part) {
+                if (!part.success) {
+                  throw part.error;
+                }
+                const streamPart = part.value;
+                if (streamPart.type === "text-delta") {
+                  result += streamPart.delta;
+                  setCompletion(result);
+                } else if (streamPart.type === "error") {
+                  throw new Error(streamPart.errorText);
+                }
+              }
+            })
+          ),
+          onError: (error) => {
+            throw error;
+          }
+        });
+        break;
+      }
+      default: {
+        const exhaustiveCheck = streamProtocol;
+        throw new Error(`Unknown stream protocol: ${exhaustiveCheck}`);
+      }
+    }
+    if (onFinish2) {
+      onFinish2(prompt, result);
+    }
+    setAbortController(null);
+    return result;
+  } catch (err) {
+    if (err.name === "AbortError") {
+      setAbortController(null);
+      return null;
+    }
+    if (err instanceof Error) {
+      if (onError2) {
+        onError2(err);
+      }
+    }
+    setError(err);
+  } finally {
+    setLoading(false);
+  }
+}
+async function convertFileListToFileUIParts(files) {
+  if (files == null) {
+    return [];
+  }
+  if (!globalThis.FileList || !(files instanceof globalThis.FileList)) {
+    throw new Error("FileList is not supported in the current environment");
+  }
+  return Promise.all(
+    Array.from(files).map(async (file) => {
+      const { name: name16, type: type2 } = file;
+      const dataUrl = await new Promise((resolve22, reject) => {
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+          var _a162;
+          resolve22((_a162 = readerEvent.target) == null ? void 0 : _a162.result);
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+      return {
+        type: "file",
+        mediaType: type2,
+        filename: name16,
+        url: dataUrl
+      };
+    })
+  );
+}
+function lastAssistantMessageIsCompleteWithToolCalls({
+  messages
+}) {
+  const message = messages[messages.length - 1];
+  if (!message) {
+    return false;
+  }
+  if (message.role !== "assistant") {
+    return false;
+  }
+  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
+    return part.type === "step-start" ? index : lastIndex;
+  }, -1);
+  const lastStepToolInvocations = message.parts.slice(lastStepStartIndex + 1).filter(isToolOrDynamicToolUIPart).filter((part) => !part.providerExecuted);
+  return lastStepToolInvocations.length > 0 && lastStepToolInvocations.every(
+    (part) => part.state === "output-available" || part.state === "output-error"
+  );
+}
+function transformTextToUiMessageStream({
+  stream
+}) {
+  return stream.pipeThrough(
+    new TransformStream({
+      start(controller) {
+        controller.enqueue({ type: "start" });
+        controller.enqueue({ type: "start-step" });
+        controller.enqueue({ type: "text-start", id: "text-1" });
+      },
+      async transform(part, controller) {
+        controller.enqueue({ type: "text-delta", id: "text-1", delta: part });
+      },
+      async flush(controller) {
+        controller.enqueue({ type: "text-end", id: "text-1" });
+        controller.enqueue({ type: "finish-step" });
+        controller.enqueue({ type: "finish" });
+      }
+    })
+  );
+}
+async function safeValidateUIMessages({
+  messages,
+  metadataSchema,
+  dataSchemas,
+  tools
+}) {
+  try {
+    if (messages == null) {
+      return {
+        success: false,
+        error: new InvalidArgumentError3({
+          parameter: "messages",
+          value: messages,
+          message: "messages parameter must be provided"
+        })
+      };
+    }
+    const validatedMessages = await validateTypes({
+      value: messages,
+      schema: uiMessagesSchema
+    });
+    if (metadataSchema) {
+      for (const message of validatedMessages) {
+        await validateTypes({
+          value: message.metadata,
+          schema: metadataSchema
+        });
+      }
+    }
+    if (dataSchemas) {
+      for (const message of validatedMessages) {
+        const dataParts = message.parts.filter(
+          (part) => part.type.startsWith("data-")
+        );
+        for (const dataPart of dataParts) {
+          const dataName = dataPart.type.slice(5);
+          const dataSchema = dataSchemas[dataName];
+          if (!dataSchema) {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: dataPart.data,
+                cause: `No data schema found for data part ${dataName}`
+              })
+            };
+          }
+          await validateTypes({
+            value: dataPart.data,
+            schema: dataSchema
+          });
+        }
+      }
+    }
+    if (tools) {
+      for (const message of validatedMessages) {
+        const toolParts = message.parts.filter(
+          (part) => part.type.startsWith("tool-")
+        );
+        for (const toolPart of toolParts) {
+          const toolName = toolPart.type.slice(5);
+          const tool2 = tools[toolName];
+          if (!tool2) {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: toolPart.input,
+                cause: `No tool schema found for tool part ${toolName}`
+              })
+            };
+          }
+          if (toolPart.state === "input-available" || toolPart.state === "output-available" || toolPart.state === "output-error") {
+            await validateTypes({
+              value: toolPart.input,
+              schema: tool2.inputSchema
+            });
+          }
+          if (toolPart.state === "output-available" && tool2.outputSchema) {
+            await validateTypes({
+              value: toolPart.output,
+              schema: tool2.outputSchema
+            });
+          }
+        }
+      }
+    }
+    return {
+      success: true,
+      data: validatedMessages
+    };
+  } catch (error) {
+    const err = error;
+    return {
+      success: false,
+      error: err
+    };
+  }
+}
+async function validateUIMessages({
+  messages,
+  metadataSchema,
+  dataSchemas,
+  tools
+}) {
+  const response = await safeValidateUIMessages({
+    messages,
+    metadataSchema,
+    dataSchemas,
+    tools
+  });
+  if (!response.success)
+    throw response.error;
+  return response.data;
+}
+function createUIMessageStream({
+  execute,
+  onError: onError2 = getErrorMessage2,
+  originalMessages,
+  onFinish: onFinish2,
+  generateId: generateId3 = generateId
+}) {
+  let controller;
+  const ongoingStreamPromises = [];
+  const stream = new ReadableStream({
+    start(controllerArg) {
+      controller = controllerArg;
+    }
+  });
+  function safeEnqueue(data) {
+    try {
+      controller.enqueue(data);
+    } catch (error) {
+    }
+  }
+  try {
+    const result = execute({
+      writer: {
+        write(part) {
+          safeEnqueue(part);
+        },
+        merge(streamArg) {
+          ongoingStreamPromises.push(
+            (async () => {
+              const reader = streamArg.getReader();
+              while (true) {
+                const { done, value: value2 } = await reader.read();
+                if (done)
+                  break;
+                safeEnqueue(value2);
+              }
+            })().catch((error) => {
+              safeEnqueue({
+                type: "error",
+                errorText: onError2(error)
+              });
+            })
+          );
+        },
+        onError: onError2
+      }
+    });
+    if (result) {
+      ongoingStreamPromises.push(
+        result.catch((error) => {
+          safeEnqueue({
+            type: "error",
+            errorText: onError2(error)
+          });
+        })
+      );
+    }
+  } catch (error) {
+    safeEnqueue({
+      type: "error",
+      errorText: onError2(error)
+    });
+  }
+  const waitForStreams = new Promise(async (resolve22) => {
+    while (ongoingStreamPromises.length > 0) {
+      await ongoingStreamPromises.shift();
+    }
+    resolve22();
+  });
+  waitForStreams.finally(() => {
+    try {
+      controller.close();
+    } catch (error) {
+    }
+  });
+  return handleUIMessageStreamFinish({
+    stream,
+    messageId: generateId3(),
+    originalMessages,
+    onFinish: onFinish2,
+    onError: onError2
+  });
+}
+function readUIMessageStream({
+  message,
+  stream,
+  onError: onError2,
+  terminateOnError = false
+}) {
+  var _a162;
+  let controller;
+  let hasErrored = false;
+  const outputStream = new ReadableStream({
+    start(controllerParam) {
+      controller = controllerParam;
+    }
+  });
+  const state = createStreamingUIMessageState({
+    messageId: (_a162 = message == null ? void 0 : message.id) != null ? _a162 : "",
+    lastMessage: message
+  });
+  const handleError = (error) => {
+    onError2 == null ? void 0 : onError2(error);
+    if (!hasErrored && terminateOnError) {
+      hasErrored = true;
+      controller == null ? void 0 : controller.error(error);
+    }
+  };
+  consumeStream({
+    stream: processUIMessageStream({
+      stream,
+      runUpdateMessageJob(job) {
+        return job({
+          state,
+          write: () => {
+            controller == null ? void 0 : controller.enqueue(structuredClone(state.message));
+          }
+        });
+      },
+      onError: handleError
+    }),
+    onError: handleError
+  }).finally(() => {
+    if (!hasErrored) {
+      controller == null ? void 0 : controller.close();
+    }
+  });
+  return createAsyncIterableStream(outputStream);
+}
+var __defProp2, __export2, name15, marker16, symbol16, _a16, NoOutputSpecifiedError, FIRST_WARNING_INFO_MESSAGE, hasLoggedBefore, logWarnings, name23, marker23, symbol23, _a23, InvalidArgumentError3, name33, marker33, symbol33, _a33, InvalidStreamPartError, name43, marker43, symbol43, _a43, InvalidToolInputError, name53, marker53, symbol53, _a53, NoImageGeneratedError, name63, marker63, symbol63, _a63, NoObjectGeneratedError, name72, marker73, symbol73, _a73, NoOutputGeneratedError, NoSpeechGeneratedError, name82, marker82, symbol82, _a82, NoSuchToolError, name92, marker92, symbol92, _a92, ToolCallRepairError, UnsupportedModelVersionError, name102, marker102, symbol102, _a102, InvalidDataContentError, name112, marker112, symbol112, _a112, InvalidMessageRoleError, name122, marker122, symbol122, _a122, MessageConversionError, name132, marker132, symbol132, _a132, DownloadError, name142, marker142, symbol142, _a142, RetryError, imageMediaTypeSignatures, audioMediaTypeSignatures, stripID3, VERSION4, download, createDefaultDownloadFunction, dataContentSchema, jsonValueSchema, providerMetadataSchema, textPartSchema, imagePartSchema, filePartSchema, reasoningPartSchema, toolCallPartSchema, outputSchema, toolResultPartSchema, systemModelMessageSchema, coreSystemMessageSchema, userModelMessageSchema, coreUserMessageSchema, assistantModelMessageSchema, coreAssistantMessageSchema, toolModelMessageSchema, coreToolMessageSchema, modelMessageSchema, coreMessageSchema, noopTracer, noopSpan, noopSpanContext, retryWithExponentialBackoffRespectingRetryHeaders, DefaultGeneratedFile, DefaultGeneratedFileWithType, DefaultStepResult, originalGenerateId, DefaultGenerateTextResult, JsonToSseTransformStream, UI_MESSAGE_STREAM_HEADERS, uiMessageChunkSchema, originalGenerateId2, DefaultStreamTextResult, convertToCoreMessages, Agent, DefaultEmbedResult, DefaultEmbedManyResult, DefaultGenerateImageResult, noSchemaOutputStrategy, objectOutputStrategy, arrayOutputStrategy, enumOutputStrategy, originalGenerateId3, DefaultGenerateObjectResult, SerialJobExecutor, originalGenerateId4, DefaultStreamObjectResult, DefaultGeneratedAudioFile, DefaultSpeechResult, output_exports, text, object, CHUNKING_REGEXPS, wrapLanguageModel, doWrap, experimental_customProvider, name152, marker152, symbol152, _a152, NoSuchProviderError, experimental_createProviderRegistry, DefaultProviderRegistry, NoTranscriptGeneratedError, DefaultTranscriptionResult, getOriginalFetch3, HttpChatTransport, DefaultChatTransport, AbstractChat, TextStreamChatTransport, uiMessagesSchema;
+var init_dist11 = __esm({
+  "node_modules/ai/dist/index.mjs"() {
+    init_dist10();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist10();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist10();
+    init_dist6();
+    init_esm();
+    init_esm();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist6();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist9();
+    init_dist6();
+    init_dist9();
+    init_dist9();
+    __defProp2 = Object.defineProperty;
+    __export2 = (target, all) => {
+      for (var name16 in all)
+        __defProp2(target, name16, { get: all[name16], enumerable: true });
+    };
+    name15 = "AI_NoOutputSpecifiedError";
+    marker16 = `vercel.ai.error.${name15}`;
+    symbol16 = Symbol.for(marker16);
+    NoOutputSpecifiedError = class extends AISDKError {
+      // used in isInstance
+      constructor({ message = "No output specified." } = {}) {
+        super({ name: name15, message });
+        this[_a16] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker16);
+      }
+    };
+    _a16 = symbol16;
+    FIRST_WARNING_INFO_MESSAGE = "AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.";
+    hasLoggedBefore = false;
+    logWarnings = (warnings) => {
+      if (warnings.length === 0) {
+        return;
+      }
+      const logger = globalThis.AI_SDK_LOG_WARNINGS;
+      if (logger === false) {
+        return;
+      }
+      if (typeof logger === "function") {
+        logger(warnings);
+        return;
+      }
+      if (!hasLoggedBefore) {
+        hasLoggedBefore = true;
+        console.info(FIRST_WARNING_INFO_MESSAGE);
+      }
+      for (const warning of warnings) {
+        console.warn(formatWarning(warning));
+      }
+    };
+    name23 = "AI_InvalidArgumentError";
+    marker23 = `vercel.ai.error.${name23}`;
+    symbol23 = Symbol.for(marker23);
+    InvalidArgumentError3 = class extends AISDKError {
+      constructor({
+        parameter,
+        value: value2,
+        message
+      }) {
+        super({
+          name: name23,
+          message: `Invalid argument for parameter ${parameter}: ${message}`
+        });
+        this[_a23] = true;
+        this.parameter = parameter;
+        this.value = value2;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker23);
+      }
+    };
+    _a23 = symbol23;
+    name33 = "AI_InvalidStreamPartError";
+    marker33 = `vercel.ai.error.${name33}`;
+    symbol33 = Symbol.for(marker33);
+    InvalidStreamPartError = class extends AISDKError {
+      constructor({
+        chunk,
+        message
+      }) {
+        super({ name: name33, message });
+        this[_a33] = true;
+        this.chunk = chunk;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker33);
+      }
+    };
+    _a33 = symbol33;
+    name43 = "AI_InvalidToolInputError";
+    marker43 = `vercel.ai.error.${name43}`;
+    symbol43 = Symbol.for(marker43);
+    InvalidToolInputError = class extends AISDKError {
+      constructor({
+        toolInput,
+        toolName,
+        cause,
+        message = `Invalid input for tool ${toolName}: ${getErrorMessage(cause)}`
+      }) {
+        super({ name: name43, message, cause });
+        this[_a43] = true;
+        this.toolInput = toolInput;
+        this.toolName = toolName;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker43);
+      }
+    };
+    _a43 = symbol43;
+    name53 = "AI_NoImageGeneratedError";
+    marker53 = `vercel.ai.error.${name53}`;
+    symbol53 = Symbol.for(marker53);
+    NoImageGeneratedError = class extends AISDKError {
+      constructor({
+        message = "No image generated.",
+        cause,
+        responses
+      }) {
+        super({ name: name53, message, cause });
+        this[_a53] = true;
+        this.responses = responses;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker53);
+      }
+    };
+    _a53 = symbol53;
+    name63 = "AI_NoObjectGeneratedError";
+    marker63 = `vercel.ai.error.${name63}`;
+    symbol63 = Symbol.for(marker63);
+    NoObjectGeneratedError = class extends AISDKError {
+      constructor({
+        message = "No object generated.",
+        cause,
+        text: text2,
+        response,
+        usage,
+        finishReason
+      }) {
+        super({ name: name63, message, cause });
+        this[_a63] = true;
+        this.text = text2;
+        this.response = response;
+        this.usage = usage;
+        this.finishReason = finishReason;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker63);
+      }
+    };
+    _a63 = symbol63;
+    name72 = "AI_NoOutputGeneratedError";
+    marker73 = `vercel.ai.error.${name72}`;
+    symbol73 = Symbol.for(marker73);
+    NoOutputGeneratedError = class extends AISDKError {
+      // used in isInstance
+      constructor({
+        message = "No output generated.",
+        cause
+      } = {}) {
+        super({ name: name72, message, cause });
+        this[_a73] = true;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker73);
+      }
+    };
+    _a73 = symbol73;
+    NoSpeechGeneratedError = class extends AISDKError {
+      constructor(options) {
+        super({
+          name: "AI_NoSpeechGeneratedError",
+          message: "No speech audio generated."
+        });
+        this.responses = options.responses;
+      }
+    };
+    name82 = "AI_NoSuchToolError";
+    marker82 = `vercel.ai.error.${name82}`;
+    symbol82 = Symbol.for(marker82);
+    NoSuchToolError = class extends AISDKError {
+      constructor({
+        toolName,
+        availableTools = void 0,
+        message = `Model tried to call unavailable tool '${toolName}'. ${availableTools === void 0 ? "No tools are available." : `Available tools: ${availableTools.join(", ")}.`}`
+      }) {
+        super({ name: name82, message });
+        this[_a82] = true;
+        this.toolName = toolName;
+        this.availableTools = availableTools;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker82);
+      }
+    };
+    _a82 = symbol82;
+    name92 = "AI_ToolCallRepairError";
+    marker92 = `vercel.ai.error.${name92}`;
+    symbol92 = Symbol.for(marker92);
+    ToolCallRepairError = class extends AISDKError {
+      constructor({
+        cause,
+        originalError,
+        message = `Error repairing tool call: ${getErrorMessage(cause)}`
+      }) {
+        super({ name: name92, message, cause });
+        this[_a92] = true;
+        this.originalError = originalError;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker92);
+      }
+    };
+    _a92 = symbol92;
+    UnsupportedModelVersionError = class extends AISDKError {
+      constructor(options) {
+        super({
+          name: "AI_UnsupportedModelVersionError",
+          message: `Unsupported model version ${options.version} for provider "${options.provider}" and model "${options.modelId}". AI SDK 5 only supports models that implement specification version "v2".`
+        });
+        this.version = options.version;
+        this.provider = options.provider;
+        this.modelId = options.modelId;
+      }
+    };
+    name102 = "AI_InvalidDataContentError";
+    marker102 = `vercel.ai.error.${name102}`;
+    symbol102 = Symbol.for(marker102);
+    InvalidDataContentError = class extends AISDKError {
+      constructor({
+        content,
+        cause,
+        message = `Invalid data content. Expected a base64 string, Uint8Array, ArrayBuffer, or Buffer, but got ${typeof content}.`
+      }) {
+        super({ name: name102, message, cause });
+        this[_a102] = true;
+        this.content = content;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker102);
+      }
+    };
+    _a102 = symbol102;
+    name112 = "AI_InvalidMessageRoleError";
+    marker112 = `vercel.ai.error.${name112}`;
+    symbol112 = Symbol.for(marker112);
+    InvalidMessageRoleError = class extends AISDKError {
+      constructor({
+        role,
+        message = `Invalid message role: '${role}'. Must be one of: "system", "user", "assistant", "tool".`
+      }) {
+        super({ name: name112, message });
+        this[_a112] = true;
+        this.role = role;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker112);
+      }
+    };
+    _a112 = symbol112;
+    name122 = "AI_MessageConversionError";
+    marker122 = `vercel.ai.error.${name122}`;
+    symbol122 = Symbol.for(marker122);
+    MessageConversionError = class extends AISDKError {
+      constructor({
+        originalMessage,
+        message
+      }) {
+        super({ name: name122, message });
+        this[_a122] = true;
+        this.originalMessage = originalMessage;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker122);
+      }
+    };
+    _a122 = symbol122;
+    name132 = "AI_DownloadError";
+    marker132 = `vercel.ai.error.${name132}`;
+    symbol132 = Symbol.for(marker132);
+    DownloadError = class extends AISDKError {
+      constructor({
+        url,
+        statusCode,
+        statusText,
+        cause,
+        message = cause == null ? `Failed to download ${url}: ${statusCode} ${statusText}` : `Failed to download ${url}: ${cause}`
+      }) {
+        super({ name: name132, message, cause });
+        this[_a132] = true;
+        this.url = url;
+        this.statusCode = statusCode;
+        this.statusText = statusText;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker132);
+      }
+    };
+    _a132 = symbol132;
+    name142 = "AI_RetryError";
+    marker142 = `vercel.ai.error.${name142}`;
+    symbol142 = Symbol.for(marker142);
+    RetryError = class extends AISDKError {
+      constructor({
+        message,
+        reason,
+        errors
+      }) {
+        super({ name: name142, message });
+        this[_a142] = true;
+        this.reason = reason;
+        this.errors = errors;
+        this.lastError = errors[errors.length - 1];
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker142);
+      }
+    };
+    _a142 = symbol142;
+    imageMediaTypeSignatures = [
+      {
+        mediaType: "image/gif",
+        bytesPrefix: [71, 73, 70]
+        // GIF
+      },
+      {
+        mediaType: "image/png",
+        bytesPrefix: [137, 80, 78, 71]
+        // PNG
+      },
+      {
+        mediaType: "image/jpeg",
+        bytesPrefix: [255, 216]
+        // JPEG
+      },
+      {
+        mediaType: "image/webp",
+        bytesPrefix: [
+          82,
+          73,
+          70,
+          70,
+          // "RIFF"
+          null,
+          null,
+          null,
+          null,
+          // file size (variable)
+          87,
+          69,
+          66,
+          80
+          // "WEBP"
+        ]
+      },
+      {
+        mediaType: "image/bmp",
+        bytesPrefix: [66, 77]
+      },
+      {
+        mediaType: "image/tiff",
+        bytesPrefix: [73, 73, 42, 0]
+      },
+      {
+        mediaType: "image/tiff",
+        bytesPrefix: [77, 77, 0, 42]
+      },
+      {
+        mediaType: "image/avif",
+        bytesPrefix: [
+          0,
+          0,
+          0,
+          32,
+          102,
+          116,
+          121,
+          112,
+          97,
+          118,
+          105,
+          102
+        ]
+      },
+      {
+        mediaType: "image/heic",
+        bytesPrefix: [
+          0,
+          0,
+          0,
+          32,
+          102,
+          116,
+          121,
+          112,
+          104,
+          101,
+          105,
+          99
+        ]
+      }
+    ];
+    audioMediaTypeSignatures = [
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 251]
+      },
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 250]
+      },
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 243]
+      },
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 242]
+      },
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 227]
+      },
+      {
+        mediaType: "audio/mpeg",
+        bytesPrefix: [255, 226]
+      },
+      {
+        mediaType: "audio/wav",
+        bytesPrefix: [
+          82,
+          // R
+          73,
+          // I
+          70,
+          // F
+          70,
+          // F
+          null,
+          null,
+          null,
+          null,
+          87,
+          // W
+          65,
+          // A
+          86,
+          // V
+          69
+          // E
+        ]
+      },
+      {
+        mediaType: "audio/ogg",
+        bytesPrefix: [79, 103, 103, 83]
+      },
+      {
+        mediaType: "audio/flac",
+        bytesPrefix: [102, 76, 97, 67]
+      },
+      {
+        mediaType: "audio/aac",
+        bytesPrefix: [64, 21, 0, 0]
+      },
+      {
+        mediaType: "audio/mp4",
+        bytesPrefix: [102, 116, 121, 112]
+      },
+      {
+        mediaType: "audio/webm",
+        bytesPrefix: [26, 69, 223, 163]
+      }
+    ];
+    stripID3 = (data) => {
+      const bytes = typeof data === "string" ? convertBase64ToUint8Array(data) : data;
+      const id3Size = (bytes[6] & 127) << 21 | (bytes[7] & 127) << 14 | (bytes[8] & 127) << 7 | bytes[9] & 127;
+      return bytes.slice(id3Size + 10);
+    };
+    VERSION4 = true ? "5.0.106" : "0.0.0-test";
+    download = async ({ url }) => {
+      var _a162;
+      const urlText = url.toString();
+      try {
+        const response = await fetch(urlText, {
+          headers: withUserAgentSuffix(
+            {},
+            `ai-sdk/${VERSION4}`,
+            getRuntimeEnvironmentUserAgent()
+          )
+        });
+        if (!response.ok) {
+          throw new DownloadError({
+            url: urlText,
+            statusCode: response.status,
+            statusText: response.statusText
+          });
+        }
+        return {
+          data: new Uint8Array(await response.arrayBuffer()),
+          mediaType: (_a162 = response.headers.get("content-type")) != null ? _a162 : void 0
+        };
+      } catch (error) {
+        if (DownloadError.isInstance(error)) {
+          throw error;
+        }
+        throw new DownloadError({ url: urlText, cause: error });
+      }
+    };
+    createDefaultDownloadFunction = (download2 = download) => (requestedDownloads) => Promise.all(
+      requestedDownloads.map(
+        async (requestedDownload) => requestedDownload.isUrlSupportedByModel ? null : download2(requestedDownload)
+      )
+    );
+    dataContentSchema = z26.union([
+      z26.string(),
+      z26.instanceof(Uint8Array),
+      z26.instanceof(ArrayBuffer),
+      z26.custom(
+        // Buffer might not be available in some environments such as CloudFlare:
+        (value2) => {
+          var _a162, _b8;
+          return (_b8 = (_a162 = globalThis.Buffer) == null ? void 0 : _a162.isBuffer(value2)) != null ? _b8 : false;
+        },
+        { message: "Must be a Buffer" }
+      )
+    ]);
+    jsonValueSchema = z27.lazy(
+      () => z27.union([
+        z27.null(),
+        z27.string(),
+        z27.number(),
+        z27.boolean(),
+        z27.record(z27.string(), jsonValueSchema),
+        z27.array(jsonValueSchema)
+      ])
+    );
+    providerMetadataSchema = z33.record(
+      z33.string(),
+      z33.record(z33.string(), jsonValueSchema)
+    );
+    textPartSchema = z44.object({
+      type: z44.literal("text"),
+      text: z44.string(),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    imagePartSchema = z44.object({
+      type: z44.literal("image"),
+      image: z44.union([dataContentSchema, z44.instanceof(URL)]),
+      mediaType: z44.string().optional(),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    filePartSchema = z44.object({
+      type: z44.literal("file"),
+      data: z44.union([dataContentSchema, z44.instanceof(URL)]),
+      filename: z44.string().optional(),
+      mediaType: z44.string(),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    reasoningPartSchema = z44.object({
+      type: z44.literal("reasoning"),
+      text: z44.string(),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    toolCallPartSchema = z44.object({
+      type: z44.literal("tool-call"),
+      toolCallId: z44.string(),
+      toolName: z44.string(),
+      input: z44.unknown(),
+      providerOptions: providerMetadataSchema.optional(),
+      providerExecuted: z44.boolean().optional()
+    });
+    outputSchema = z44.discriminatedUnion("type", [
+      z44.object({
+        type: z44.literal("text"),
+        value: z44.string()
+      }),
+      z44.object({
+        type: z44.literal("json"),
+        value: jsonValueSchema
+      }),
+      z44.object({
+        type: z44.literal("error-text"),
+        value: z44.string()
+      }),
+      z44.object({
+        type: z44.literal("error-json"),
+        value: jsonValueSchema
+      }),
+      z44.object({
+        type: z44.literal("content"),
+        value: z44.array(
+          z44.union([
+            z44.object({
+              type: z44.literal("text"),
+              text: z44.string()
+            }),
+            z44.object({
+              type: z44.literal("media"),
+              data: z44.string(),
+              mediaType: z44.string()
+            })
+          ])
+        )
+      })
+    ]);
+    toolResultPartSchema = z44.object({
+      type: z44.literal("tool-result"),
+      toolCallId: z44.string(),
+      toolName: z44.string(),
+      output: outputSchema,
+      providerOptions: providerMetadataSchema.optional()
+    });
+    systemModelMessageSchema = z53.object(
+      {
+        role: z53.literal("system"),
+        content: z53.string(),
+        providerOptions: providerMetadataSchema.optional()
+      }
+    );
+    coreSystemMessageSchema = systemModelMessageSchema;
+    userModelMessageSchema = z53.object({
+      role: z53.literal("user"),
+      content: z53.union([
+        z53.string(),
+        z53.array(z53.union([textPartSchema, imagePartSchema, filePartSchema]))
+      ]),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    coreUserMessageSchema = userModelMessageSchema;
+    assistantModelMessageSchema = z53.object({
+      role: z53.literal("assistant"),
+      content: z53.union([
+        z53.string(),
+        z53.array(
+          z53.union([
+            textPartSchema,
+            filePartSchema,
+            reasoningPartSchema,
+            toolCallPartSchema,
+            toolResultPartSchema
+          ])
+        )
+      ]),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    coreAssistantMessageSchema = assistantModelMessageSchema;
+    toolModelMessageSchema = z53.object({
+      role: z53.literal("tool"),
+      content: z53.array(toolResultPartSchema),
+      providerOptions: providerMetadataSchema.optional()
+    });
+    coreToolMessageSchema = toolModelMessageSchema;
+    modelMessageSchema = z53.union([
+      systemModelMessageSchema,
+      userModelMessageSchema,
+      assistantModelMessageSchema,
+      toolModelMessageSchema
+    ]);
+    coreMessageSchema = modelMessageSchema;
+    noopTracer = {
+      startSpan() {
+        return noopSpan;
+      },
+      startActiveSpan(name16, arg1, arg2, arg3) {
+        if (typeof arg1 === "function") {
+          return arg1(noopSpan);
+        }
+        if (typeof arg2 === "function") {
+          return arg2(noopSpan);
+        }
+        if (typeof arg3 === "function") {
+          return arg3(noopSpan);
+        }
+      }
+    };
+    noopSpan = {
+      spanContext() {
+        return noopSpanContext;
+      },
+      setAttribute() {
+        return this;
+      },
+      setAttributes() {
+        return this;
+      },
+      addEvent() {
+        return this;
+      },
+      addLink() {
+        return this;
+      },
+      addLinks() {
+        return this;
+      },
+      setStatus() {
+        return this;
+      },
+      updateName() {
+        return this;
+      },
+      end() {
+        return this;
+      },
+      isRecording() {
+        return false;
+      },
+      recordException() {
+        return this;
+      }
+    };
+    noopSpanContext = {
+      traceId: "",
+      spanId: "",
+      traceFlags: 0
+    };
+    retryWithExponentialBackoffRespectingRetryHeaders = ({
+      maxRetries = 2,
+      initialDelayInMs = 2e3,
+      backoffFactor = 2,
+      abortSignal
+    } = {}) => async (f) => _retryWithExponentialBackoff(f, {
+      maxRetries,
+      delayInMs: initialDelayInMs,
+      backoffFactor,
+      abortSignal
+    });
+    DefaultGeneratedFile = class {
+      constructor({
+        data,
+        mediaType
+      }) {
+        const isUint8Array = data instanceof Uint8Array;
+        this.base64Data = isUint8Array ? void 0 : data;
+        this.uint8ArrayData = isUint8Array ? data : void 0;
+        this.mediaType = mediaType;
+      }
+      // lazy conversion with caching to avoid unnecessary conversion overhead:
+      get base64() {
+        if (this.base64Data == null) {
+          this.base64Data = convertUint8ArrayToBase64(this.uint8ArrayData);
+        }
+        return this.base64Data;
+      }
+      // lazy conversion with caching to avoid unnecessary conversion overhead:
+      get uint8Array() {
+        if (this.uint8ArrayData == null) {
+          this.uint8ArrayData = convertBase64ToUint8Array(this.base64Data);
+        }
+        return this.uint8ArrayData;
+      }
+    };
+    DefaultGeneratedFileWithType = class extends DefaultGeneratedFile {
+      constructor(options) {
+        super(options);
+        this.type = "file";
+      }
+    };
+    DefaultStepResult = class {
+      constructor({
+        content,
+        finishReason,
+        usage,
+        warnings,
+        request,
+        response,
+        providerMetadata
+      }) {
+        this.content = content;
+        this.finishReason = finishReason;
+        this.usage = usage;
+        this.warnings = warnings;
+        this.request = request;
+        this.response = response;
+        this.providerMetadata = providerMetadata;
+      }
+      get text() {
+        return this.content.filter((part) => part.type === "text").map((part) => part.text).join("");
+      }
+      get reasoning() {
+        return this.content.filter((part) => part.type === "reasoning");
+      }
+      get reasoningText() {
+        return this.reasoning.length === 0 ? void 0 : this.reasoning.map((part) => part.text).join("");
+      }
+      get files() {
+        return this.content.filter((part) => part.type === "file").map((part) => part.file);
+      }
+      get sources() {
+        return this.content.filter((part) => part.type === "source");
+      }
+      get toolCalls() {
+        return this.content.filter((part) => part.type === "tool-call");
+      }
+      get staticToolCalls() {
+        return this.toolCalls.filter(
+          (toolCall) => toolCall.dynamic !== true
+        );
+      }
+      get dynamicToolCalls() {
+        return this.toolCalls.filter(
+          (toolCall) => toolCall.dynamic === true
+        );
+      }
+      get toolResults() {
+        return this.content.filter((part) => part.type === "tool-result");
+      }
+      get staticToolResults() {
+        return this.toolResults.filter(
+          (toolResult) => toolResult.dynamic !== true
+        );
+      }
+      get dynamicToolResults() {
+        return this.toolResults.filter(
+          (toolResult) => toolResult.dynamic === true
+        );
+      }
+    };
+    originalGenerateId = createIdGenerator({
+      prefix: "aitxt",
+      size: 24
+    });
+    DefaultGenerateTextResult = class {
+      constructor(options) {
+        this.steps = options.steps;
+        this.resolvedOutput = options.resolvedOutput;
+      }
+      get finalStep() {
+        return this.steps[this.steps.length - 1];
+      }
+      get content() {
+        return this.finalStep.content;
+      }
+      get text() {
+        return this.finalStep.text;
+      }
+      get files() {
+        return this.finalStep.files;
+      }
+      get reasoningText() {
+        return this.finalStep.reasoningText;
+      }
+      get reasoning() {
+        return this.finalStep.reasoning;
+      }
+      get toolCalls() {
+        return this.finalStep.toolCalls;
+      }
+      get staticToolCalls() {
+        return this.finalStep.staticToolCalls;
+      }
+      get dynamicToolCalls() {
+        return this.finalStep.dynamicToolCalls;
+      }
+      get toolResults() {
+        return this.finalStep.toolResults;
+      }
+      get staticToolResults() {
+        return this.finalStep.staticToolResults;
+      }
+      get dynamicToolResults() {
+        return this.finalStep.dynamicToolResults;
+      }
+      get sources() {
+        return this.finalStep.sources;
+      }
+      get finishReason() {
+        return this.finalStep.finishReason;
+      }
+      get warnings() {
+        return this.finalStep.warnings;
+      }
+      get providerMetadata() {
+        return this.finalStep.providerMetadata;
+      }
+      get response() {
+        return this.finalStep.response;
+      }
+      get request() {
+        return this.finalStep.request;
+      }
+      get usage() {
+        return this.finalStep.usage;
+      }
+      get totalUsage() {
+        return this.steps.reduce(
+          (totalUsage, step) => {
+            return addLanguageModelUsage(totalUsage, step.usage);
+          },
+          {
+            inputTokens: void 0,
+            outputTokens: void 0,
+            totalTokens: void 0,
+            reasoningTokens: void 0,
+            cachedInputTokens: void 0
+          }
+        );
+      }
+      get experimental_output() {
+        if (this.resolvedOutput == null) {
+          throw new NoOutputSpecifiedError();
+        }
+        return this.resolvedOutput;
+      }
+    };
+    JsonToSseTransformStream = class extends TransformStream {
+      constructor() {
+        super({
+          transform(part, controller) {
+            controller.enqueue(`data: ${JSON.stringify(part)}
+
+`);
+          },
+          flush(controller) {
+            controller.enqueue("data: [DONE]\n\n");
+          }
+        });
+      }
+    };
+    UI_MESSAGE_STREAM_HEADERS = {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+      "x-vercel-ai-ui-message-stream": "v1",
+      "x-accel-buffering": "no"
+      // disable nginx buffering
+    };
+    uiMessageChunkSchema = lazyValidator(
+      () => zodSchema(
+        z73.union([
+          z73.strictObject({
+            type: z73.literal("text-start"),
+            id: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("text-delta"),
+            id: z73.string(),
+            delta: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("text-end"),
+            id: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("error"),
+            errorText: z73.string()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-input-start"),
+            toolCallId: z73.string(),
+            toolName: z73.string(),
+            providerExecuted: z73.boolean().optional(),
+            dynamic: z73.boolean().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-input-delta"),
+            toolCallId: z73.string(),
+            inputTextDelta: z73.string()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-input-available"),
+            toolCallId: z73.string(),
+            toolName: z73.string(),
+            input: z73.unknown(),
+            providerExecuted: z73.boolean().optional(),
+            providerMetadata: providerMetadataSchema.optional(),
+            dynamic: z73.boolean().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-input-error"),
+            toolCallId: z73.string(),
+            toolName: z73.string(),
+            input: z73.unknown(),
+            providerExecuted: z73.boolean().optional(),
+            providerMetadata: providerMetadataSchema.optional(),
+            dynamic: z73.boolean().optional(),
+            errorText: z73.string()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-output-available"),
+            toolCallId: z73.string(),
+            output: z73.unknown(),
+            providerExecuted: z73.boolean().optional(),
+            dynamic: z73.boolean().optional(),
+            preliminary: z73.boolean().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("tool-output-error"),
+            toolCallId: z73.string(),
+            errorText: z73.string(),
+            providerExecuted: z73.boolean().optional(),
+            dynamic: z73.boolean().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("reasoning-start"),
+            id: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("reasoning-delta"),
+            id: z73.string(),
+            delta: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("reasoning-end"),
+            id: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("source-url"),
+            sourceId: z73.string(),
+            url: z73.string(),
+            title: z73.string().optional(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("source-document"),
+            sourceId: z73.string(),
+            mediaType: z73.string(),
+            title: z73.string(),
+            filename: z73.string().optional(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("file"),
+            url: z73.string(),
+            mediaType: z73.string(),
+            providerMetadata: providerMetadataSchema.optional()
+          }),
+          z73.strictObject({
+            type: z73.custom(
+              (value2) => typeof value2 === "string" && value2.startsWith("data-"),
+              { message: 'Type must start with "data-"' }
+            ),
+            id: z73.string().optional(),
+            data: z73.unknown(),
+            transient: z73.boolean().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("start-step")
+          }),
+          z73.strictObject({
+            type: z73.literal("finish-step")
+          }),
+          z73.strictObject({
+            type: z73.literal("start"),
+            messageId: z73.string().optional(),
+            messageMetadata: z73.unknown().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("finish"),
+            finishReason: z73.enum([
+              "stop",
+              "length",
+              "content-filter",
+              "tool-calls",
+              "error",
+              "other",
+              "unknown"
+            ]).optional(),
+            messageMetadata: z73.unknown().optional()
+          }),
+          z73.strictObject({
+            type: z73.literal("abort")
+          }),
+          z73.strictObject({
+            type: z73.literal("message-metadata"),
+            messageMetadata: z73.unknown()
+          })
+        ])
+      )
+    );
+    originalGenerateId2 = createIdGenerator({
+      prefix: "aitxt",
+      size: 24
+    });
+    DefaultStreamTextResult = class {
+      constructor({
+        model,
+        telemetry: telemetry2,
+        headers,
+        settings,
+        maxRetries: maxRetriesArg,
+        abortSignal,
+        system,
+        prompt,
+        messages,
+        tools,
+        toolChoice,
+        transforms,
+        activeTools,
+        repairToolCall,
+        stopConditions,
+        output,
+        providerOptions,
+        prepareStep,
+        includeRawChunks,
+        now: now2,
+        currentDate,
+        generateId: generateId3,
+        onChunk,
+        onError: onError2,
+        onFinish: onFinish2,
+        onAbort,
+        onStepFinish,
+        experimental_context,
+        download: download2
+      }) {
+        this._totalUsage = new DelayedPromise();
+        this._finishReason = new DelayedPromise();
+        this._steps = new DelayedPromise();
+        this.output = output;
+        this.includeRawChunks = includeRawChunks;
+        this.tools = tools;
+        let stepFinish;
+        let recordedContent = [];
+        const recordedResponseMessages = [];
+        let recordedFinishReason = void 0;
+        let recordedTotalUsage = void 0;
+        let recordedRequest = {};
+        let recordedWarnings = [];
+        const recordedSteps = [];
+        let rootSpan;
+        let activeTextContent = {};
+        let activeReasoningContent = {};
+        const eventProcessor = new TransformStream({
+          async transform(chunk, controller) {
+            var _a162, _b8, _c, _d;
+            controller.enqueue(chunk);
+            const { part } = chunk;
+            if (part.type === "text-delta" || part.type === "reasoning-delta" || part.type === "source" || part.type === "tool-call" || part.type === "tool-result" || part.type === "tool-input-start" || part.type === "tool-input-delta" || part.type === "raw") {
+              await (onChunk == null ? void 0 : onChunk({ chunk: part }));
+            }
+            if (part.type === "error") {
+              await onError2({ error: wrapGatewayError(part.error) });
+            }
+            if (part.type === "text-start") {
+              activeTextContent[part.id] = {
+                type: "text",
+                text: "",
+                providerMetadata: part.providerMetadata
+              };
+              recordedContent.push(activeTextContent[part.id]);
+            }
+            if (part.type === "text-delta") {
+              const activeText = activeTextContent[part.id];
+              if (activeText == null) {
+                controller.enqueue({
+                  part: {
+                    type: "error",
+                    error: `text part ${part.id} not found`
+                  },
+                  partialOutput: void 0
+                });
+                return;
+              }
+              activeText.text += part.text;
+              activeText.providerMetadata = (_a162 = part.providerMetadata) != null ? _a162 : activeText.providerMetadata;
+            }
+            if (part.type === "text-end") {
+              const activeText = activeTextContent[part.id];
+              if (activeText == null) {
+                controller.enqueue({
+                  part: {
+                    type: "error",
+                    error: `text part ${part.id} not found`
+                  },
+                  partialOutput: void 0
+                });
+                return;
+              }
+              activeText.providerMetadata = (_b8 = part.providerMetadata) != null ? _b8 : activeText.providerMetadata;
+              delete activeTextContent[part.id];
+            }
+            if (part.type === "reasoning-start") {
+              activeReasoningContent[part.id] = {
+                type: "reasoning",
+                text: "",
+                providerMetadata: part.providerMetadata
+              };
+              recordedContent.push(activeReasoningContent[part.id]);
+            }
+            if (part.type === "reasoning-delta") {
+              const activeReasoning = activeReasoningContent[part.id];
+              if (activeReasoning == null) {
+                controller.enqueue({
+                  part: {
+                    type: "error",
+                    error: `reasoning part ${part.id} not found`
+                  },
+                  partialOutput: void 0
+                });
+                return;
+              }
+              activeReasoning.text += part.text;
+              activeReasoning.providerMetadata = (_c = part.providerMetadata) != null ? _c : activeReasoning.providerMetadata;
+            }
+            if (part.type === "reasoning-end") {
+              const activeReasoning = activeReasoningContent[part.id];
+              if (activeReasoning == null) {
+                controller.enqueue({
+                  part: {
+                    type: "error",
+                    error: `reasoning part ${part.id} not found`
+                  },
+                  partialOutput: void 0
+                });
+                return;
+              }
+              activeReasoning.providerMetadata = (_d = part.providerMetadata) != null ? _d : activeReasoning.providerMetadata;
+              delete activeReasoningContent[part.id];
+            }
+            if (part.type === "file") {
+              recordedContent.push({ type: "file", file: part.file });
+            }
+            if (part.type === "source") {
+              recordedContent.push(part);
+            }
+            if (part.type === "tool-call") {
+              recordedContent.push(part);
+            }
+            if (part.type === "tool-result" && !part.preliminary) {
+              recordedContent.push(part);
+            }
+            if (part.type === "tool-error") {
+              recordedContent.push(part);
+            }
+            if (part.type === "start-step") {
+              recordedRequest = part.request;
+              recordedWarnings = part.warnings;
+            }
+            if (part.type === "finish-step") {
+              const stepMessages = toResponseMessages({
+                content: recordedContent,
+                tools
+              });
+              const currentStepResult = new DefaultStepResult({
+                content: recordedContent,
+                finishReason: part.finishReason,
+                usage: part.usage,
+                warnings: recordedWarnings,
+                request: recordedRequest,
+                response: {
+                  ...part.response,
+                  messages: [...recordedResponseMessages, ...stepMessages]
+                },
+                providerMetadata: part.providerMetadata
+              });
+              await (onStepFinish == null ? void 0 : onStepFinish(currentStepResult));
+              logWarnings(recordedWarnings);
+              recordedSteps.push(currentStepResult);
+              recordedContent = [];
+              activeReasoningContent = {};
+              activeTextContent = {};
+              recordedResponseMessages.push(...stepMessages);
+              stepFinish.resolve();
+            }
+            if (part.type === "finish") {
+              recordedTotalUsage = part.totalUsage;
+              recordedFinishReason = part.finishReason;
+            }
+          },
+          async flush(controller) {
+            try {
+              if (recordedSteps.length === 0) {
+                const error = new NoOutputGeneratedError({
+                  message: "No output generated. Check the stream for errors."
+                });
+                self._finishReason.reject(error);
+                self._totalUsage.reject(error);
+                self._steps.reject(error);
+                return;
+              }
+              const finishReason = recordedFinishReason != null ? recordedFinishReason : "unknown";
+              const totalUsage = recordedTotalUsage != null ? recordedTotalUsage : {
+                inputTokens: void 0,
+                outputTokens: void 0,
+                totalTokens: void 0
+              };
+              self._finishReason.resolve(finishReason);
+              self._totalUsage.resolve(totalUsage);
+              self._steps.resolve(recordedSteps);
+              const finalStep = recordedSteps[recordedSteps.length - 1];
+              await (onFinish2 == null ? void 0 : onFinish2({
+                finishReason,
+                totalUsage,
+                usage: finalStep.usage,
+                content: finalStep.content,
+                text: finalStep.text,
+                reasoningText: finalStep.reasoningText,
+                reasoning: finalStep.reasoning,
+                files: finalStep.files,
+                sources: finalStep.sources,
+                toolCalls: finalStep.toolCalls,
+                staticToolCalls: finalStep.staticToolCalls,
+                dynamicToolCalls: finalStep.dynamicToolCalls,
+                toolResults: finalStep.toolResults,
+                staticToolResults: finalStep.staticToolResults,
+                dynamicToolResults: finalStep.dynamicToolResults,
+                request: finalStep.request,
+                response: finalStep.response,
+                warnings: finalStep.warnings,
+                providerMetadata: finalStep.providerMetadata,
+                steps: recordedSteps
+              }));
+              rootSpan.setAttributes(
+                selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    "ai.response.finishReason": finishReason,
+                    "ai.response.text": { output: () => finalStep.text },
+                    "ai.response.toolCalls": {
+                      output: () => {
+                        var _a162;
+                        return ((_a162 = finalStep.toolCalls) == null ? void 0 : _a162.length) ? JSON.stringify(finalStep.toolCalls) : void 0;
+                      }
+                    },
+                    "ai.response.providerMetadata": JSON.stringify(
+                      finalStep.providerMetadata
+                    ),
+                    "ai.usage.inputTokens": totalUsage.inputTokens,
+                    "ai.usage.outputTokens": totalUsage.outputTokens,
+                    "ai.usage.totalTokens": totalUsage.totalTokens,
+                    "ai.usage.reasoningTokens": totalUsage.reasoningTokens,
+                    "ai.usage.cachedInputTokens": totalUsage.cachedInputTokens
+                  }
+                })
+              );
+            } catch (error) {
+              controller.error(error);
+            } finally {
+              rootSpan.end();
+            }
+          }
+        });
+        const stitchableStream = createStitchableStream();
+        this.addStream = stitchableStream.addStream;
+        this.closeStream = stitchableStream.close;
+        const reader = stitchableStream.stream.getReader();
+        let stream = new ReadableStream({
+          async start(controller) {
+            controller.enqueue({ type: "start" });
+          },
+          async pull(controller) {
+            function abort() {
+              onAbort == null ? void 0 : onAbort({ steps: recordedSteps });
+              controller.enqueue({ type: "abort" });
+              controller.close();
+            }
+            try {
+              const { done, value: value2 } = await reader.read();
+              if (done) {
+                controller.close();
+                return;
+              }
+              if (abortSignal == null ? void 0 : abortSignal.aborted) {
+                abort();
+                return;
+              }
+              controller.enqueue(value2);
+            } catch (error) {
+              if (isAbortError(error) && (abortSignal == null ? void 0 : abortSignal.aborted)) {
+                abort();
+              } else {
+                controller.error(error);
+              }
+            }
+          },
+          cancel(reason) {
+            return stitchableStream.stream.cancel(reason);
+          }
+        });
+        for (const transform of transforms) {
+          stream = stream.pipeThrough(
+            transform({
+              tools,
+              stopStream() {
+                stitchableStream.terminate();
+              }
+            })
+          );
+        }
+        this.baseStream = stream.pipeThrough(createOutputTransformStream(output)).pipeThrough(eventProcessor);
+        const { maxRetries, retry } = prepareRetries({
+          maxRetries: maxRetriesArg,
+          abortSignal
+        });
+        const tracer = getTracer(telemetry2);
+        const callSettings = prepareCallSettings(settings);
+        const baseTelemetryAttributes = getBaseTelemetryAttributes({
+          model,
+          telemetry: telemetry2,
+          headers,
+          settings: { ...callSettings, maxRetries }
+        });
+        const self = this;
+        recordSpan({
+          name: "ai.streamText",
+          attributes: selectTelemetryAttributes({
+            telemetry: telemetry2,
+            attributes: {
+              ...assembleOperationName({ operationId: "ai.streamText", telemetry: telemetry2 }),
+              ...baseTelemetryAttributes,
+              // specific settings that only make sense on the outer level:
+              "ai.prompt": {
+                input: () => JSON.stringify({ system, prompt, messages })
+              }
+            }
+          }),
+          tracer,
+          endWhenDone: false,
+          fn: async (rootSpanArg) => {
+            rootSpan = rootSpanArg;
+            async function streamStep({
+              currentStep,
+              responseMessages,
+              usage
+            }) {
+              var _a162, _b8, _c, _d, _e;
+              const includeRawChunks2 = self.includeRawChunks;
+              stepFinish = new DelayedPromise();
+              const initialPrompt = await standardizePrompt({
+                system,
+                prompt,
+                messages
+              });
+              const stepInputMessages = [
+                ...initialPrompt.messages,
+                ...responseMessages
+              ];
+              const prepareStepResult = await (prepareStep == null ? void 0 : prepareStep({
+                model,
+                steps: recordedSteps,
+                stepNumber: recordedSteps.length,
+                messages: stepInputMessages
+              }));
+              const stepModel = resolveLanguageModel(
+                (_a162 = prepareStepResult == null ? void 0 : prepareStepResult.model) != null ? _a162 : model
+              );
+              const promptMessages = await convertToLanguageModelPrompt({
+                prompt: {
+                  system: (_b8 = prepareStepResult == null ? void 0 : prepareStepResult.system) != null ? _b8 : initialPrompt.system,
+                  messages: (_c = prepareStepResult == null ? void 0 : prepareStepResult.messages) != null ? _c : stepInputMessages
+                },
+                supportedUrls: await stepModel.supportedUrls,
+                download: download2
+              });
+              const { toolChoice: stepToolChoice, tools: stepTools } = prepareToolsAndToolChoice({
+                tools,
+                toolChoice: (_d = prepareStepResult == null ? void 0 : prepareStepResult.toolChoice) != null ? _d : toolChoice,
+                activeTools: (_e = prepareStepResult == null ? void 0 : prepareStepResult.activeTools) != null ? _e : activeTools
+              });
+              const {
+                result: { stream: stream2, response, request },
+                doStreamSpan,
+                startTimestampMs
+              } = await retry(
+                () => recordSpan({
+                  name: "ai.streamText.doStream",
+                  attributes: selectTelemetryAttributes({
+                    telemetry: telemetry2,
+                    attributes: {
+                      ...assembleOperationName({
+                        operationId: "ai.streamText.doStream",
+                        telemetry: telemetry2
+                      }),
+                      ...baseTelemetryAttributes,
+                      // model:
+                      "ai.model.provider": stepModel.provider,
+                      "ai.model.id": stepModel.modelId,
+                      // prompt:
+                      "ai.prompt.messages": {
+                        input: () => stringifyForTelemetry(promptMessages)
+                      },
+                      "ai.prompt.tools": {
+                        // convert the language model level tools:
+                        input: () => stepTools == null ? void 0 : stepTools.map((tool2) => JSON.stringify(tool2))
+                      },
+                      "ai.prompt.toolChoice": {
+                        input: () => stepToolChoice != null ? JSON.stringify(stepToolChoice) : void 0
+                      },
+                      // standardized gen-ai llm span attributes:
+                      "gen_ai.system": stepModel.provider,
+                      "gen_ai.request.model": stepModel.modelId,
+                      "gen_ai.request.frequency_penalty": callSettings.frequencyPenalty,
+                      "gen_ai.request.max_tokens": callSettings.maxOutputTokens,
+                      "gen_ai.request.presence_penalty": callSettings.presencePenalty,
+                      "gen_ai.request.stop_sequences": callSettings.stopSequences,
+                      "gen_ai.request.temperature": callSettings.temperature,
+                      "gen_ai.request.top_k": callSettings.topK,
+                      "gen_ai.request.top_p": callSettings.topP
+                    }
+                  }),
+                  tracer,
+                  endWhenDone: false,
+                  fn: async (doStreamSpan2) => {
+                    return {
+                      startTimestampMs: now2(),
+                      // get before the call
+                      doStreamSpan: doStreamSpan2,
+                      result: await stepModel.doStream({
+                        ...callSettings,
+                        tools: stepTools,
+                        toolChoice: stepToolChoice,
+                        responseFormat: output == null ? void 0 : output.responseFormat,
+                        prompt: promptMessages,
+                        providerOptions,
+                        abortSignal,
+                        headers,
+                        includeRawChunks: includeRawChunks2
+                      })
+                    };
+                  }
+                })
+              );
+              const streamWithToolResults = runToolsTransformation({
+                tools,
+                generatorStream: stream2,
+                tracer,
+                telemetry: telemetry2,
+                system,
+                messages: stepInputMessages,
+                repairToolCall,
+                abortSignal,
+                experimental_context
+              });
+              const stepRequest = request != null ? request : {};
+              const stepToolCalls = [];
+              const stepToolOutputs = [];
+              let warnings;
+              const activeToolCallToolNames = {};
+              let stepFinishReason = "unknown";
+              let stepUsage = {
+                inputTokens: void 0,
+                outputTokens: void 0,
+                totalTokens: void 0
+              };
+              let stepProviderMetadata;
+              let stepFirstChunk = true;
+              let stepResponse = {
+                id: generateId3(),
+                timestamp: currentDate(),
+                modelId: model.modelId
+              };
+              let activeText = "";
+              self.addStream(
+                streamWithToolResults.pipeThrough(
+                  new TransformStream({
+                    async transform(chunk, controller) {
+                      var _a17, _b22, _c2, _d2;
+                      if (chunk.type === "stream-start") {
+                        warnings = chunk.warnings;
+                        return;
+                      }
+                      if (stepFirstChunk) {
+                        const msToFirstChunk = now2() - startTimestampMs;
+                        stepFirstChunk = false;
+                        doStreamSpan.addEvent("ai.stream.firstChunk", {
+                          "ai.response.msToFirstChunk": msToFirstChunk
+                        });
+                        doStreamSpan.setAttributes({
+                          "ai.response.msToFirstChunk": msToFirstChunk
+                        });
+                        controller.enqueue({
+                          type: "start-step",
+                          request: stepRequest,
+                          warnings: warnings != null ? warnings : []
+                        });
+                      }
+                      const chunkType = chunk.type;
+                      switch (chunkType) {
+                        case "text-start":
+                        case "text-end": {
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "text-delta": {
+                          if (chunk.delta.length > 0) {
+                            controller.enqueue({
+                              type: "text-delta",
+                              id: chunk.id,
+                              text: chunk.delta,
+                              providerMetadata: chunk.providerMetadata
+                            });
+                            activeText += chunk.delta;
+                          }
+                          break;
+                        }
+                        case "reasoning-start":
+                        case "reasoning-end": {
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "reasoning-delta": {
+                          controller.enqueue({
+                            type: "reasoning-delta",
+                            id: chunk.id,
+                            text: chunk.delta,
+                            providerMetadata: chunk.providerMetadata
+                          });
+                          break;
+                        }
+                        case "tool-call": {
+                          controller.enqueue(chunk);
+                          stepToolCalls.push(chunk);
+                          break;
+                        }
+                        case "tool-result": {
+                          controller.enqueue(chunk);
+                          if (!chunk.preliminary) {
+                            stepToolOutputs.push(chunk);
+                          }
+                          break;
+                        }
+                        case "tool-error": {
+                          controller.enqueue(chunk);
+                          stepToolOutputs.push(chunk);
+                          break;
+                        }
+                        case "response-metadata": {
+                          stepResponse = {
+                            id: (_a17 = chunk.id) != null ? _a17 : stepResponse.id,
+                            timestamp: (_b22 = chunk.timestamp) != null ? _b22 : stepResponse.timestamp,
+                            modelId: (_c2 = chunk.modelId) != null ? _c2 : stepResponse.modelId
+                          };
+                          break;
+                        }
+                        case "finish": {
+                          stepUsage = chunk.usage;
+                          stepFinishReason = chunk.finishReason;
+                          stepProviderMetadata = chunk.providerMetadata;
+                          const msToFinish = now2() - startTimestampMs;
+                          doStreamSpan.addEvent("ai.stream.finish");
+                          doStreamSpan.setAttributes({
+                            "ai.response.msToFinish": msToFinish,
+                            "ai.response.avgOutputTokensPerSecond": 1e3 * ((_d2 = stepUsage.outputTokens) != null ? _d2 : 0) / msToFinish
+                          });
+                          break;
+                        }
+                        case "file": {
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "source": {
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "tool-input-start": {
+                          activeToolCallToolNames[chunk.id] = chunk.toolName;
+                          const tool2 = tools == null ? void 0 : tools[chunk.toolName];
+                          if ((tool2 == null ? void 0 : tool2.onInputStart) != null) {
+                            await tool2.onInputStart({
+                              toolCallId: chunk.id,
+                              messages: stepInputMessages,
+                              abortSignal,
+                              experimental_context
+                            });
+                          }
+                          controller.enqueue({
+                            ...chunk,
+                            dynamic: (tool2 == null ? void 0 : tool2.type) === "dynamic"
+                          });
+                          break;
+                        }
+                        case "tool-input-end": {
+                          delete activeToolCallToolNames[chunk.id];
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "tool-input-delta": {
+                          const toolName = activeToolCallToolNames[chunk.id];
+                          const tool2 = tools == null ? void 0 : tools[toolName];
+                          if ((tool2 == null ? void 0 : tool2.onInputDelta) != null) {
+                            await tool2.onInputDelta({
+                              inputTextDelta: chunk.delta,
+                              toolCallId: chunk.id,
+                              messages: stepInputMessages,
+                              abortSignal,
+                              experimental_context
+                            });
+                          }
+                          controller.enqueue(chunk);
+                          break;
+                        }
+                        case "error": {
+                          controller.enqueue(chunk);
+                          stepFinishReason = "error";
+                          break;
+                        }
+                        case "raw": {
+                          if (includeRawChunks2) {
+                            controller.enqueue(chunk);
+                          }
+                          break;
+                        }
+                        default: {
+                          const exhaustiveCheck = chunkType;
+                          throw new Error(`Unknown chunk type: ${exhaustiveCheck}`);
+                        }
+                      }
+                    },
+                    // invoke onFinish callback and resolve toolResults promise when the stream is about to close:
+                    async flush(controller) {
+                      const stepToolCallsJson = stepToolCalls.length > 0 ? JSON.stringify(stepToolCalls) : void 0;
+                      try {
+                        doStreamSpan.setAttributes(
+                          selectTelemetryAttributes({
+                            telemetry: telemetry2,
+                            attributes: {
+                              "ai.response.finishReason": stepFinishReason,
+                              "ai.response.text": {
+                                output: () => activeText
+                              },
+                              "ai.response.toolCalls": {
+                                output: () => stepToolCallsJson
+                              },
+                              "ai.response.id": stepResponse.id,
+                              "ai.response.model": stepResponse.modelId,
+                              "ai.response.timestamp": stepResponse.timestamp.toISOString(),
+                              "ai.response.providerMetadata": JSON.stringify(stepProviderMetadata),
+                              "ai.usage.inputTokens": stepUsage.inputTokens,
+                              "ai.usage.outputTokens": stepUsage.outputTokens,
+                              "ai.usage.totalTokens": stepUsage.totalTokens,
+                              "ai.usage.reasoningTokens": stepUsage.reasoningTokens,
+                              "ai.usage.cachedInputTokens": stepUsage.cachedInputTokens,
+                              // standardized gen-ai llm span attributes:
+                              "gen_ai.response.finish_reasons": [stepFinishReason],
+                              "gen_ai.response.id": stepResponse.id,
+                              "gen_ai.response.model": stepResponse.modelId,
+                              "gen_ai.usage.input_tokens": stepUsage.inputTokens,
+                              "gen_ai.usage.output_tokens": stepUsage.outputTokens
+                            }
+                          })
+                        );
+                      } catch (error) {
+                      } finally {
+                        doStreamSpan.end();
+                      }
+                      controller.enqueue({
+                        type: "finish-step",
+                        finishReason: stepFinishReason,
+                        usage: stepUsage,
+                        providerMetadata: stepProviderMetadata,
+                        response: {
+                          ...stepResponse,
+                          headers: response == null ? void 0 : response.headers
+                        }
+                      });
+                      const combinedUsage = addLanguageModelUsage(usage, stepUsage);
+                      await stepFinish.promise;
+                      const clientToolCalls = stepToolCalls.filter(
+                        (toolCall) => toolCall.providerExecuted !== true
+                      );
+                      const clientToolOutputs = stepToolOutputs.filter(
+                        (toolOutput) => toolOutput.providerExecuted !== true
+                      );
+                      if (clientToolCalls.length > 0 && // all current tool calls have outputs (incl. execution errors):
+                      clientToolOutputs.length === clientToolCalls.length && // continue until a stop condition is met:
+                      !await isStopConditionMet({
+                        stopConditions,
+                        steps: recordedSteps
+                      })) {
+                        responseMessages.push(
+                          ...toResponseMessages({
+                            content: (
+                              // use transformed content to create the messages for the next step:
+                              recordedSteps[recordedSteps.length - 1].content
+                            ),
+                            tools
+                          })
+                        );
+                        try {
+                          await streamStep({
+                            currentStep: currentStep + 1,
+                            responseMessages,
+                            usage: combinedUsage
+                          });
+                        } catch (error) {
+                          controller.enqueue({
+                            type: "error",
+                            error
+                          });
+                          self.closeStream();
+                        }
+                      } else {
+                        controller.enqueue({
+                          type: "finish",
+                          finishReason: stepFinishReason,
+                          totalUsage: combinedUsage
+                        });
+                        self.closeStream();
+                      }
+                    }
+                  })
+                )
+              );
+            }
+            await streamStep({
+              currentStep: 0,
+              responseMessages: [],
+              usage: {
+                inputTokens: void 0,
+                outputTokens: void 0,
+                totalTokens: void 0
+              }
+            });
+          }
+        }).catch((error) => {
+          self.addStream(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue({ type: "error", error });
+                controller.close();
+              }
+            })
+          );
+          self.closeStream();
+        });
+      }
+      get steps() {
+        this.consumeStream();
+        return this._steps.promise;
+      }
+      get finalStep() {
+        return this.steps.then((steps) => steps[steps.length - 1]);
+      }
+      get content() {
+        return this.finalStep.then((step) => step.content);
+      }
+      get warnings() {
+        return this.finalStep.then((step) => step.warnings);
+      }
+      get providerMetadata() {
+        return this.finalStep.then((step) => step.providerMetadata);
+      }
+      get text() {
+        return this.finalStep.then((step) => step.text);
+      }
+      get reasoningText() {
+        return this.finalStep.then((step) => step.reasoningText);
+      }
+      get reasoning() {
+        return this.finalStep.then((step) => step.reasoning);
+      }
+      get sources() {
+        return this.finalStep.then((step) => step.sources);
+      }
+      get files() {
+        return this.finalStep.then((step) => step.files);
+      }
+      get toolCalls() {
+        return this.finalStep.then((step) => step.toolCalls);
+      }
+      get staticToolCalls() {
+        return this.finalStep.then((step) => step.staticToolCalls);
+      }
+      get dynamicToolCalls() {
+        return this.finalStep.then((step) => step.dynamicToolCalls);
+      }
+      get toolResults() {
+        return this.finalStep.then((step) => step.toolResults);
+      }
+      get staticToolResults() {
+        return this.finalStep.then((step) => step.staticToolResults);
+      }
+      get dynamicToolResults() {
+        return this.finalStep.then((step) => step.dynamicToolResults);
+      }
+      get usage() {
+        return this.finalStep.then((step) => step.usage);
+      }
+      get request() {
+        return this.finalStep.then((step) => step.request);
+      }
+      get response() {
+        return this.finalStep.then((step) => step.response);
+      }
+      get totalUsage() {
+        this.consumeStream();
+        return this._totalUsage.promise;
+      }
+      get finishReason() {
+        this.consumeStream();
+        return this._finishReason.promise;
+      }
+      /**
+      Split out a new stream from the original stream.
+      The original stream is replaced to allow for further splitting,
+      since we do not know how many times the stream will be split.
+      
+      Note: this leads to buffering the stream content on the server.
+      However, the LLM results are expected to be small enough to not cause issues.
+         */
+      teeStream() {
+        const [stream1, stream2] = this.baseStream.tee();
+        this.baseStream = stream2;
+        return stream1;
+      }
+      get textStream() {
+        return createAsyncIterableStream(
+          this.teeStream().pipeThrough(
+            new TransformStream({
+              transform({ part }, controller) {
+                if (part.type === "text-delta") {
+                  controller.enqueue(part.text);
+                }
+              }
+            })
+          )
+        );
+      }
+      get fullStream() {
+        return createAsyncIterableStream(
+          this.teeStream().pipeThrough(
+            new TransformStream({
+              transform({ part }, controller) {
+                controller.enqueue(part);
+              }
+            })
+          )
+        );
+      }
+      async consumeStream(options) {
+        var _a162;
+        try {
+          await consumeStream({
+            stream: this.fullStream,
+            onError: options == null ? void 0 : options.onError
+          });
+        } catch (error) {
+          (_a162 = options == null ? void 0 : options.onError) == null ? void 0 : _a162.call(options, error);
+        }
+      }
+      get experimental_partialOutputStream() {
+        if (this.output == null) {
+          throw new NoOutputSpecifiedError();
+        }
+        return createAsyncIterableStream(
+          this.teeStream().pipeThrough(
+            new TransformStream({
+              transform({ partialOutput }, controller) {
+                if (partialOutput != null) {
+                  controller.enqueue(partialOutput);
+                }
+              }
+            })
+          )
+        );
+      }
+      toUIMessageStream({
+        originalMessages,
+        generateMessageId,
+        onFinish: onFinish2,
+        messageMetadata,
+        sendReasoning = true,
+        sendSources = false,
+        sendStart = true,
+        sendFinish = true,
+        onError: onError2 = getErrorMessage
+      } = {}) {
+        const responseMessageId = generateMessageId != null ? getResponseUIMessageId({
+          originalMessages,
+          responseMessageId: generateMessageId
+        }) : void 0;
+        const toolNamesByCallId = {};
+        const isDynamic = (toolCallId) => {
+          var _a162, _b8;
+          const toolName = toolNamesByCallId[toolCallId];
+          const dynamic = ((_b8 = (_a162 = this.tools) == null ? void 0 : _a162[toolName]) == null ? void 0 : _b8.type) === "dynamic";
+          return dynamic ? true : void 0;
+        };
+        const baseStream = this.fullStream.pipeThrough(
+          new TransformStream({
+            transform: async (part, controller) => {
+              const messageMetadataValue = messageMetadata == null ? void 0 : messageMetadata({ part });
+              const partType = part.type;
+              switch (partType) {
+                case "text-start": {
+                  controller.enqueue({
+                    type: "text-start",
+                    id: part.id,
+                    ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                  });
+                  break;
+                }
+                case "text-delta": {
+                  controller.enqueue({
+                    type: "text-delta",
+                    id: part.id,
+                    delta: part.text,
+                    ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                  });
+                  break;
+                }
+                case "text-end": {
+                  controller.enqueue({
+                    type: "text-end",
+                    id: part.id,
+                    ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                  });
+                  break;
+                }
+                case "reasoning-start": {
+                  controller.enqueue({
+                    type: "reasoning-start",
+                    id: part.id,
+                    ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                  });
+                  break;
+                }
+                case "reasoning-delta": {
+                  if (sendReasoning) {
+                    controller.enqueue({
+                      type: "reasoning-delta",
+                      id: part.id,
+                      delta: part.text,
+                      ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                    });
+                  }
+                  break;
+                }
+                case "reasoning-end": {
+                  controller.enqueue({
+                    type: "reasoning-end",
+                    id: part.id,
+                    ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                  });
+                  break;
+                }
+                case "file": {
+                  controller.enqueue({
+                    type: "file",
+                    mediaType: part.file.mediaType,
+                    url: `data:${part.file.mediaType};base64,${part.file.base64}`
+                  });
+                  break;
+                }
+                case "source": {
+                  if (sendSources && part.sourceType === "url") {
+                    controller.enqueue({
+                      type: "source-url",
+                      sourceId: part.id,
+                      url: part.url,
+                      title: part.title,
+                      ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                    });
+                  }
+                  if (sendSources && part.sourceType === "document") {
+                    controller.enqueue({
+                      type: "source-document",
+                      sourceId: part.id,
+                      mediaType: part.mediaType,
+                      title: part.title,
+                      filename: part.filename,
+                      ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {}
+                    });
+                  }
+                  break;
+                }
+                case "tool-input-start": {
+                  toolNamesByCallId[part.id] = part.toolName;
+                  const dynamic = isDynamic(part.id);
+                  controller.enqueue({
+                    type: "tool-input-start",
+                    toolCallId: part.id,
+                    toolName: part.toolName,
+                    ...part.providerExecuted != null ? { providerExecuted: part.providerExecuted } : {},
+                    ...dynamic != null ? { dynamic } : {}
+                  });
+                  break;
+                }
+                case "tool-input-delta": {
+                  controller.enqueue({
+                    type: "tool-input-delta",
+                    toolCallId: part.id,
+                    inputTextDelta: part.delta
+                  });
+                  break;
+                }
+                case "tool-call": {
+                  toolNamesByCallId[part.toolCallId] = part.toolName;
+                  const dynamic = isDynamic(part.toolCallId);
+                  if (part.invalid) {
+                    controller.enqueue({
+                      type: "tool-input-error",
+                      toolCallId: part.toolCallId,
+                      toolName: part.toolName,
+                      input: part.input,
+                      ...part.providerExecuted != null ? { providerExecuted: part.providerExecuted } : {},
+                      ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {},
+                      ...dynamic != null ? { dynamic } : {},
+                      errorText: onError2(part.error)
+                    });
+                  } else {
+                    controller.enqueue({
+                      type: "tool-input-available",
+                      toolCallId: part.toolCallId,
+                      toolName: part.toolName,
+                      input: part.input,
+                      ...part.providerExecuted != null ? { providerExecuted: part.providerExecuted } : {},
+                      ...part.providerMetadata != null ? { providerMetadata: part.providerMetadata } : {},
+                      ...dynamic != null ? { dynamic } : {}
+                    });
+                  }
+                  break;
+                }
+                case "tool-result": {
+                  const dynamic = isDynamic(part.toolCallId);
+                  controller.enqueue({
+                    type: "tool-output-available",
+                    toolCallId: part.toolCallId,
+                    output: part.output,
+                    ...part.providerExecuted != null ? { providerExecuted: part.providerExecuted } : {},
+                    ...part.preliminary != null ? { preliminary: part.preliminary } : {},
+                    ...dynamic != null ? { dynamic } : {}
+                  });
+                  break;
+                }
+                case "tool-error": {
+                  const dynamic = isDynamic(part.toolCallId);
+                  controller.enqueue({
+                    type: "tool-output-error",
+                    toolCallId: part.toolCallId,
+                    errorText: onError2(part.error),
+                    ...part.providerExecuted != null ? { providerExecuted: part.providerExecuted } : {},
+                    ...dynamic != null ? { dynamic } : {}
+                  });
+                  break;
+                }
+                case "error": {
+                  controller.enqueue({
+                    type: "error",
+                    errorText: onError2(part.error)
+                  });
+                  break;
+                }
+                case "start-step": {
+                  controller.enqueue({ type: "start-step" });
+                  break;
+                }
+                case "finish-step": {
+                  controller.enqueue({ type: "finish-step" });
+                  break;
+                }
+                case "start": {
+                  if (sendStart) {
+                    controller.enqueue({
+                      type: "start",
+                      ...messageMetadataValue != null ? { messageMetadata: messageMetadataValue } : {},
+                      ...responseMessageId != null ? { messageId: responseMessageId } : {}
+                    });
+                  }
+                  break;
+                }
+                case "finish": {
+                  if (sendFinish) {
+                    controller.enqueue({
+                      type: "finish",
+                      finishReason: part.finishReason,
+                      ...messageMetadataValue != null ? { messageMetadata: messageMetadataValue } : {}
+                    });
+                  }
+                  break;
+                }
+                case "abort": {
+                  controller.enqueue(part);
+                  break;
+                }
+                case "tool-input-end": {
+                  break;
+                }
+                case "raw": {
+                  break;
+                }
+                default: {
+                  const exhaustiveCheck = partType;
+                  throw new Error(`Unknown chunk type: ${exhaustiveCheck}`);
+                }
+              }
+              if (messageMetadataValue != null && partType !== "start" && partType !== "finish") {
+                controller.enqueue({
+                  type: "message-metadata",
+                  messageMetadata: messageMetadataValue
+                });
+              }
+            }
+          })
+        );
+        return createAsyncIterableStream(
+          handleUIMessageStreamFinish({
+            stream: baseStream,
+            messageId: responseMessageId != null ? responseMessageId : generateMessageId == null ? void 0 : generateMessageId(),
+            originalMessages,
+            onFinish: onFinish2,
+            onError: onError2
+          })
+        );
+      }
+      pipeUIMessageStreamToResponse(response, {
+        originalMessages,
+        generateMessageId,
+        onFinish: onFinish2,
+        messageMetadata,
+        sendReasoning,
+        sendSources,
+        sendFinish,
+        sendStart,
+        onError: onError2,
+        ...init
+      } = {}) {
+        pipeUIMessageStreamToResponse({
+          response,
+          stream: this.toUIMessageStream({
+            originalMessages,
+            generateMessageId,
+            onFinish: onFinish2,
+            messageMetadata,
+            sendReasoning,
+            sendSources,
+            sendFinish,
+            sendStart,
+            onError: onError2
+          }),
+          ...init
+        });
+      }
+      pipeTextStreamToResponse(response, init) {
+        pipeTextStreamToResponse({
+          response,
+          textStream: this.textStream,
+          ...init
+        });
+      }
+      toUIMessageStreamResponse({
+        originalMessages,
+        generateMessageId,
+        onFinish: onFinish2,
+        messageMetadata,
+        sendReasoning,
+        sendSources,
+        sendFinish,
+        sendStart,
+        onError: onError2,
+        ...init
+      } = {}) {
+        return createUIMessageStreamResponse({
+          stream: this.toUIMessageStream({
+            originalMessages,
+            generateMessageId,
+            onFinish: onFinish2,
+            messageMetadata,
+            sendReasoning,
+            sendSources,
+            sendFinish,
+            sendStart,
+            onError: onError2
+          }),
+          ...init
+        });
+      }
+      toTextStreamResponse(init) {
+        return createTextStreamResponse({
+          textStream: this.textStream,
+          ...init
+        });
+      }
+    };
+    convertToCoreMessages = convertToModelMessages;
+    Agent = class {
+      constructor(settings) {
+        this.settings = settings;
+      }
+      get tools() {
+        return this.settings.tools;
+      }
+      async generate(options) {
+        return generateText({ ...this.settings, ...options });
+      }
+      stream(options) {
+        return streamText({ ...this.settings, ...options });
+      }
+      /**
+       * Creates a response object that streams UI messages to the client.
+       */
+      respond(options) {
+        return this.stream({
+          prompt: convertToModelMessages(options.messages)
+        }).toUIMessageStreamResponse();
+      }
+    };
+    DefaultEmbedResult = class {
+      constructor(options) {
+        this.value = options.value;
+        this.embedding = options.embedding;
+        this.usage = options.usage;
+        this.providerMetadata = options.providerMetadata;
+        this.response = options.response;
+      }
+    };
+    DefaultEmbedManyResult = class {
+      constructor(options) {
+        this.values = options.values;
+        this.embeddings = options.embeddings;
+        this.usage = options.usage;
+        this.providerMetadata = options.providerMetadata;
+        this.responses = options.responses;
+      }
+    };
+    DefaultGenerateImageResult = class {
+      constructor(options) {
+        this.images = options.images;
+        this.warnings = options.warnings;
+        this.responses = options.responses;
+        this.providerMetadata = options.providerMetadata;
+      }
+      get image() {
+        return this.images[0];
+      }
+    };
+    noSchemaOutputStrategy = {
+      type: "no-schema",
+      jsonSchema: void 0,
+      async validatePartialResult({ value: value2, textDelta }) {
+        return { success: true, value: { partial: value2, textDelta } };
+      },
+      async validateFinalResult(value2, context) {
+        return value2 === void 0 ? {
+          success: false,
+          error: new NoObjectGeneratedError({
+            message: "No object generated: response did not match schema.",
+            text: context.text,
+            response: context.response,
+            usage: context.usage,
+            finishReason: context.finishReason
+          })
+        } : { success: true, value: value2 };
+      },
+      createElementStream() {
+        throw new UnsupportedFunctionalityError({
+          functionality: "element streams in no-schema mode"
+        });
+      }
+    };
+    objectOutputStrategy = (schema) => ({
+      type: "object",
+      jsonSchema: schema.jsonSchema,
+      async validatePartialResult({ value: value2, textDelta }) {
+        return {
+          success: true,
+          value: {
+            // Note: currently no validation of partial results:
+            partial: value2,
+            textDelta
+          }
+        };
+      },
+      async validateFinalResult(value2) {
+        return safeValidateTypes({ value: value2, schema });
+      },
+      createElementStream() {
+        throw new UnsupportedFunctionalityError({
+          functionality: "element streams in object mode"
+        });
+      }
+    });
+    arrayOutputStrategy = (schema) => {
+      const { $schema, ...itemSchema } = schema.jsonSchema;
+      return {
+        type: "array",
+        // wrap in object that contains array of elements, since most LLMs will not
+        // be able to generate an array directly:
+        // possible future optimization: use arrays directly when model supports grammar-guided generation
+        jsonSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            elements: { type: "array", items: itemSchema }
+          },
+          required: ["elements"],
+          additionalProperties: false
+        },
+        async validatePartialResult({
+          value: value2,
+          latestObject,
+          isFirstDelta,
+          isFinalDelta
+        }) {
+          var _a162;
+          if (!isJSONObject(value2) || !isJSONArray(value2.elements)) {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: value2,
+                cause: "value must be an object that contains an array of elements"
+              })
+            };
+          }
+          const inputArray = value2.elements;
+          const resultArray = [];
+          for (let i = 0; i < inputArray.length; i++) {
+            const element = inputArray[i];
+            const result = await safeValidateTypes({ value: element, schema });
+            if (i === inputArray.length - 1 && !isFinalDelta) {
+              continue;
+            }
+            if (!result.success) {
+              return result;
+            }
+            resultArray.push(result.value);
+          }
+          const publishedElementCount = (_a162 = latestObject == null ? void 0 : latestObject.length) != null ? _a162 : 0;
+          let textDelta = "";
+          if (isFirstDelta) {
+            textDelta += "[";
+          }
+          if (publishedElementCount > 0) {
+            textDelta += ",";
+          }
+          textDelta += resultArray.slice(publishedElementCount).map((element) => JSON.stringify(element)).join(",");
+          if (isFinalDelta) {
+            textDelta += "]";
+          }
+          return {
+            success: true,
+            value: {
+              partial: resultArray,
+              textDelta
+            }
+          };
+        },
+        async validateFinalResult(value2) {
+          if (!isJSONObject(value2) || !isJSONArray(value2.elements)) {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: value2,
+                cause: "value must be an object that contains an array of elements"
+              })
+            };
+          }
+          const inputArray = value2.elements;
+          for (const element of inputArray) {
+            const result = await safeValidateTypes({ value: element, schema });
+            if (!result.success) {
+              return result;
+            }
+          }
+          return { success: true, value: inputArray };
+        },
+        createElementStream(originalStream) {
+          let publishedElements = 0;
+          return createAsyncIterableStream(
+            originalStream.pipeThrough(
+              new TransformStream({
+                transform(chunk, controller) {
+                  switch (chunk.type) {
+                    case "object": {
+                      const array = chunk.object;
+                      for (; publishedElements < array.length; publishedElements++) {
+                        controller.enqueue(array[publishedElements]);
+                      }
+                      break;
+                    }
+                    case "text-delta":
+                    case "finish":
+                    case "error":
+                      break;
+                    default: {
+                      const _exhaustiveCheck = chunk;
+                      throw new Error(
+                        `Unsupported chunk type: ${_exhaustiveCheck}`
+                      );
+                    }
+                  }
+                }
+              })
+            )
+          );
+        }
+      };
+    };
+    enumOutputStrategy = (enumValues) => {
+      return {
+        type: "enum",
+        // wrap in object that contains result, since most LLMs will not
+        // be able to generate an enum value directly:
+        // possible future optimization: use enums directly when model supports top-level enums
+        jsonSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            result: { type: "string", enum: enumValues }
+          },
+          required: ["result"],
+          additionalProperties: false
+        },
+        async validateFinalResult(value2) {
+          if (!isJSONObject(value2) || typeof value2.result !== "string") {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: value2,
+                cause: 'value must be an object that contains a string in the "result" property.'
+              })
+            };
+          }
+          const result = value2.result;
+          return enumValues.includes(result) ? { success: true, value: result } : {
+            success: false,
+            error: new TypeValidationError({
+              value: value2,
+              cause: "value must be a string in the enum"
+            })
+          };
+        },
+        async validatePartialResult({ value: value2, textDelta }) {
+          if (!isJSONObject(value2) || typeof value2.result !== "string") {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: value2,
+                cause: 'value must be an object that contains a string in the "result" property.'
+              })
+            };
+          }
+          const result = value2.result;
+          const possibleEnumValues = enumValues.filter(
+            (enumValue) => enumValue.startsWith(result)
+          );
+          if (value2.result.length === 0 || possibleEnumValues.length === 0) {
+            return {
+              success: false,
+              error: new TypeValidationError({
+                value: value2,
+                cause: "value must be a string in the enum"
+              })
+            };
+          }
+          return {
+            success: true,
+            value: {
+              partial: possibleEnumValues.length > 1 ? result : possibleEnumValues[0],
+              textDelta
+            }
+          };
+        },
+        createElementStream() {
+          throw new UnsupportedFunctionalityError({
+            functionality: "element streams in enum mode"
+          });
+        }
+      };
+    };
+    originalGenerateId3 = createIdGenerator({ prefix: "aiobj", size: 24 });
+    DefaultGenerateObjectResult = class {
+      constructor(options) {
+        this.object = options.object;
+        this.finishReason = options.finishReason;
+        this.usage = options.usage;
+        this.warnings = options.warnings;
+        this.providerMetadata = options.providerMetadata;
+        this.response = options.response;
+        this.request = options.request;
+        this.reasoning = options.reasoning;
+      }
+      toJsonResponse(init) {
+        var _a162;
+        return new Response(JSON.stringify(this.object), {
+          status: (_a162 = init == null ? void 0 : init.status) != null ? _a162 : 200,
+          headers: prepareHeaders(init == null ? void 0 : init.headers, {
+            "content-type": "application/json; charset=utf-8"
+          })
+        });
+      }
+    };
+    SerialJobExecutor = class {
+      constructor() {
+        this.queue = [];
+        this.isProcessing = false;
+      }
+      async processQueue() {
+        if (this.isProcessing) {
+          return;
+        }
+        this.isProcessing = true;
+        while (this.queue.length > 0) {
+          await this.queue[0]();
+          this.queue.shift();
+        }
+        this.isProcessing = false;
+      }
+      async run(job) {
+        return new Promise((resolve22, reject) => {
+          this.queue.push(async () => {
+            try {
+              await job();
+              resolve22();
+            } catch (error) {
+              reject(error);
+            }
+          });
+          void this.processQueue();
+        });
+      }
+    };
+    originalGenerateId4 = createIdGenerator({ prefix: "aiobj", size: 24 });
+    DefaultStreamObjectResult = class {
+      constructor({
+        model: modelArg,
+        headers,
+        telemetry: telemetry2,
+        settings,
+        maxRetries: maxRetriesArg,
+        abortSignal,
+        outputStrategy,
+        system,
+        prompt,
+        messages,
+        schemaName,
+        schemaDescription,
+        providerOptions,
+        repairText,
+        onError: onError2,
+        onFinish: onFinish2,
+        download: download2,
+        generateId: generateId3,
+        currentDate,
+        now: now2
+      }) {
+        this._object = new DelayedPromise();
+        this._usage = new DelayedPromise();
+        this._providerMetadata = new DelayedPromise();
+        this._warnings = new DelayedPromise();
+        this._request = new DelayedPromise();
+        this._response = new DelayedPromise();
+        this._finishReason = new DelayedPromise();
+        const model = resolveLanguageModel(modelArg);
+        const { maxRetries, retry } = prepareRetries({
+          maxRetries: maxRetriesArg,
+          abortSignal
+        });
+        const callSettings = prepareCallSettings(settings);
+        const baseTelemetryAttributes = getBaseTelemetryAttributes({
+          model,
+          telemetry: telemetry2,
+          headers,
+          settings: { ...callSettings, maxRetries }
+        });
+        const tracer = getTracer(telemetry2);
+        const self = this;
+        const stitchableStream = createStitchableStream();
+        const eventProcessor = new TransformStream({
+          transform(chunk, controller) {
+            controller.enqueue(chunk);
+            if (chunk.type === "error") {
+              onError2({ error: wrapGatewayError(chunk.error) });
+            }
+          }
+        });
+        this.baseStream = stitchableStream.stream.pipeThrough(eventProcessor);
+        recordSpan({
+          name: "ai.streamObject",
+          attributes: selectTelemetryAttributes({
+            telemetry: telemetry2,
+            attributes: {
+              ...assembleOperationName({
+                operationId: "ai.streamObject",
+                telemetry: telemetry2
+              }),
+              ...baseTelemetryAttributes,
+              // specific settings that only make sense on the outer level:
+              "ai.prompt": {
+                input: () => JSON.stringify({ system, prompt, messages })
+              },
+              "ai.schema": outputStrategy.jsonSchema != null ? { input: () => JSON.stringify(outputStrategy.jsonSchema) } : void 0,
+              "ai.schema.name": schemaName,
+              "ai.schema.description": schemaDescription,
+              "ai.settings.output": outputStrategy.type
+            }
+          }),
+          tracer,
+          endWhenDone: false,
+          fn: async (rootSpan) => {
+            const standardizedPrompt = await standardizePrompt({
+              system,
+              prompt,
+              messages
+            });
+            const callOptions = {
+              responseFormat: {
+                type: "json",
+                schema: outputStrategy.jsonSchema,
+                name: schemaName,
+                description: schemaDescription
+              },
+              ...prepareCallSettings(settings),
+              prompt: await convertToLanguageModelPrompt({
+                prompt: standardizedPrompt,
+                supportedUrls: await model.supportedUrls,
+                download: download2
+              }),
+              providerOptions,
+              abortSignal,
+              headers,
+              includeRawChunks: false
+            };
+            const transformer = {
+              transform: (chunk, controller) => {
+                switch (chunk.type) {
+                  case "text-delta":
+                    controller.enqueue(chunk.delta);
+                    break;
+                  case "response-metadata":
+                  case "finish":
+                  case "error":
+                  case "stream-start":
+                    controller.enqueue(chunk);
+                    break;
+                }
+              }
+            };
+            const {
+              result: { stream, response, request },
+              doStreamSpan,
+              startTimestampMs
+            } = await retry(
+              () => recordSpan({
+                name: "ai.streamObject.doStream",
+                attributes: selectTelemetryAttributes({
+                  telemetry: telemetry2,
+                  attributes: {
+                    ...assembleOperationName({
+                      operationId: "ai.streamObject.doStream",
+                      telemetry: telemetry2
+                    }),
+                    ...baseTelemetryAttributes,
+                    "ai.prompt.messages": {
+                      input: () => stringifyForTelemetry(callOptions.prompt)
+                    },
+                    // standardized gen-ai llm span attributes:
+                    "gen_ai.system": model.provider,
+                    "gen_ai.request.model": model.modelId,
+                    "gen_ai.request.frequency_penalty": callSettings.frequencyPenalty,
+                    "gen_ai.request.max_tokens": callSettings.maxOutputTokens,
+                    "gen_ai.request.presence_penalty": callSettings.presencePenalty,
+                    "gen_ai.request.temperature": callSettings.temperature,
+                    "gen_ai.request.top_k": callSettings.topK,
+                    "gen_ai.request.top_p": callSettings.topP
+                  }
+                }),
+                tracer,
+                endWhenDone: false,
+                fn: async (doStreamSpan2) => ({
+                  startTimestampMs: now2(),
+                  doStreamSpan: doStreamSpan2,
+                  result: await model.doStream(callOptions)
+                })
+              })
+            );
+            self._request.resolve(request != null ? request : {});
+            let warnings;
+            let usage = {
+              inputTokens: void 0,
+              outputTokens: void 0,
+              totalTokens: void 0
+            };
+            let finishReason;
+            let providerMetadata;
+            let object2;
+            let error;
+            let accumulatedText = "";
+            let textDelta = "";
+            let fullResponse = {
+              id: generateId3(),
+              timestamp: currentDate(),
+              modelId: model.modelId
+            };
+            let latestObjectJson = void 0;
+            let latestObject = void 0;
+            let isFirstChunk = true;
+            let isFirstDelta = true;
+            const transformedStream = stream.pipeThrough(new TransformStream(transformer)).pipeThrough(
+              new TransformStream({
+                async transform(chunk, controller) {
+                  var _a162, _b8, _c;
+                  if (typeof chunk === "object" && chunk.type === "stream-start") {
+                    warnings = chunk.warnings;
+                    return;
+                  }
+                  if (isFirstChunk) {
+                    const msToFirstChunk = now2() - startTimestampMs;
+                    isFirstChunk = false;
+                    doStreamSpan.addEvent("ai.stream.firstChunk", {
+                      "ai.stream.msToFirstChunk": msToFirstChunk
+                    });
+                    doStreamSpan.setAttributes({
+                      "ai.stream.msToFirstChunk": msToFirstChunk
+                    });
+                  }
+                  if (typeof chunk === "string") {
+                    accumulatedText += chunk;
+                    textDelta += chunk;
+                    const { value: currentObjectJson, state: parseState } = await parsePartialJson(accumulatedText);
+                    if (currentObjectJson !== void 0 && !isDeepEqualData(latestObjectJson, currentObjectJson)) {
+                      const validationResult = await outputStrategy.validatePartialResult({
+                        value: currentObjectJson,
+                        textDelta,
+                        latestObject,
+                        isFirstDelta,
+                        isFinalDelta: parseState === "successful-parse"
+                      });
+                      if (validationResult.success && !isDeepEqualData(
+                        latestObject,
+                        validationResult.value.partial
+                      )) {
+                        latestObjectJson = currentObjectJson;
+                        latestObject = validationResult.value.partial;
+                        controller.enqueue({
+                          type: "object",
+                          object: latestObject
+                        });
+                        controller.enqueue({
+                          type: "text-delta",
+                          textDelta: validationResult.value.textDelta
+                        });
+                        textDelta = "";
+                        isFirstDelta = false;
+                      }
+                    }
+                    return;
+                  }
+                  switch (chunk.type) {
+                    case "response-metadata": {
+                      fullResponse = {
+                        id: (_a162 = chunk.id) != null ? _a162 : fullResponse.id,
+                        timestamp: (_b8 = chunk.timestamp) != null ? _b8 : fullResponse.timestamp,
+                        modelId: (_c = chunk.modelId) != null ? _c : fullResponse.modelId
+                      };
+                      break;
+                    }
+                    case "finish": {
+                      if (textDelta !== "") {
+                        controller.enqueue({ type: "text-delta", textDelta });
+                      }
+                      finishReason = chunk.finishReason;
+                      usage = chunk.usage;
+                      providerMetadata = chunk.providerMetadata;
+                      controller.enqueue({
+                        ...chunk,
+                        usage,
+                        response: fullResponse
+                      });
+                      logWarnings(warnings != null ? warnings : []);
+                      self._usage.resolve(usage);
+                      self._providerMetadata.resolve(providerMetadata);
+                      self._warnings.resolve(warnings);
+                      self._response.resolve({
+                        ...fullResponse,
+                        headers: response == null ? void 0 : response.headers
+                      });
+                      self._finishReason.resolve(finishReason != null ? finishReason : "unknown");
+                      try {
+                        object2 = await parseAndValidateObjectResultWithRepair(
+                          accumulatedText,
+                          outputStrategy,
+                          repairText,
+                          {
+                            response: fullResponse,
+                            usage,
+                            finishReason
+                          }
+                        );
+                        self._object.resolve(object2);
+                      } catch (e) {
+                        error = e;
+                        self._object.reject(e);
+                      }
+                      break;
+                    }
+                    default: {
+                      controller.enqueue(chunk);
+                      break;
+                    }
+                  }
+                },
+                // invoke onFinish callback and resolve toolResults promise when the stream is about to close:
+                async flush(controller) {
+                  try {
+                    const finalUsage = usage != null ? usage : {
+                      promptTokens: NaN,
+                      completionTokens: NaN,
+                      totalTokens: NaN
+                    };
+                    doStreamSpan.setAttributes(
+                      selectTelemetryAttributes({
+                        telemetry: telemetry2,
+                        attributes: {
+                          "ai.response.finishReason": finishReason,
+                          "ai.response.object": {
+                            output: () => JSON.stringify(object2)
+                          },
+                          "ai.response.id": fullResponse.id,
+                          "ai.response.model": fullResponse.modelId,
+                          "ai.response.timestamp": fullResponse.timestamp.toISOString(),
+                          "ai.response.providerMetadata": JSON.stringify(providerMetadata),
+                          "ai.usage.inputTokens": finalUsage.inputTokens,
+                          "ai.usage.outputTokens": finalUsage.outputTokens,
+                          "ai.usage.totalTokens": finalUsage.totalTokens,
+                          "ai.usage.reasoningTokens": finalUsage.reasoningTokens,
+                          "ai.usage.cachedInputTokens": finalUsage.cachedInputTokens,
+                          // standardized gen-ai llm span attributes:
+                          "gen_ai.response.finish_reasons": [finishReason],
+                          "gen_ai.response.id": fullResponse.id,
+                          "gen_ai.response.model": fullResponse.modelId,
+                          "gen_ai.usage.input_tokens": finalUsage.inputTokens,
+                          "gen_ai.usage.output_tokens": finalUsage.outputTokens
+                        }
+                      })
+                    );
+                    doStreamSpan.end();
+                    rootSpan.setAttributes(
+                      selectTelemetryAttributes({
+                        telemetry: telemetry2,
+                        attributes: {
+                          "ai.usage.inputTokens": finalUsage.inputTokens,
+                          "ai.usage.outputTokens": finalUsage.outputTokens,
+                          "ai.usage.totalTokens": finalUsage.totalTokens,
+                          "ai.usage.reasoningTokens": finalUsage.reasoningTokens,
+                          "ai.usage.cachedInputTokens": finalUsage.cachedInputTokens,
+                          "ai.response.object": {
+                            output: () => JSON.stringify(object2)
+                          },
+                          "ai.response.providerMetadata": JSON.stringify(providerMetadata)
+                        }
+                      })
+                    );
+                    await (onFinish2 == null ? void 0 : onFinish2({
+                      usage: finalUsage,
+                      object: object2,
+                      error,
+                      response: {
+                        ...fullResponse,
+                        headers: response == null ? void 0 : response.headers
+                      },
+                      warnings,
+                      providerMetadata
+                    }));
+                  } catch (error2) {
+                    controller.enqueue({ type: "error", error: error2 });
+                  } finally {
+                    rootSpan.end();
+                  }
+                }
+              })
+            );
+            stitchableStream.addStream(transformedStream);
+          }
+        }).catch((error) => {
+          stitchableStream.addStream(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue({ type: "error", error });
+                controller.close();
+              }
+            })
+          );
+        }).finally(() => {
+          stitchableStream.close();
+        });
+        this.outputStrategy = outputStrategy;
+      }
+      get object() {
+        return this._object.promise;
+      }
+      get usage() {
+        return this._usage.promise;
+      }
+      get providerMetadata() {
+        return this._providerMetadata.promise;
+      }
+      get warnings() {
+        return this._warnings.promise;
+      }
+      get request() {
+        return this._request.promise;
+      }
+      get response() {
+        return this._response.promise;
+      }
+      get finishReason() {
+        return this._finishReason.promise;
+      }
+      get partialObjectStream() {
+        return createAsyncIterableStream(
+          this.baseStream.pipeThrough(
+            new TransformStream({
+              transform(chunk, controller) {
+                switch (chunk.type) {
+                  case "object":
+                    controller.enqueue(chunk.object);
+                    break;
+                  case "text-delta":
+                  case "finish":
+                  case "error":
+                    break;
+                  default: {
+                    const _exhaustiveCheck = chunk;
+                    throw new Error(`Unsupported chunk type: ${_exhaustiveCheck}`);
+                  }
+                }
+              }
+            })
+          )
+        );
+      }
+      get elementStream() {
+        return this.outputStrategy.createElementStream(this.baseStream);
+      }
+      get textStream() {
+        return createAsyncIterableStream(
+          this.baseStream.pipeThrough(
+            new TransformStream({
+              transform(chunk, controller) {
+                switch (chunk.type) {
+                  case "text-delta":
+                    controller.enqueue(chunk.textDelta);
+                    break;
+                  case "object":
+                  case "finish":
+                  case "error":
+                    break;
+                  default: {
+                    const _exhaustiveCheck = chunk;
+                    throw new Error(`Unsupported chunk type: ${_exhaustiveCheck}`);
+                  }
+                }
+              }
+            })
+          )
+        );
+      }
+      get fullStream() {
+        return createAsyncIterableStream(this.baseStream);
+      }
+      pipeTextStreamToResponse(response, init) {
+        pipeTextStreamToResponse({
+          response,
+          textStream: this.textStream,
+          ...init
+        });
+      }
+      toTextStreamResponse(init) {
+        return createTextStreamResponse({
+          textStream: this.textStream,
+          ...init
+        });
+      }
+    };
+    DefaultGeneratedAudioFile = class extends DefaultGeneratedFile {
+      constructor({
+        data,
+        mediaType
+      }) {
+        super({ data, mediaType });
+        let format = "mp3";
+        if (mediaType) {
+          const mediaTypeParts = mediaType.split("/");
+          if (mediaTypeParts.length === 2) {
+            if (mediaType !== "audio/mpeg") {
+              format = mediaTypeParts[1];
+            }
+          }
+        }
+        if (!format) {
+          throw new Error(
+            "Audio format must be provided or determinable from media type"
+          );
+        }
+        this.format = format;
+      }
+    };
+    DefaultSpeechResult = class {
+      constructor(options) {
+        var _a162;
+        this.audio = options.audio;
+        this.warnings = options.warnings;
+        this.responses = options.responses;
+        this.providerMetadata = (_a162 = options.providerMetadata) != null ? _a162 : {};
+      }
+    };
+    output_exports = {};
+    __export2(output_exports, {
+      object: () => object,
+      text: () => text
+    });
+    text = () => ({
+      type: "text",
+      responseFormat: { type: "text" },
+      async parsePartial({ text: text2 }) {
+        return { partial: text2 };
+      },
+      async parseOutput({ text: text2 }) {
+        return text2;
+      }
+    });
+    object = ({
+      schema: inputSchema
+    }) => {
+      const schema = asSchema(inputSchema);
+      return {
+        type: "object",
+        responseFormat: {
+          type: "json",
+          schema: schema.jsonSchema
+        },
+        async parsePartial({ text: text2 }) {
+          const result = await parsePartialJson(text2);
+          switch (result.state) {
+            case "failed-parse":
+            case "undefined-input":
+              return void 0;
+            case "repaired-parse":
+            case "successful-parse":
+              return {
+                // Note: currently no validation of partial results:
+                partial: result.value
+              };
+            default: {
+              const _exhaustiveCheck = result.state;
+              throw new Error(`Unsupported parse state: ${_exhaustiveCheck}`);
+            }
+          }
+        },
+        async parseOutput({ text: text2 }, context) {
+          const parseResult = await safeParseJSON({ text: text2 });
+          if (!parseResult.success) {
+            throw new NoObjectGeneratedError({
+              message: "No object generated: could not parse the response.",
+              cause: parseResult.error,
+              text: text2,
+              response: context.response,
+              usage: context.usage,
+              finishReason: context.finishReason
+            });
+          }
+          const validationResult = await safeValidateTypes({
+            value: parseResult.value,
+            schema
+          });
+          if (!validationResult.success) {
+            throw new NoObjectGeneratedError({
+              message: "No object generated: response did not match schema.",
+              cause: validationResult.error,
+              text: text2,
+              response: context.response,
+              usage: context.usage,
+              finishReason: context.finishReason
+            });
+          }
+          return validationResult.value;
+        }
+      };
+    };
+    CHUNKING_REGEXPS = {
+      word: /\S+\s+/m,
+      line: /\n+/m
+    };
+    wrapLanguageModel = ({
+      model,
+      middleware: middlewareArg,
+      modelId,
+      providerId
+    }) => {
+      return [...asArray(middlewareArg)].reverse().reduce((wrappedModel, middleware) => {
+        return doWrap({ model: wrappedModel, middleware, modelId, providerId });
+      }, model);
+    };
+    doWrap = ({
+      model,
+      middleware: {
+        transformParams,
+        wrapGenerate,
+        wrapStream,
+        overrideProvider,
+        overrideModelId,
+        overrideSupportedUrls
+      },
+      modelId,
+      providerId
+    }) => {
+      var _a162, _b8, _c;
+      async function doTransform({
+        params,
+        type: type2
+      }) {
+        return transformParams ? await transformParams({ params, type: type2, model }) : params;
+      }
+      return {
+        specificationVersion: "v2",
+        provider: (_a162 = providerId != null ? providerId : overrideProvider == null ? void 0 : overrideProvider({ model })) != null ? _a162 : model.provider,
+        modelId: (_b8 = modelId != null ? modelId : overrideModelId == null ? void 0 : overrideModelId({ model })) != null ? _b8 : model.modelId,
+        supportedUrls: (_c = overrideSupportedUrls == null ? void 0 : overrideSupportedUrls({ model })) != null ? _c : model.supportedUrls,
+        async doGenerate(params) {
+          const transformedParams = await doTransform({ params, type: "generate" });
+          const doGenerate = async () => model.doGenerate(transformedParams);
+          const doStream = async () => model.doStream(transformedParams);
+          return wrapGenerate ? wrapGenerate({
+            doGenerate,
+            doStream,
+            params: transformedParams,
+            model
+          }) : doGenerate();
+        },
+        async doStream(params) {
+          const transformedParams = await doTransform({ params, type: "stream" });
+          const doGenerate = async () => model.doGenerate(transformedParams);
+          const doStream = async () => model.doStream(transformedParams);
+          return wrapStream ? wrapStream({ doGenerate, doStream, params: transformedParams, model }) : doStream();
+        }
+      };
+    };
+    experimental_customProvider = customProvider;
+    name152 = "AI_NoSuchProviderError";
+    marker152 = `vercel.ai.error.${name152}`;
+    symbol152 = Symbol.for(marker152);
+    NoSuchProviderError = class extends NoSuchModelError {
+      constructor({
+        modelId,
+        modelType,
+        providerId,
+        availableProviders,
+        message = `No such provider: ${providerId} (available providers: ${availableProviders.join()})`
+      }) {
+        super({ errorName: name152, modelId, modelType, message });
+        this[_a152] = true;
+        this.providerId = providerId;
+        this.availableProviders = availableProviders;
+      }
+      static isInstance(error) {
+        return AISDKError.hasMarker(error, marker152);
+      }
+    };
+    _a152 = symbol152;
+    experimental_createProviderRegistry = createProviderRegistry;
+    DefaultProviderRegistry = class {
+      constructor({
+        separator,
+        languageModelMiddleware
+      }) {
+        this.providers = {};
+        this.separator = separator;
+        this.languageModelMiddleware = languageModelMiddleware;
+      }
+      registerProvider({
+        id,
+        provider
+      }) {
+        this.providers[id] = provider;
+      }
+      getProvider(id, modelType) {
+        const provider = this.providers[id];
+        if (provider == null) {
+          throw new NoSuchProviderError({
+            modelId: id,
+            modelType,
+            providerId: id,
+            availableProviders: Object.keys(this.providers)
+          });
+        }
+        return provider;
+      }
+      splitId(id, modelType) {
+        const index = id.indexOf(this.separator);
+        if (index === -1) {
+          throw new NoSuchModelError({
+            modelId: id,
+            modelType,
+            message: `Invalid ${modelType} id for registry: ${id} (must be in the format "providerId${this.separator}modelId")`
+          });
+        }
+        return [id.slice(0, index), id.slice(index + this.separator.length)];
+      }
+      languageModel(id) {
+        var _a162, _b8;
+        const [providerId, modelId] = this.splitId(id, "languageModel");
+        let model = (_b8 = (_a162 = this.getProvider(providerId, "languageModel")).languageModel) == null ? void 0 : _b8.call(
+          _a162,
+          modelId
+        );
+        if (model == null) {
+          throw new NoSuchModelError({ modelId: id, modelType: "languageModel" });
+        }
+        if (this.languageModelMiddleware != null) {
+          model = wrapLanguageModel({
+            model,
+            middleware: this.languageModelMiddleware
+          });
+        }
+        return model;
+      }
+      textEmbeddingModel(id) {
+        var _a162;
+        const [providerId, modelId] = this.splitId(id, "textEmbeddingModel");
+        const provider = this.getProvider(providerId, "textEmbeddingModel");
+        const model = (_a162 = provider.textEmbeddingModel) == null ? void 0 : _a162.call(provider, modelId);
+        if (model == null) {
+          throw new NoSuchModelError({
+            modelId: id,
+            modelType: "textEmbeddingModel"
+          });
+        }
+        return model;
+      }
+      imageModel(id) {
+        var _a162;
+        const [providerId, modelId] = this.splitId(id, "imageModel");
+        const provider = this.getProvider(providerId, "imageModel");
+        const model = (_a162 = provider.imageModel) == null ? void 0 : _a162.call(provider, modelId);
+        if (model == null) {
+          throw new NoSuchModelError({ modelId: id, modelType: "imageModel" });
+        }
+        return model;
+      }
+      transcriptionModel(id) {
+        var _a162;
+        const [providerId, modelId] = this.splitId(id, "transcriptionModel");
+        const provider = this.getProvider(providerId, "transcriptionModel");
+        const model = (_a162 = provider.transcriptionModel) == null ? void 0 : _a162.call(provider, modelId);
+        if (model == null) {
+          throw new NoSuchModelError({
+            modelId: id,
+            modelType: "transcriptionModel"
+          });
+        }
+        return model;
+      }
+      speechModel(id) {
+        var _a162;
+        const [providerId, modelId] = this.splitId(id, "speechModel");
+        const provider = this.getProvider(providerId, "speechModel");
+        const model = (_a162 = provider.speechModel) == null ? void 0 : _a162.call(provider, modelId);
+        if (model == null) {
+          throw new NoSuchModelError({ modelId: id, modelType: "speechModel" });
+        }
+        return model;
+      }
+    };
+    NoTranscriptGeneratedError = class extends AISDKError {
+      constructor(options) {
+        super({
+          name: "AI_NoTranscriptGeneratedError",
+          message: "No transcript generated."
+        });
+        this.responses = options.responses;
+      }
+    };
+    DefaultTranscriptionResult = class {
+      constructor(options) {
+        var _a162;
+        this.text = options.text;
+        this.segments = options.segments;
+        this.language = options.language;
+        this.durationInSeconds = options.durationInSeconds;
+        this.warnings = options.warnings;
+        this.responses = options.responses;
+        this.providerMetadata = (_a162 = options.providerMetadata) != null ? _a162 : {};
+      }
+    };
+    getOriginalFetch3 = () => fetch;
+    HttpChatTransport = class {
+      constructor({
+        api = "/api/chat",
+        credentials,
+        headers,
+        body,
+        fetch: fetch2,
+        prepareSendMessagesRequest,
+        prepareReconnectToStreamRequest
+      }) {
+        this.api = api;
+        this.credentials = credentials;
+        this.headers = headers;
+        this.body = body;
+        this.fetch = fetch2;
+        this.prepareSendMessagesRequest = prepareSendMessagesRequest;
+        this.prepareReconnectToStreamRequest = prepareReconnectToStreamRequest;
+      }
+      async sendMessages({
+        abortSignal,
+        ...options
+      }) {
+        var _a162, _b8, _c, _d, _e;
+        const resolvedBody = await resolve(this.body);
+        const resolvedHeaders = await resolve(this.headers);
+        const resolvedCredentials = await resolve(this.credentials);
+        const baseHeaders = {
+          ...normalizeHeaders(resolvedHeaders),
+          ...normalizeHeaders(options.headers)
+        };
+        const preparedRequest = await ((_a162 = this.prepareSendMessagesRequest) == null ? void 0 : _a162.call(this, {
+          api: this.api,
+          id: options.chatId,
+          messages: options.messages,
+          body: { ...resolvedBody, ...options.body },
+          headers: baseHeaders,
+          credentials: resolvedCredentials,
+          requestMetadata: options.metadata,
+          trigger: options.trigger,
+          messageId: options.messageId
+        }));
+        const api = (_b8 = preparedRequest == null ? void 0 : preparedRequest.api) != null ? _b8 : this.api;
+        const headers = (preparedRequest == null ? void 0 : preparedRequest.headers) !== void 0 ? normalizeHeaders(preparedRequest.headers) : baseHeaders;
+        const body = (preparedRequest == null ? void 0 : preparedRequest.body) !== void 0 ? preparedRequest.body : {
+          ...resolvedBody,
+          ...options.body,
+          id: options.chatId,
+          messages: options.messages,
+          trigger: options.trigger,
+          messageId: options.messageId
+        };
+        const credentials = (_c = preparedRequest == null ? void 0 : preparedRequest.credentials) != null ? _c : resolvedCredentials;
+        const fetch2 = (_d = this.fetch) != null ? _d : globalThis.fetch;
+        const response = await fetch2(api, {
+          method: "POST",
+          headers: withUserAgentSuffix(
+            {
+              "Content-Type": "application/json",
+              ...headers
+            },
+            `ai-sdk/${VERSION4}`,
+            getRuntimeEnvironmentUserAgent()
+          ),
+          body: JSON.stringify(body),
+          credentials,
+          signal: abortSignal
+        });
+        if (!response.ok) {
+          throw new Error(
+            (_e = await response.text()) != null ? _e : "Failed to fetch the chat response."
+          );
+        }
+        if (!response.body) {
+          throw new Error("The response body is empty.");
+        }
+        return this.processResponseStream(response.body);
+      }
+      async reconnectToStream(options) {
+        var _a162, _b8, _c, _d, _e;
+        const resolvedBody = await resolve(this.body);
+        const resolvedHeaders = await resolve(this.headers);
+        const resolvedCredentials = await resolve(this.credentials);
+        const baseHeaders = {
+          ...normalizeHeaders(resolvedHeaders),
+          ...normalizeHeaders(options.headers)
+        };
+        const preparedRequest = await ((_a162 = this.prepareReconnectToStreamRequest) == null ? void 0 : _a162.call(this, {
+          api: this.api,
+          id: options.chatId,
+          body: { ...resolvedBody, ...options.body },
+          headers: baseHeaders,
+          credentials: resolvedCredentials,
+          requestMetadata: options.metadata
+        }));
+        const api = (_b8 = preparedRequest == null ? void 0 : preparedRequest.api) != null ? _b8 : `${this.api}/${options.chatId}/stream`;
+        const headers = (preparedRequest == null ? void 0 : preparedRequest.headers) !== void 0 ? normalizeHeaders(preparedRequest.headers) : baseHeaders;
+        const credentials = (_c = preparedRequest == null ? void 0 : preparedRequest.credentials) != null ? _c : resolvedCredentials;
+        const fetch2 = (_d = this.fetch) != null ? _d : globalThis.fetch;
+        const response = await fetch2(api, {
+          method: "GET",
+          headers: withUserAgentSuffix(
+            headers,
+            `ai-sdk/${VERSION4}`,
+            getRuntimeEnvironmentUserAgent()
+          ),
+          credentials
+        });
+        if (response.status === 204) {
+          return null;
+        }
+        if (!response.ok) {
+          throw new Error(
+            (_e = await response.text()) != null ? _e : "Failed to fetch the chat response."
+          );
+        }
+        if (!response.body) {
+          throw new Error("The response body is empty.");
+        }
+        return this.processResponseStream(response.body);
+      }
+    };
+    DefaultChatTransport = class extends HttpChatTransport {
+      constructor(options = {}) {
+        super(options);
+      }
+      processResponseStream(stream) {
+        return parseJsonEventStream({
+          stream,
+          schema: uiMessageChunkSchema
+        }).pipeThrough(
+          new TransformStream({
+            async transform(chunk, controller) {
+              if (!chunk.success) {
+                throw chunk.error;
+              }
+              controller.enqueue(chunk.value);
+            }
+          })
+        );
+      }
+    };
+    AbstractChat = class {
+      constructor({
+        generateId: generateId3 = generateId,
+        id = generateId3(),
+        transport = new DefaultChatTransport(),
+        messageMetadataSchema,
+        dataPartSchemas,
+        state,
+        onError: onError2,
+        onToolCall,
+        onFinish: onFinish2,
+        onData,
+        sendAutomaticallyWhen
+      }) {
+        this.activeResponse = void 0;
+        this.jobExecutor = new SerialJobExecutor();
+        this.sendMessage = async (message, options) => {
+          var _a162, _b8, _c, _d;
+          if (message == null) {
+            await this.makeRequest({
+              trigger: "submit-message",
+              messageId: (_a162 = this.lastMessage) == null ? void 0 : _a162.id,
+              ...options
+            });
+            return;
+          }
+          let uiMessage;
+          if ("text" in message || "files" in message) {
+            const fileParts = Array.isArray(message.files) ? message.files : await convertFileListToFileUIParts(message.files);
+            uiMessage = {
+              parts: [
+                ...fileParts,
+                ..."text" in message && message.text != null ? [{ type: "text", text: message.text }] : []
+              ]
+            };
+          } else {
+            uiMessage = message;
+          }
+          if (message.messageId != null) {
+            const messageIndex = this.state.messages.findIndex(
+              (m) => m.id === message.messageId
+            );
+            if (messageIndex === -1) {
+              throw new Error(`message with id ${message.messageId} not found`);
+            }
+            if (this.state.messages[messageIndex].role !== "user") {
+              throw new Error(
+                `message with id ${message.messageId} is not a user message`
+              );
+            }
+            this.state.messages = this.state.messages.slice(0, messageIndex + 1);
+            this.state.replaceMessage(messageIndex, {
+              ...uiMessage,
+              id: message.messageId,
+              role: (_b8 = uiMessage.role) != null ? _b8 : "user",
+              metadata: message.metadata
+            });
+          } else {
+            this.state.pushMessage({
+              ...uiMessage,
+              id: (_c = uiMessage.id) != null ? _c : this.generateId(),
+              role: (_d = uiMessage.role) != null ? _d : "user",
+              metadata: message.metadata
+            });
+          }
+          await this.makeRequest({
+            trigger: "submit-message",
+            messageId: message.messageId,
+            ...options
+          });
+        };
+        this.regenerate = async ({
+          messageId,
+          ...options
+        } = {}) => {
+          const messageIndex = messageId == null ? this.state.messages.length - 1 : this.state.messages.findIndex((message) => message.id === messageId);
+          if (messageIndex === -1) {
+            throw new Error(`message ${messageId} not found`);
+          }
+          this.state.messages = this.state.messages.slice(
+            0,
+            // if the message is a user message, we need to include it in the request:
+            this.messages[messageIndex].role === "assistant" ? messageIndex : messageIndex + 1
+          );
+          await this.makeRequest({
+            trigger: "regenerate-message",
+            messageId,
+            ...options
+          });
+        };
+        this.resumeStream = async (options = {}) => {
+          await this.makeRequest({ trigger: "resume-stream", ...options });
+        };
+        this.clearError = () => {
+          if (this.status === "error") {
+            this.state.error = void 0;
+            this.setStatus({ status: "ready" });
+          }
+        };
+        this.addToolOutput = async ({
+          state: state2 = "output-available",
+          tool: tool2,
+          toolCallId,
+          output,
+          errorText
+        }) => this.jobExecutor.run(async () => {
+          var _a162, _b8;
+          const messages = this.state.messages;
+          const lastMessage = messages[messages.length - 1];
+          this.state.replaceMessage(messages.length - 1, {
+            ...lastMessage,
+            parts: lastMessage.parts.map(
+              (part) => isToolOrDynamicToolUIPart(part) && part.toolCallId === toolCallId ? { ...part, state: state2, output, errorText } : part
+            )
+          });
+          if (this.activeResponse) {
+            this.activeResponse.state.message.parts = this.activeResponse.state.message.parts.map(
+              (part) => isToolOrDynamicToolUIPart(part) && part.toolCallId === toolCallId ? {
+                ...part,
+                state: state2,
+                output,
+                errorText
+              } : part
+            );
+          }
+          if (this.status !== "streaming" && this.status !== "submitted" && ((_a162 = this.sendAutomaticallyWhen) == null ? void 0 : _a162.call(this, { messages: this.state.messages }))) {
+            this.makeRequest({
+              trigger: "submit-message",
+              messageId: (_b8 = this.lastMessage) == null ? void 0 : _b8.id
+            });
+          }
+        });
+        this.addToolResult = this.addToolOutput;
+        this.stop = async () => {
+          var _a162;
+          if (this.status !== "streaming" && this.status !== "submitted")
+            return;
+          if ((_a162 = this.activeResponse) == null ? void 0 : _a162.abortController) {
+            this.activeResponse.abortController.abort();
+          }
+        };
+        this.id = id;
+        this.transport = transport;
+        this.generateId = generateId3;
+        this.messageMetadataSchema = messageMetadataSchema;
+        this.dataPartSchemas = dataPartSchemas;
+        this.state = state;
+        this.onError = onError2;
+        this.onToolCall = onToolCall;
+        this.onFinish = onFinish2;
+        this.onData = onData;
+        this.sendAutomaticallyWhen = sendAutomaticallyWhen;
+      }
+      /**
+       * Hook status:
+       *
+       * - `submitted`: The message has been sent to the API and we're awaiting the start of the response stream.
+       * - `streaming`: The response is actively streaming in from the API, receiving chunks of data.
+       * - `ready`: The full response has been received and processed; a new user message can be submitted.
+       * - `error`: An error occurred during the API request, preventing successful completion.
+       */
+      get status() {
+        return this.state.status;
+      }
+      setStatus({
+        status,
+        error
+      }) {
+        if (this.status === status)
+          return;
+        this.state.status = status;
+        this.state.error = error;
+      }
+      get error() {
+        return this.state.error;
+      }
+      get messages() {
+        return this.state.messages;
+      }
+      get lastMessage() {
+        return this.state.messages[this.state.messages.length - 1];
+      }
+      set messages(messages) {
+        this.state.messages = messages;
+      }
+      async makeRequest({
+        trigger,
+        metadata,
+        headers,
+        body,
+        messageId
+      }) {
+        var _a162, _b8, _c, _d;
+        this.setStatus({ status: "submitted", error: void 0 });
+        const lastMessage = this.lastMessage;
+        let isAbort = false;
+        let isDisconnect = false;
+        let isError = false;
+        try {
+          const activeResponse = {
+            state: createStreamingUIMessageState({
+              lastMessage: this.state.snapshot(lastMessage),
+              messageId: this.generateId()
+            }),
+            abortController: new AbortController()
+          };
+          activeResponse.abortController.signal.addEventListener("abort", () => {
+            isAbort = true;
+          });
+          this.activeResponse = activeResponse;
+          let stream;
+          if (trigger === "resume-stream") {
+            const reconnect = await this.transport.reconnectToStream({
+              chatId: this.id,
+              metadata,
+              headers,
+              body
+            });
+            if (reconnect == null) {
+              this.setStatus({ status: "ready" });
+              return;
+            }
+            stream = reconnect;
+          } else {
+            stream = await this.transport.sendMessages({
+              chatId: this.id,
+              messages: this.state.messages,
+              abortSignal: activeResponse.abortController.signal,
+              metadata,
+              headers,
+              body,
+              trigger,
+              messageId
+            });
+          }
+          const runUpdateMessageJob = (job) => (
+            // serialize the job execution to avoid race conditions:
+            this.jobExecutor.run(
+              () => job({
+                state: activeResponse.state,
+                write: () => {
+                  var _a17;
+                  this.setStatus({ status: "streaming" });
+                  const replaceLastMessage = activeResponse.state.message.id === ((_a17 = this.lastMessage) == null ? void 0 : _a17.id);
+                  if (replaceLastMessage) {
+                    this.state.replaceMessage(
+                      this.state.messages.length - 1,
+                      activeResponse.state.message
+                    );
+                  } else {
+                    this.state.pushMessage(activeResponse.state.message);
+                  }
+                }
+              })
+            )
+          );
+          await consumeStream({
+            stream: processUIMessageStream({
+              stream,
+              onToolCall: this.onToolCall,
+              onData: this.onData,
+              messageMetadataSchema: this.messageMetadataSchema,
+              dataPartSchemas: this.dataPartSchemas,
+              runUpdateMessageJob,
+              onError: (error) => {
+                throw error;
+              }
+            }),
+            onError: (error) => {
+              throw error;
+            }
+          });
+          this.setStatus({ status: "ready" });
+        } catch (err) {
+          if (isAbort || err.name === "AbortError") {
+            isAbort = true;
+            this.setStatus({ status: "ready" });
+            return null;
+          }
+          isError = true;
+          if (err instanceof TypeError && (err.message.toLowerCase().includes("fetch") || err.message.toLowerCase().includes("network"))) {
+            isDisconnect = true;
+          }
+          if (this.onError && err instanceof Error) {
+            this.onError(err);
+          }
+          this.setStatus({ status: "error", error: err });
+        } finally {
+          try {
+            (_b8 = this.onFinish) == null ? void 0 : _b8.call(this, {
+              message: this.activeResponse.state.message,
+              messages: this.state.messages,
+              isAbort,
+              isDisconnect,
+              isError,
+              finishReason: (_a162 = this.activeResponse) == null ? void 0 : _a162.state.finishReason
+            });
+          } catch (err) {
+            console.error(err);
+          }
+          this.activeResponse = void 0;
+        }
+        if (((_c = this.sendAutomaticallyWhen) == null ? void 0 : _c.call(this, { messages: this.state.messages })) && !isError) {
+          await this.makeRequest({
+            trigger: "submit-message",
+            messageId: (_d = this.lastMessage) == null ? void 0 : _d.id,
+            metadata,
+            headers,
+            body
+          });
+        }
+      }
+    };
+    TextStreamChatTransport = class extends HttpChatTransport {
+      constructor(options = {}) {
+        super(options);
+      }
+      processResponseStream(stream) {
+        return transformTextToUiMessageStream({
+          stream: stream.pipeThrough(new TextDecoderStream())
+        });
+      }
+    };
+    uiMessagesSchema = lazyValidator(
+      () => zodSchema(
+        z82.array(
+          z82.object({
+            id: z82.string(),
+            role: z82.enum(["system", "user", "assistant"]),
+            metadata: z82.unknown().optional(),
+            parts: z82.array(
+              z82.union([
+                z82.object({
+                  type: z82.literal("text"),
+                  text: z82.string(),
+                  state: z82.enum(["streaming", "done"]).optional(),
+                  providerMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("reasoning"),
+                  text: z82.string(),
+                  state: z82.enum(["streaming", "done"]).optional(),
+                  providerMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("source-url"),
+                  sourceId: z82.string(),
+                  url: z82.string(),
+                  title: z82.string().optional(),
+                  providerMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("source-document"),
+                  sourceId: z82.string(),
+                  mediaType: z82.string(),
+                  title: z82.string(),
+                  filename: z82.string().optional(),
+                  providerMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("file"),
+                  mediaType: z82.string(),
+                  filename: z82.string().optional(),
+                  url: z82.string(),
+                  providerMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("step-start")
+                }),
+                z82.object({
+                  type: z82.string().startsWith("data-"),
+                  id: z82.string().optional(),
+                  data: z82.unknown()
+                }),
+                z82.object({
+                  type: z82.literal("dynamic-tool"),
+                  toolName: z82.string(),
+                  toolCallId: z82.string(),
+                  state: z82.literal("input-streaming"),
+                  input: z82.unknown().optional(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional()
+                }),
+                z82.object({
+                  type: z82.literal("dynamic-tool"),
+                  toolName: z82.string(),
+                  toolCallId: z82.string(),
+                  state: z82.literal("input-available"),
+                  input: z82.unknown(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.literal("dynamic-tool"),
+                  toolName: z82.string(),
+                  toolCallId: z82.string(),
+                  state: z82.literal("output-available"),
+                  input: z82.unknown(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.unknown(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  preliminary: z82.boolean().optional()
+                }),
+                z82.object({
+                  type: z82.literal("dynamic-tool"),
+                  toolName: z82.string(),
+                  toolCallId: z82.string(),
+                  state: z82.literal("output-error"),
+                  input: z82.unknown(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.string(),
+                  callProviderMetadata: providerMetadataSchema.optional()
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("input-streaming"),
+                  providerExecuted: z82.boolean().optional(),
+                  input: z82.unknown().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  approval: z82.never().optional()
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("input-available"),
+                  providerExecuted: z82.boolean().optional(),
+                  input: z82.unknown(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  approval: z82.never().optional()
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("approval-requested"),
+                  input: z82.unknown(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  approval: z82.object({
+                    id: z82.string(),
+                    approved: z82.never().optional(),
+                    reason: z82.never().optional()
+                  })
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("approval-responded"),
+                  input: z82.unknown(),
+                  providerExecuted: z82.boolean().optional(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  approval: z82.object({
+                    id: z82.string(),
+                    approved: z82.boolean(),
+                    reason: z82.string().optional()
+                  })
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("output-available"),
+                  providerExecuted: z82.boolean().optional(),
+                  input: z82.unknown(),
+                  output: z82.unknown(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  preliminary: z82.boolean().optional(),
+                  approval: z82.object({
+                    id: z82.string(),
+                    approved: z82.literal(true),
+                    reason: z82.string().optional()
+                  }).optional()
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("output-error"),
+                  providerExecuted: z82.boolean().optional(),
+                  input: z82.unknown(),
+                  output: z82.never().optional(),
+                  errorText: z82.string(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  approval: z82.object({
+                    id: z82.string(),
+                    approved: z82.literal(true),
+                    reason: z82.string().optional()
+                  }).optional()
+                }),
+                z82.object({
+                  type: z82.string().startsWith("tool-"),
+                  toolCallId: z82.string(),
+                  state: z82.literal("output-denied"),
+                  providerExecuted: z82.boolean().optional(),
+                  input: z82.unknown(),
+                  output: z82.never().optional(),
+                  errorText: z82.never().optional(),
+                  callProviderMetadata: providerMetadataSchema.optional(),
+                  approval: z82.object({
+                    id: z82.string(),
+                    approved: z82.literal(false),
+                    reason: z82.string().optional()
+                  })
+                })
+              ])
+            ).nonempty("Message must contain at least one part")
+          })
+        ).nonempty("Messages array must not be empty")
+      )
+    );
   }
 });
 
@@ -14658,7 +28453,7 @@ var WorkspaceMCPOverridesSchema = z4.object({
   enabledServers: z4.array(z4.string()).optional(),
   /**
    * Per-server tool allowlist.
-   * Key: server name (from .unix/mcp.jsonc)
+   * Key: server name (from .lattice/mcp.jsonc)
    * Value: raw MCP tool names (NOT namespaced)
    *
    * If omitted for a server => expose all tools from that server.
@@ -14854,7 +28649,7 @@ var WorkspaceConfigSchema = z6.object({
     description: "Trunk branch used to create/init this agent task workspace (used for restart-safe init on queued tasks)."
   }),
   mcp: WorkspaceMCPOverridesSchema.optional().meta({
-    description: "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.unix/mcp.local.jsonc)"
+    description: "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.lattice/mcp.local.jsonc)"
   }),
   archivedAt: z6.string().optional().meta({
     description: "ISO 8601 timestamp when workspace was last archived. Workspace is considered archived if archivedAt > unarchivedAt (or unarchivedAt is absent)."
@@ -17198,6644 +30993,8 @@ var debug = {
   }
 };
 
-// node_modules/@ai-sdk/provider/dist/index.mjs
-var marker = "vercel.ai.error";
-var symbol = Symbol.for(marker);
-var _a;
-var _AISDKError = class _AISDKError2 extends Error {
-  /**
-   * Creates an AI SDK Error.
-   *
-   * @param {Object} params - The parameters for creating the error.
-   * @param {string} params.name - The name of the error.
-   * @param {string} params.message - The error message.
-   * @param {unknown} [params.cause] - The underlying cause of the error.
-   */
-  constructor({
-    name: name143,
-    message,
-    cause
-  }) {
-    super(message);
-    this[_a] = true;
-    this.name = name143;
-    this.cause = cause;
-  }
-  /**
-   * Checks if the given error is an AI SDK Error.
-   * @param {unknown} error - The error to check.
-   * @returns {boolean} True if the error is an AI SDK Error, false otherwise.
-   */
-  static isInstance(error) {
-    return _AISDKError2.hasMarker(error, marker);
-  }
-  static hasMarker(error, marker153) {
-    const markerSymbol = Symbol.for(marker153);
-    return error != null && typeof error === "object" && markerSymbol in error && typeof error[markerSymbol] === "boolean" && error[markerSymbol] === true;
-  }
-};
-_a = symbol;
-var AISDKError = _AISDKError;
-var name = "AI_APICallError";
-var marker2 = `vercel.ai.error.${name}`;
-var symbol2 = Symbol.for(marker2);
-var _a2;
-var APICallError = class extends AISDKError {
-  constructor({
-    message,
-    url,
-    requestBodyValues,
-    statusCode,
-    responseHeaders,
-    responseBody,
-    cause,
-    isRetryable = statusCode != null && (statusCode === 408 || // request timeout
-    statusCode === 409 || // conflict
-    statusCode === 429 || // too many requests
-    statusCode >= 500),
-    // server error
-    data
-  }) {
-    super({ name, message, cause });
-    this[_a2] = true;
-    this.url = url;
-    this.requestBodyValues = requestBodyValues;
-    this.statusCode = statusCode;
-    this.responseHeaders = responseHeaders;
-    this.responseBody = responseBody;
-    this.isRetryable = isRetryable;
-    this.data = data;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker2);
-  }
-};
-_a2 = symbol2;
-var name2 = "AI_EmptyResponseBodyError";
-var marker3 = `vercel.ai.error.${name2}`;
-var symbol3 = Symbol.for(marker3);
-var _a3;
-var EmptyResponseBodyError = class extends AISDKError {
-  // used in isInstance
-  constructor({ message = "Empty response body" } = {}) {
-    super({ name: name2, message });
-    this[_a3] = true;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker3);
-  }
-};
-_a3 = symbol3;
-function getErrorMessage(error) {
-  if (error == null) {
-    return "unknown error";
-  }
-  if (typeof error === "string") {
-    return error;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return JSON.stringify(error);
-}
-var name3 = "AI_InvalidArgumentError";
-var marker4 = `vercel.ai.error.${name3}`;
-var symbol4 = Symbol.for(marker4);
-var _a4;
-var InvalidArgumentError2 = class extends AISDKError {
-  constructor({
-    message,
-    cause,
-    argument
-  }) {
-    super({ name: name3, message, cause });
-    this[_a4] = true;
-    this.argument = argument;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker4);
-  }
-};
-_a4 = symbol4;
-var name4 = "AI_InvalidPromptError";
-var marker5 = `vercel.ai.error.${name4}`;
-var symbol5 = Symbol.for(marker5);
-var _a5;
-var InvalidPromptError = class extends AISDKError {
-  constructor({
-    prompt,
-    message,
-    cause
-  }) {
-    super({ name: name4, message: `Invalid prompt: ${message}`, cause });
-    this[_a5] = true;
-    this.prompt = prompt;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker5);
-  }
-};
-_a5 = symbol5;
-var name5 = "AI_InvalidResponseDataError";
-var marker6 = `vercel.ai.error.${name5}`;
-var symbol6 = Symbol.for(marker6);
-var _a6;
-_a6 = symbol6;
-var name6 = "AI_JSONParseError";
-var marker7 = `vercel.ai.error.${name6}`;
-var symbol7 = Symbol.for(marker7);
-var _a7;
-var JSONParseError = class extends AISDKError {
-  constructor({ text: text2, cause }) {
-    super({
-      name: name6,
-      message: `JSON parsing failed: Text: ${text2}.
-Error message: ${getErrorMessage(cause)}`,
-      cause
-    });
-    this[_a7] = true;
-    this.text = text2;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker7);
-  }
-};
-_a7 = symbol7;
-var name7 = "AI_LoadAPIKeyError";
-var marker8 = `vercel.ai.error.${name7}`;
-var symbol8 = Symbol.for(marker8);
-var _a8;
-_a8 = symbol8;
-var name8 = "AI_LoadSettingError";
-var marker9 = `vercel.ai.error.${name8}`;
-var symbol9 = Symbol.for(marker9);
-var _a9;
-_a9 = symbol9;
-var name9 = "AI_NoContentGeneratedError";
-var marker10 = `vercel.ai.error.${name9}`;
-var symbol10 = Symbol.for(marker10);
-var _a10;
-_a10 = symbol10;
-var name10 = "AI_NoSuchModelError";
-var marker11 = `vercel.ai.error.${name10}`;
-var symbol11 = Symbol.for(marker11);
-var _a11;
-_a11 = symbol11;
-var name11 = "AI_TooManyEmbeddingValuesForCallError";
-var marker12 = `vercel.ai.error.${name11}`;
-var symbol12 = Symbol.for(marker12);
-var _a12;
-_a12 = symbol12;
-var name12 = "AI_TypeValidationError";
-var marker13 = `vercel.ai.error.${name12}`;
-var symbol13 = Symbol.for(marker13);
-var _a13;
-var _TypeValidationError = class _TypeValidationError2 extends AISDKError {
-  constructor({ value: value2, cause }) {
-    super({
-      name: name12,
-      message: `Type validation failed: Value: ${JSON.stringify(value2)}.
-Error message: ${getErrorMessage(cause)}`,
-      cause
-    });
-    this[_a13] = true;
-    this.value = value2;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker13);
-  }
-  /**
-   * Wraps an error into a TypeValidationError.
-   * If the cause is already a TypeValidationError with the same value, it returns the cause.
-   * Otherwise, it creates a new TypeValidationError.
-   *
-   * @param {Object} params - The parameters for wrapping the error.
-   * @param {unknown} params.value - The value that failed validation.
-   * @param {unknown} params.cause - The original error or cause of the validation failure.
-   * @returns {TypeValidationError} A TypeValidationError instance.
-   */
-  static wrap({
-    value: value2,
-    cause
-  }) {
-    return _TypeValidationError2.isInstance(cause) && cause.value === value2 ? cause : new _TypeValidationError2({ value: value2, cause });
-  }
-};
-_a13 = symbol13;
-var TypeValidationError = _TypeValidationError;
-var name13 = "AI_UnsupportedFunctionalityError";
-var marker14 = `vercel.ai.error.${name13}`;
-var symbol14 = Symbol.for(marker14);
-var _a14;
-var UnsupportedFunctionalityError = class extends AISDKError {
-  constructor({
-    functionality,
-    message = `'${functionality}' functionality not supported.`
-  }) {
-    super({ name: name13, message });
-    this[_a14] = true;
-    this.functionality = functionality;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker14);
-  }
-};
-_a14 = symbol14;
-function isJSONValue(value2) {
-  if (value2 === null || typeof value2 === "string" || typeof value2 === "number" || typeof value2 === "boolean") {
-    return true;
-  }
-  if (Array.isArray(value2)) {
-    return value2.every(isJSONValue);
-  }
-  if (typeof value2 === "object") {
-    return Object.entries(value2).every(
-      ([key, val]) => typeof key === "string" && isJSONValue(val)
-    );
-  }
-  return false;
-}
-function isJSONArray(value2) {
-  return Array.isArray(value2) && value2.every(isJSONValue);
-}
-function isJSONObject(value2) {
-  return value2 != null && typeof value2 === "object" && Object.entries(value2).every(
-    ([key, val]) => typeof key === "string" && isJSONValue(val)
-  );
-}
-
-// node_modules/eventsource-parser/dist/index.js
-var ParseError = class extends Error {
-  constructor(message, options) {
-    super(message), this.name = "ParseError", this.type = options.type, this.field = options.field, this.value = options.value, this.line = options.line;
-  }
-};
-function noop(_arg) {
-}
-function createParser(callbacks) {
-  if (typeof callbacks == "function")
-    throw new TypeError(
-      "`callbacks` must be an object, got a function instead. Did you mean `{onEvent: fn}`?"
-    );
-  const { onEvent = noop, onError: onError2 = noop, onRetry = noop, onComment } = callbacks;
-  let incompleteLine = "", isFirstChunk = true, id, data = "", eventType = "";
-  function feed(newChunk) {
-    const chunk = isFirstChunk ? newChunk.replace(/^\xEF\xBB\xBF/, "") : newChunk, [complete, incomplete] = splitLines(`${incompleteLine}${chunk}`);
-    for (const line of complete)
-      parseLine(line);
-    incompleteLine = incomplete, isFirstChunk = false;
-  }
-  function parseLine(line) {
-    if (line === "") {
-      dispatchEvent();
-      return;
-    }
-    if (line.startsWith(":")) {
-      onComment && onComment(line.slice(line.startsWith(": ") ? 2 : 1));
-      return;
-    }
-    const fieldSeparatorIndex = line.indexOf(":");
-    if (fieldSeparatorIndex !== -1) {
-      const field = line.slice(0, fieldSeparatorIndex), offset = line[fieldSeparatorIndex + 1] === " " ? 2 : 1, value2 = line.slice(fieldSeparatorIndex + offset);
-      processField(field, value2, line);
-      return;
-    }
-    processField(line, "", line);
-  }
-  function processField(field, value2, line) {
-    switch (field) {
-      case "event":
-        eventType = value2;
-        break;
-      case "data":
-        data = `${data}${value2}
-`;
-        break;
-      case "id":
-        id = value2.includes("\0") ? void 0 : value2;
-        break;
-      case "retry":
-        /^\d+$/.test(value2) ? onRetry(parseInt(value2, 10)) : onError2(
-          new ParseError(`Invalid \`retry\` value: "${value2}"`, {
-            type: "invalid-retry",
-            value: value2,
-            line
-          })
-        );
-        break;
-      default:
-        onError2(
-          new ParseError(
-            `Unknown field "${field.length > 20 ? `${field.slice(0, 20)}\u2026` : field}"`,
-            { type: "unknown-field", field, value: value2, line }
-          )
-        );
-        break;
-    }
-  }
-  function dispatchEvent() {
-    data.length > 0 && onEvent({
-      id,
-      event: eventType || void 0,
-      // If the data buffer's last character is a U+000A LINE FEED (LF) character,
-      // then remove the last character from the data buffer.
-      data: data.endsWith(`
-`) ? data.slice(0, -1) : data
-    }), id = void 0, data = "", eventType = "";
-  }
-  function reset(options = {}) {
-    incompleteLine && options.consume && parseLine(incompleteLine), isFirstChunk = true, id = void 0, data = "", eventType = "", incompleteLine = "";
-  }
-  return { feed, reset };
-}
-function splitLines(chunk) {
-  const lines = [];
-  let incompleteLine = "", searchIndex = 0;
-  for (; searchIndex < chunk.length; ) {
-    const crIndex = chunk.indexOf("\r", searchIndex), lfIndex = chunk.indexOf(`
-`, searchIndex);
-    let lineEnd = -1;
-    if (crIndex !== -1 && lfIndex !== -1 ? lineEnd = Math.min(crIndex, lfIndex) : crIndex !== -1 ? crIndex === chunk.length - 1 ? lineEnd = -1 : lineEnd = crIndex : lfIndex !== -1 && (lineEnd = lfIndex), lineEnd === -1) {
-      incompleteLine = chunk.slice(searchIndex);
-      break;
-    } else {
-      const line = chunk.slice(searchIndex, lineEnd);
-      lines.push(line), searchIndex = lineEnd + 1, chunk[searchIndex - 1] === "\r" && chunk[searchIndex] === `
-` && searchIndex++;
-    }
-  }
-  return [lines, incompleteLine];
-}
-
-// node_modules/eventsource-parser/dist/stream.js
-var EventSourceParserStream = class extends TransformStream {
-  constructor({ onError: onError2, onRetry, onComment } = {}) {
-    let parser;
-    super({
-      start(controller) {
-        parser = createParser({
-          onEvent: (event) => {
-            controller.enqueue(event);
-          },
-          onError(error) {
-            onError2 === "terminate" ? controller.error(error) : typeof onError2 == "function" && onError2(error);
-          },
-          onRetry,
-          onComment
-        });
-      },
-      transform(chunk) {
-        parser.feed(chunk);
-      }
-    });
-  }
-};
-
-// node_modules/@ai-sdk/provider-utils/dist/index.mjs
-import * as z42 from "zod/v4";
-import { ZodFirstPartyTypeKind as ZodFirstPartyTypeKind3 } from "zod/v3";
-import { ZodFirstPartyTypeKind as ZodFirstPartyTypeKind2 } from "zod/v3";
-import {
-  ZodFirstPartyTypeKind as ZodFirstPartyTypeKind22
-} from "zod/v3";
-function combineHeaders(...headers) {
-  return headers.reduce(
-    (combinedHeaders, currentHeaders) => ({
-      ...combinedHeaders,
-      ...currentHeaders != null ? currentHeaders : {}
-    }),
-    {}
-  );
-}
-async function delay(delayInMs, options) {
-  if (delayInMs == null) {
-    return Promise.resolve();
-  }
-  const signal = options == null ? void 0 : options.abortSignal;
-  return new Promise((resolve22, reject) => {
-    if (signal == null ? void 0 : signal.aborted) {
-      reject(createAbortError());
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      cleanup();
-      resolve22();
-    }, delayInMs);
-    const cleanup = () => {
-      clearTimeout(timeoutId);
-      signal == null ? void 0 : signal.removeEventListener("abort", onAbort);
-    };
-    const onAbort = () => {
-      cleanup();
-      reject(createAbortError());
-    };
-    signal == null ? void 0 : signal.addEventListener("abort", onAbort);
-  });
-}
-function createAbortError() {
-  return new DOMException("Delay was aborted", "AbortError");
-}
-function extractResponseHeaders(response) {
-  return Object.fromEntries([...response.headers]);
-}
-var createIdGenerator = ({
-  prefix,
-  size = 16,
-  alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-  separator = "-"
-} = {}) => {
-  const generator = () => {
-    const alphabetLength = alphabet.length;
-    const chars = new Array(size);
-    for (let i = 0; i < size; i++) {
-      chars[i] = alphabet[Math.random() * alphabetLength | 0];
-    }
-    return chars.join("");
-  };
-  if (prefix == null) {
-    return generator;
-  }
-  if (alphabet.includes(separator)) {
-    throw new InvalidArgumentError2({
-      argument: "separator",
-      message: `The separator "${separator}" must not be part of the alphabet "${alphabet}".`
-    });
-  }
-  return () => `${prefix}${separator}${generator()}`;
-};
-var generateId = createIdGenerator();
-function getErrorMessage2(error) {
-  if (error == null) {
-    return "unknown error";
-  }
-  if (typeof error === "string") {
-    return error;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return JSON.stringify(error);
-}
-function isAbortError(error) {
-  return (error instanceof Error || error instanceof DOMException) && (error.name === "AbortError" || error.name === "ResponseAborted" || // Next.js
-  error.name === "TimeoutError");
-}
-var FETCH_FAILED_ERROR_MESSAGES = ["fetch failed", "failed to fetch"];
-function handleFetchError({
-  error,
-  url,
-  requestBodyValues
-}) {
-  if (isAbortError(error)) {
-    return error;
-  }
-  if (error instanceof TypeError && FETCH_FAILED_ERROR_MESSAGES.includes(error.message.toLowerCase())) {
-    const cause = error.cause;
-    if (cause != null) {
-      return new APICallError({
-        message: `Cannot connect to API: ${cause.message}`,
-        cause,
-        url,
-        requestBodyValues,
-        isRetryable: true
-        // retry when network error
-      });
-    }
-  }
-  return error;
-}
-function getRuntimeEnvironmentUserAgent(globalThisAny = globalThis) {
-  var _a17, _b8, _c;
-  if (globalThisAny.window) {
-    return `runtime/browser`;
-  }
-  if ((_a17 = globalThisAny.navigator) == null ? void 0 : _a17.userAgent) {
-    return `runtime/${globalThisAny.navigator.userAgent.toLowerCase()}`;
-  }
-  if ((_c = (_b8 = globalThisAny.process) == null ? void 0 : _b8.versions) == null ? void 0 : _c.node) {
-    return `runtime/node.js/${globalThisAny.process.version.substring(0)}`;
-  }
-  if (globalThisAny.EdgeRuntime) {
-    return `runtime/vercel-edge`;
-  }
-  return "runtime/unknown";
-}
-function normalizeHeaders(headers) {
-  if (headers == null) {
-    return {};
-  }
-  const normalized = {};
-  if (headers instanceof Headers) {
-    headers.forEach((value2, key) => {
-      normalized[key.toLowerCase()] = value2;
-    });
-  } else {
-    if (!Array.isArray(headers)) {
-      headers = Object.entries(headers);
-    }
-    for (const [key, value2] of headers) {
-      if (value2 != null) {
-        normalized[key.toLowerCase()] = value2;
-      }
-    }
-  }
-  return normalized;
-}
-function withUserAgentSuffix(headers, ...userAgentSuffixParts) {
-  const normalizedHeaders = new Headers(normalizeHeaders(headers));
-  const currentUserAgentHeader = normalizedHeaders.get("user-agent") || "";
-  normalizedHeaders.set(
-    "user-agent",
-    [currentUserAgentHeader, ...userAgentSuffixParts].filter(Boolean).join(" ")
-  );
-  return Object.fromEntries(normalizedHeaders.entries());
-}
-var VERSION = true ? "3.0.18" : "0.0.0-test";
-var getOriginalFetch = () => globalThis.fetch;
-var getFromApi = async ({
-  url,
-  headers = {},
-  successfulResponseHandler,
-  failedResponseHandler,
-  abortSignal,
-  fetch: fetch2 = getOriginalFetch()
-}) => {
-  try {
-    const response = await fetch2(url, {
-      method: "GET",
-      headers: withUserAgentSuffix(
-        headers,
-        `ai-sdk/provider-utils/${VERSION}`,
-        getRuntimeEnvironmentUserAgent()
-      ),
-      signal: abortSignal
-    });
-    const responseHeaders = extractResponseHeaders(response);
-    if (!response.ok) {
-      let errorInformation;
-      try {
-        errorInformation = await failedResponseHandler({
-          response,
-          url,
-          requestBodyValues: {}
-        });
-      } catch (error) {
-        if (isAbortError(error) || APICallError.isInstance(error)) {
-          throw error;
-        }
-        throw new APICallError({
-          message: "Failed to process error response",
-          cause: error,
-          statusCode: response.status,
-          url,
-          responseHeaders,
-          requestBodyValues: {}
-        });
-      }
-      throw errorInformation.value;
-    }
-    try {
-      return await successfulResponseHandler({
-        response,
-        url,
-        requestBodyValues: {}
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (isAbortError(error) || APICallError.isInstance(error)) {
-          throw error;
-        }
-      }
-      throw new APICallError({
-        message: "Failed to process successful response",
-        cause: error,
-        statusCode: response.status,
-        url,
-        responseHeaders,
-        requestBodyValues: {}
-      });
-    }
-  } catch (error) {
-    throw handleFetchError({ error, url, requestBodyValues: {} });
-  }
-};
-function isUrlSupported({
-  mediaType,
-  url,
-  supportedUrls
-}) {
-  url = url.toLowerCase();
-  mediaType = mediaType.toLowerCase();
-  return Object.entries(supportedUrls).map(([key, value2]) => {
-    const mediaType2 = key.toLowerCase();
-    return mediaType2 === "*" || mediaType2 === "*/*" ? { mediaTypePrefix: "", regexes: value2 } : { mediaTypePrefix: mediaType2.replace(/\*/, ""), regexes: value2 };
-  }).filter(({ mediaTypePrefix }) => mediaType.startsWith(mediaTypePrefix)).flatMap(({ regexes }) => regexes).some((pattern) => pattern.test(url));
-}
-function loadOptionalSetting({
-  settingValue,
-  environmentVariableName
-}) {
-  if (typeof settingValue === "string") {
-    return settingValue;
-  }
-  if (settingValue != null || typeof process === "undefined") {
-    return void 0;
-  }
-  settingValue = process.env[environmentVariableName];
-  if (settingValue == null || typeof settingValue !== "string") {
-    return void 0;
-  }
-  return settingValue;
-}
-var suspectProtoRx = /"__proto__"\s*:/;
-var suspectConstructorRx = /"constructor"\s*:/;
-function _parse(text2) {
-  const obj = JSON.parse(text2);
-  if (obj === null || typeof obj !== "object") {
-    return obj;
-  }
-  if (suspectProtoRx.test(text2) === false && suspectConstructorRx.test(text2) === false) {
-    return obj;
-  }
-  return filter(obj);
-}
-function filter(obj) {
-  let next = [obj];
-  while (next.length) {
-    const nodes = next;
-    next = [];
-    for (const node of nodes) {
-      if (Object.prototype.hasOwnProperty.call(node, "__proto__")) {
-        throw new SyntaxError("Object contains forbidden prototype property");
-      }
-      if (Object.prototype.hasOwnProperty.call(node, "constructor") && Object.prototype.hasOwnProperty.call(node.constructor, "prototype")) {
-        throw new SyntaxError("Object contains forbidden prototype property");
-      }
-      for (const key in node) {
-        const value2 = node[key];
-        if (value2 && typeof value2 === "object") {
-          next.push(value2);
-        }
-      }
-    }
-  }
-  return obj;
-}
-function secureJsonParse(text2) {
-  const { stackTraceLimit } = Error;
-  try {
-    Error.stackTraceLimit = 0;
-  } catch (e) {
-    return _parse(text2);
-  }
-  try {
-    return _parse(text2);
-  } finally {
-    Error.stackTraceLimit = stackTraceLimit;
-  }
-}
-var validatorSymbol = Symbol.for("vercel.ai.validator");
-function validator(validate) {
-  return { [validatorSymbol]: true, validate };
-}
-function isValidator(value2) {
-  return typeof value2 === "object" && value2 !== null && validatorSymbol in value2 && value2[validatorSymbol] === true && "validate" in value2;
-}
-function lazyValidator(createValidator) {
-  let validator2;
-  return () => {
-    if (validator2 == null) {
-      validator2 = createValidator();
-    }
-    return validator2;
-  };
-}
-function asValidator(value2) {
-  return isValidator(value2) ? value2 : typeof value2 === "function" ? value2() : standardSchemaValidator(value2);
-}
-function standardSchemaValidator(standardSchema) {
-  return validator(async (value2) => {
-    const result = await standardSchema["~standard"].validate(value2);
-    return result.issues == null ? { success: true, value: result.value } : {
-      success: false,
-      error: new TypeValidationError({
-        value: value2,
-        cause: result.issues
-      })
-    };
-  });
-}
-async function validateTypes({
-  value: value2,
-  schema
-}) {
-  const result = await safeValidateTypes({ value: value2, schema });
-  if (!result.success) {
-    throw TypeValidationError.wrap({ value: value2, cause: result.error });
-  }
-  return result.value;
-}
-async function safeValidateTypes({
-  value: value2,
-  schema
-}) {
-  const validator2 = asValidator(schema);
-  try {
-    if (validator2.validate == null) {
-      return { success: true, value: value2, rawValue: value2 };
-    }
-    const result = await validator2.validate(value2);
-    if (result.success) {
-      return { success: true, value: result.value, rawValue: value2 };
-    }
-    return {
-      success: false,
-      error: TypeValidationError.wrap({ value: value2, cause: result.error }),
-      rawValue: value2
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: TypeValidationError.wrap({ value: value2, cause: error }),
-      rawValue: value2
-    };
-  }
-}
-async function parseJSON({
-  text: text2,
-  schema
-}) {
-  try {
-    const value2 = secureJsonParse(text2);
-    if (schema == null) {
-      return value2;
-    }
-    return validateTypes({ value: value2, schema });
-  } catch (error) {
-    if (JSONParseError.isInstance(error) || TypeValidationError.isInstance(error)) {
-      throw error;
-    }
-    throw new JSONParseError({ text: text2, cause: error });
-  }
-}
-async function safeParseJSON({
-  text: text2,
-  schema
-}) {
-  try {
-    const value2 = secureJsonParse(text2);
-    if (schema == null) {
-      return { success: true, value: value2, rawValue: value2 };
-    }
-    return await safeValidateTypes({ value: value2, schema });
-  } catch (error) {
-    return {
-      success: false,
-      error: JSONParseError.isInstance(error) ? error : new JSONParseError({ text: text2, cause: error }),
-      rawValue: void 0
-    };
-  }
-}
-function parseJsonEventStream({
-  stream,
-  schema
-}) {
-  return stream.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream()).pipeThrough(
-    new TransformStream({
-      async transform({ data }, controller) {
-        if (data === "[DONE]") {
-          return;
-        }
-        controller.enqueue(await safeParseJSON({ text: data, schema }));
-      }
-    })
-  );
-}
-var getOriginalFetch2 = () => globalThis.fetch;
-var postJsonToApi = async ({
-  url,
-  headers,
-  body,
-  failedResponseHandler,
-  successfulResponseHandler,
-  abortSignal,
-  fetch: fetch2
-}) => postToApi({
-  url,
-  headers: {
-    "Content-Type": "application/json",
-    ...headers
-  },
-  body: {
-    content: JSON.stringify(body),
-    values: body
-  },
-  failedResponseHandler,
-  successfulResponseHandler,
-  abortSignal,
-  fetch: fetch2
-});
-var postToApi = async ({
-  url,
-  headers = {},
-  body,
-  successfulResponseHandler,
-  failedResponseHandler,
-  abortSignal,
-  fetch: fetch2 = getOriginalFetch2()
-}) => {
-  try {
-    const response = await fetch2(url, {
-      method: "POST",
-      headers: withUserAgentSuffix(
-        headers,
-        `ai-sdk/provider-utils/${VERSION}`,
-        getRuntimeEnvironmentUserAgent()
-      ),
-      body: body.content,
-      signal: abortSignal
-    });
-    const responseHeaders = extractResponseHeaders(response);
-    if (!response.ok) {
-      let errorInformation;
-      try {
-        errorInformation = await failedResponseHandler({
-          response,
-          url,
-          requestBodyValues: body.values
-        });
-      } catch (error) {
-        if (isAbortError(error) || APICallError.isInstance(error)) {
-          throw error;
-        }
-        throw new APICallError({
-          message: "Failed to process error response",
-          cause: error,
-          statusCode: response.status,
-          url,
-          responseHeaders,
-          requestBodyValues: body.values
-        });
-      }
-      throw errorInformation.value;
-    }
-    try {
-      return await successfulResponseHandler({
-        response,
-        url,
-        requestBodyValues: body.values
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (isAbortError(error) || APICallError.isInstance(error)) {
-          throw error;
-        }
-      }
-      throw new APICallError({
-        message: "Failed to process successful response",
-        cause: error,
-        statusCode: response.status,
-        url,
-        responseHeaders,
-        requestBodyValues: body.values
-      });
-    }
-  } catch (error) {
-    throw handleFetchError({ error, url, requestBodyValues: body.values });
-  }
-};
-async function resolve(value2) {
-  if (typeof value2 === "function") {
-    value2 = value2();
-  }
-  return Promise.resolve(value2);
-}
-var createJsonErrorResponseHandler = ({
-  errorSchema,
-  errorToMessage,
-  isRetryable
-}) => async ({ response, url, requestBodyValues }) => {
-  const responseBody = await response.text();
-  const responseHeaders = extractResponseHeaders(response);
-  if (responseBody.trim() === "") {
-    return {
-      responseHeaders,
-      value: new APICallError({
-        message: response.statusText,
-        url,
-        requestBodyValues,
-        statusCode: response.status,
-        responseHeaders,
-        responseBody,
-        isRetryable: isRetryable == null ? void 0 : isRetryable(response)
-      })
-    };
-  }
-  try {
-    const parsedError = await parseJSON({
-      text: responseBody,
-      schema: errorSchema
-    });
-    return {
-      responseHeaders,
-      value: new APICallError({
-        message: errorToMessage(parsedError),
-        url,
-        requestBodyValues,
-        statusCode: response.status,
-        responseHeaders,
-        responseBody,
-        data: parsedError,
-        isRetryable: isRetryable == null ? void 0 : isRetryable(response, parsedError)
-      })
-    };
-  } catch (parseError) {
-    return {
-      responseHeaders,
-      value: new APICallError({
-        message: response.statusText,
-        url,
-        requestBodyValues,
-        statusCode: response.status,
-        responseHeaders,
-        responseBody,
-        isRetryable: isRetryable == null ? void 0 : isRetryable(response)
-      })
-    };
-  }
-};
-var createEventSourceResponseHandler = (chunkSchema) => async ({ response }) => {
-  const responseHeaders = extractResponseHeaders(response);
-  if (response.body == null) {
-    throw new EmptyResponseBodyError({});
-  }
-  return {
-    responseHeaders,
-    value: parseJsonEventStream({
-      stream: response.body,
-      schema: chunkSchema
-    })
-  };
-};
-var createJsonResponseHandler = (responseSchema) => async ({ response, url, requestBodyValues }) => {
-  const responseBody = await response.text();
-  const parsedResult = await safeParseJSON({
-    text: responseBody,
-    schema: responseSchema
-  });
-  const responseHeaders = extractResponseHeaders(response);
-  if (!parsedResult.success) {
-    throw new APICallError({
-      message: "Invalid JSON response",
-      cause: parsedResult.error,
-      statusCode: response.status,
-      responseHeaders,
-      responseBody,
-      url,
-      requestBodyValues
-    });
-  }
-  return {
-    responseHeaders,
-    value: parsedResult.value,
-    rawValue: parsedResult.rawValue
-  };
-};
-var getRelativePath2 = (pathA, pathB) => {
-  let i = 0;
-  for (; i < pathA.length && i < pathB.length; i++) {
-    if (pathA[i] !== pathB[i]) break;
-  }
-  return [(pathA.length - i).toString(), ...pathB.slice(i)].join("/");
-};
-var ignoreOverride2 = Symbol(
-  "Let zodToJsonSchema decide on which parser to use"
-);
-var defaultOptions2 = {
-  name: void 0,
-  $refStrategy: "root",
-  basePath: ["#"],
-  effectStrategy: "input",
-  pipeStrategy: "all",
-  dateStrategy: "format:date-time",
-  mapStrategy: "entries",
-  removeAdditionalStrategy: "passthrough",
-  allowedAdditionalProperties: true,
-  rejectedAdditionalProperties: false,
-  definitionPath: "definitions",
-  strictUnions: false,
-  definitions: {},
-  errorMessages: false,
-  patternStrategy: "escape",
-  applyRegexFlags: false,
-  emailStrategy: "format:email",
-  base64Strategy: "contentEncoding:base64",
-  nameStrategy: "ref"
-};
-var getDefaultOptions2 = (options) => typeof options === "string" ? {
-  ...defaultOptions2,
-  name: options
-} : {
-  ...defaultOptions2,
-  ...options
-};
-function parseAnyDef2() {
-  return {};
-}
-function parseArrayDef2(def, refs) {
-  var _a17, _b8, _c;
-  const res = {
-    type: "array"
-  };
-  if (((_a17 = def.type) == null ? void 0 : _a17._def) && ((_c = (_b8 = def.type) == null ? void 0 : _b8._def) == null ? void 0 : _c.typeName) !== ZodFirstPartyTypeKind2.ZodAny) {
-    res.items = parseDef2(def.type._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "items"]
-    });
-  }
-  if (def.minLength) {
-    res.minItems = def.minLength.value;
-  }
-  if (def.maxLength) {
-    res.maxItems = def.maxLength.value;
-  }
-  if (def.exactLength) {
-    res.minItems = def.exactLength.value;
-    res.maxItems = def.exactLength.value;
-  }
-  return res;
-}
-function parseBigintDef2(def) {
-  const res = {
-    type: "integer",
-    format: "int64"
-  };
-  if (!def.checks) return res;
-  for (const check of def.checks) {
-    switch (check.kind) {
-      case "min":
-        if (check.inclusive) {
-          res.minimum = check.value;
-        } else {
-          res.exclusiveMinimum = check.value;
-        }
-        break;
-      case "max":
-        if (check.inclusive) {
-          res.maximum = check.value;
-        } else {
-          res.exclusiveMaximum = check.value;
-        }
-        break;
-      case "multipleOf":
-        res.multipleOf = check.value;
-        break;
-    }
-  }
-  return res;
-}
-function parseBooleanDef2() {
-  return { type: "boolean" };
-}
-function parseBrandedDef2(_def, refs) {
-  return parseDef2(_def.type._def, refs);
-}
-var parseCatchDef2 = (def, refs) => {
-  return parseDef2(def.innerType._def, refs);
-};
-function parseDateDef2(def, refs, overrideDateStrategy) {
-  const strategy = overrideDateStrategy != null ? overrideDateStrategy : refs.dateStrategy;
-  if (Array.isArray(strategy)) {
-    return {
-      anyOf: strategy.map((item, i) => parseDateDef2(def, refs, item))
-    };
-  }
-  switch (strategy) {
-    case "string":
-    case "format:date-time":
-      return {
-        type: "string",
-        format: "date-time"
-      };
-    case "format:date":
-      return {
-        type: "string",
-        format: "date"
-      };
-    case "integer":
-      return integerDateParser2(def);
-  }
-}
-var integerDateParser2 = (def) => {
-  const res = {
-    type: "integer",
-    format: "unix-time"
-  };
-  for (const check of def.checks) {
-    switch (check.kind) {
-      case "min":
-        res.minimum = check.value;
-        break;
-      case "max":
-        res.maximum = check.value;
-        break;
-    }
-  }
-  return res;
-};
-function parseDefaultDef2(_def, refs) {
-  return {
-    ...parseDef2(_def.innerType._def, refs),
-    default: _def.defaultValue()
-  };
-}
-function parseEffectsDef2(_def, refs) {
-  return refs.effectStrategy === "input" ? parseDef2(_def.schema._def, refs) : parseAnyDef2();
-}
-function parseEnumDef2(def) {
-  return {
-    type: "string",
-    enum: Array.from(def.values)
-  };
-}
-var isJsonSchema7AllOfType2 = (type2) => {
-  if ("type" in type2 && type2.type === "string") return false;
-  return "allOf" in type2;
-};
-function parseIntersectionDef2(def, refs) {
-  const allOf = [
-    parseDef2(def.left._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "allOf", "0"]
-    }),
-    parseDef2(def.right._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "allOf", "1"]
-    })
-  ].filter((x) => !!x);
-  const mergedAllOf = [];
-  allOf.forEach((schema) => {
-    if (isJsonSchema7AllOfType2(schema)) {
-      mergedAllOf.push(...schema.allOf);
-    } else {
-      let nestedSchema = schema;
-      if ("additionalProperties" in schema && schema.additionalProperties === false) {
-        const { additionalProperties, ...rest } = schema;
-        nestedSchema = rest;
-      }
-      mergedAllOf.push(nestedSchema);
-    }
-  });
-  return mergedAllOf.length ? { allOf: mergedAllOf } : void 0;
-}
-function parseLiteralDef2(def) {
-  const parsedType = typeof def.value;
-  if (parsedType !== "bigint" && parsedType !== "number" && parsedType !== "boolean" && parsedType !== "string") {
-    return {
-      type: Array.isArray(def.value) ? "array" : "object"
-    };
-  }
-  return {
-    type: parsedType === "bigint" ? "integer" : parsedType,
-    const: def.value
-  };
-}
-var emojiRegex2 = void 0;
-var zodPatterns2 = {
-  /**
-   * `c` was changed to `[cC]` to replicate /i flag
-   */
-  cuid: /^[cC][^\s-]{8,}$/,
-  cuid2: /^[0-9a-z]+$/,
-  ulid: /^[0-9A-HJKMNP-TV-Z]{26}$/,
-  /**
-   * `a-z` was added to replicate /i flag
-   */
-  email: /^(?!\.)(?!.*\.\.)([a-zA-Z0-9_'+\-\.]*)[a-zA-Z0-9_+-]@([a-zA-Z0-9][a-zA-Z0-9\-]*\.)+[a-zA-Z]{2,}$/,
-  /**
-   * Constructed a valid Unicode RegExp
-   *
-   * Lazily instantiate since this type of regex isn't supported
-   * in all envs (e.g. React Native).
-   *
-   * See:
-   * https://github.com/colinhacks/zod/issues/2433
-   * Fix in Zod:
-   * https://github.com/colinhacks/zod/commit/9340fd51e48576a75adc919bff65dbc4a5d4c99b
-   */
-  emoji: () => {
-    if (emojiRegex2 === void 0) {
-      emojiRegex2 = RegExp(
-        "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
-        "u"
-      );
-    }
-    return emojiRegex2;
-  },
-  /**
-   * Unused
-   */
-  uuid: /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/,
-  /**
-   * Unused
-   */
-  ipv4: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/,
-  ipv4Cidr: /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/(3[0-2]|[12]?[0-9])$/,
-  /**
-   * Unused
-   */
-  ipv6: /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/,
-  ipv6Cidr: /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/,
-  base64: /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/,
-  base64url: /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/,
-  nanoid: /^[a-zA-Z0-9_-]{21}$/,
-  jwt: /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/
-};
-function parseStringDef2(def, refs) {
-  const res = {
-    type: "string"
-  };
-  if (def.checks) {
-    for (const check of def.checks) {
-      switch (check.kind) {
-        case "min":
-          res.minLength = typeof res.minLength === "number" ? Math.max(res.minLength, check.value) : check.value;
-          break;
-        case "max":
-          res.maxLength = typeof res.maxLength === "number" ? Math.min(res.maxLength, check.value) : check.value;
-          break;
-        case "email":
-          switch (refs.emailStrategy) {
-            case "format:email":
-              addFormat2(res, "email", check.message, refs);
-              break;
-            case "format:idn-email":
-              addFormat2(res, "idn-email", check.message, refs);
-              break;
-            case "pattern:zod":
-              addPattern2(res, zodPatterns2.email, check.message, refs);
-              break;
-          }
-          break;
-        case "url":
-          addFormat2(res, "uri", check.message, refs);
-          break;
-        case "uuid":
-          addFormat2(res, "uuid", check.message, refs);
-          break;
-        case "regex":
-          addPattern2(res, check.regex, check.message, refs);
-          break;
-        case "cuid":
-          addPattern2(res, zodPatterns2.cuid, check.message, refs);
-          break;
-        case "cuid2":
-          addPattern2(res, zodPatterns2.cuid2, check.message, refs);
-          break;
-        case "startsWith":
-          addPattern2(
-            res,
-            RegExp(`^${escapeLiteralCheckValue2(check.value, refs)}`),
-            check.message,
-            refs
-          );
-          break;
-        case "endsWith":
-          addPattern2(
-            res,
-            RegExp(`${escapeLiteralCheckValue2(check.value, refs)}$`),
-            check.message,
-            refs
-          );
-          break;
-        case "datetime":
-          addFormat2(res, "date-time", check.message, refs);
-          break;
-        case "date":
-          addFormat2(res, "date", check.message, refs);
-          break;
-        case "time":
-          addFormat2(res, "time", check.message, refs);
-          break;
-        case "duration":
-          addFormat2(res, "duration", check.message, refs);
-          break;
-        case "length":
-          res.minLength = typeof res.minLength === "number" ? Math.max(res.minLength, check.value) : check.value;
-          res.maxLength = typeof res.maxLength === "number" ? Math.min(res.maxLength, check.value) : check.value;
-          break;
-        case "includes": {
-          addPattern2(
-            res,
-            RegExp(escapeLiteralCheckValue2(check.value, refs)),
-            check.message,
-            refs
-          );
-          break;
-        }
-        case "ip": {
-          if (check.version !== "v6") {
-            addFormat2(res, "ipv4", check.message, refs);
-          }
-          if (check.version !== "v4") {
-            addFormat2(res, "ipv6", check.message, refs);
-          }
-          break;
-        }
-        case "base64url":
-          addPattern2(res, zodPatterns2.base64url, check.message, refs);
-          break;
-        case "jwt":
-          addPattern2(res, zodPatterns2.jwt, check.message, refs);
-          break;
-        case "cidr": {
-          if (check.version !== "v6") {
-            addPattern2(res, zodPatterns2.ipv4Cidr, check.message, refs);
-          }
-          if (check.version !== "v4") {
-            addPattern2(res, zodPatterns2.ipv6Cidr, check.message, refs);
-          }
-          break;
-        }
-        case "emoji":
-          addPattern2(res, zodPatterns2.emoji(), check.message, refs);
-          break;
-        case "ulid": {
-          addPattern2(res, zodPatterns2.ulid, check.message, refs);
-          break;
-        }
-        case "base64": {
-          switch (refs.base64Strategy) {
-            case "format:binary": {
-              addFormat2(res, "binary", check.message, refs);
-              break;
-            }
-            case "contentEncoding:base64": {
-              res.contentEncoding = "base64";
-              break;
-            }
-            case "pattern:zod": {
-              addPattern2(res, zodPatterns2.base64, check.message, refs);
-              break;
-            }
-          }
-          break;
-        }
-        case "nanoid": {
-          addPattern2(res, zodPatterns2.nanoid, check.message, refs);
-        }
-        case "toLowerCase":
-        case "toUpperCase":
-        case "trim":
-          break;
-        default:
-          /* @__PURE__ */ ((_) => {
-          })(check);
-      }
-    }
-  }
-  return res;
-}
-function escapeLiteralCheckValue2(literal, refs) {
-  return refs.patternStrategy === "escape" ? escapeNonAlphaNumeric2(literal) : literal;
-}
-var ALPHA_NUMERIC2 = new Set(
-  "ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789"
-);
-function escapeNonAlphaNumeric2(source) {
-  let result = "";
-  for (let i = 0; i < source.length; i++) {
-    if (!ALPHA_NUMERIC2.has(source[i])) {
-      result += "\\";
-    }
-    result += source[i];
-  }
-  return result;
-}
-function addFormat2(schema, value2, message, refs) {
-  var _a17;
-  if (schema.format || ((_a17 = schema.anyOf) == null ? void 0 : _a17.some((x) => x.format))) {
-    if (!schema.anyOf) {
-      schema.anyOf = [];
-    }
-    if (schema.format) {
-      schema.anyOf.push({
-        format: schema.format
-      });
-      delete schema.format;
-    }
-    schema.anyOf.push({
-      format: value2,
-      ...message && refs.errorMessages && { errorMessage: { format: message } }
-    });
-  } else {
-    schema.format = value2;
-  }
-}
-function addPattern2(schema, regex, message, refs) {
-  var _a17;
-  if (schema.pattern || ((_a17 = schema.allOf) == null ? void 0 : _a17.some((x) => x.pattern))) {
-    if (!schema.allOf) {
-      schema.allOf = [];
-    }
-    if (schema.pattern) {
-      schema.allOf.push({
-        pattern: schema.pattern
-      });
-      delete schema.pattern;
-    }
-    schema.allOf.push({
-      pattern: stringifyRegExpWithFlags2(regex, refs),
-      ...message && refs.errorMessages && { errorMessage: { pattern: message } }
-    });
-  } else {
-    schema.pattern = stringifyRegExpWithFlags2(regex, refs);
-  }
-}
-function stringifyRegExpWithFlags2(regex, refs) {
-  var _a17;
-  if (!refs.applyRegexFlags || !regex.flags) {
-    return regex.source;
-  }
-  const flags = {
-    i: regex.flags.includes("i"),
-    // Case-insensitive
-    m: regex.flags.includes("m"),
-    // `^` and `$` matches adjacent to newline characters
-    s: regex.flags.includes("s")
-    // `.` matches newlines
-  };
-  const source = flags.i ? regex.source.toLowerCase() : regex.source;
-  let pattern = "";
-  let isEscaped = false;
-  let inCharGroup = false;
-  let inCharRange = false;
-  for (let i = 0; i < source.length; i++) {
-    if (isEscaped) {
-      pattern += source[i];
-      isEscaped = false;
-      continue;
-    }
-    if (flags.i) {
-      if (inCharGroup) {
-        if (source[i].match(/[a-z]/)) {
-          if (inCharRange) {
-            pattern += source[i];
-            pattern += `${source[i - 2]}-${source[i]}`.toUpperCase();
-            inCharRange = false;
-          } else if (source[i + 1] === "-" && ((_a17 = source[i + 2]) == null ? void 0 : _a17.match(/[a-z]/))) {
-            pattern += source[i];
-            inCharRange = true;
-          } else {
-            pattern += `${source[i]}${source[i].toUpperCase()}`;
-          }
-          continue;
-        }
-      } else if (source[i].match(/[a-z]/)) {
-        pattern += `[${source[i]}${source[i].toUpperCase()}]`;
-        continue;
-      }
-    }
-    if (flags.m) {
-      if (source[i] === "^") {
-        pattern += `(^|(?<=[\r
-]))`;
-        continue;
-      } else if (source[i] === "$") {
-        pattern += `($|(?=[\r
-]))`;
-        continue;
-      }
-    }
-    if (flags.s && source[i] === ".") {
-      pattern += inCharGroup ? `${source[i]}\r
-` : `[${source[i]}\r
-]`;
-      continue;
-    }
-    pattern += source[i];
-    if (source[i] === "\\") {
-      isEscaped = true;
-    } else if (inCharGroup && source[i] === "]") {
-      inCharGroup = false;
-    } else if (!inCharGroup && source[i] === "[") {
-      inCharGroup = true;
-    }
-  }
-  try {
-    new RegExp(pattern);
-  } catch (e) {
-    console.warn(
-      `Could not convert regex pattern at ${refs.currentPath.join(
-        "/"
-      )} to a flag-independent form! Falling back to the flag-ignorant source`
-    );
-    return regex.source;
-  }
-  return pattern;
-}
-function parseRecordDef2(def, refs) {
-  var _a17, _b8, _c, _d, _e, _f;
-  const schema = {
-    type: "object",
-    additionalProperties: (_a17 = parseDef2(def.valueType._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "additionalProperties"]
-    })) != null ? _a17 : refs.allowedAdditionalProperties
-  };
-  if (((_b8 = def.keyType) == null ? void 0 : _b8._def.typeName) === ZodFirstPartyTypeKind22.ZodString && ((_c = def.keyType._def.checks) == null ? void 0 : _c.length)) {
-    const { type: type2, ...keyType } = parseStringDef2(def.keyType._def, refs);
-    return {
-      ...schema,
-      propertyNames: keyType
-    };
-  } else if (((_d = def.keyType) == null ? void 0 : _d._def.typeName) === ZodFirstPartyTypeKind22.ZodEnum) {
-    return {
-      ...schema,
-      propertyNames: {
-        enum: def.keyType._def.values
-      }
-    };
-  } else if (((_e = def.keyType) == null ? void 0 : _e._def.typeName) === ZodFirstPartyTypeKind22.ZodBranded && def.keyType._def.type._def.typeName === ZodFirstPartyTypeKind22.ZodString && ((_f = def.keyType._def.type._def.checks) == null ? void 0 : _f.length)) {
-    const { type: type2, ...keyType } = parseBrandedDef2(
-      def.keyType._def,
-      refs
-    );
-    return {
-      ...schema,
-      propertyNames: keyType
-    };
-  }
-  return schema;
-}
-function parseMapDef2(def, refs) {
-  if (refs.mapStrategy === "record") {
-    return parseRecordDef2(def, refs);
-  }
-  const keys = parseDef2(def.keyType._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "items", "items", "0"]
-  }) || parseAnyDef2();
-  const values = parseDef2(def.valueType._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "items", "items", "1"]
-  }) || parseAnyDef2();
-  return {
-    type: "array",
-    maxItems: 125,
-    items: {
-      type: "array",
-      items: [keys, values],
-      minItems: 2,
-      maxItems: 2
-    }
-  };
-}
-function parseNativeEnumDef2(def) {
-  const object2 = def.values;
-  const actualKeys = Object.keys(def.values).filter((key) => {
-    return typeof object2[object2[key]] !== "number";
-  });
-  const actualValues = actualKeys.map((key) => object2[key]);
-  const parsedTypes = Array.from(
-    new Set(actualValues.map((values) => typeof values))
-  );
-  return {
-    type: parsedTypes.length === 1 ? parsedTypes[0] === "string" ? "string" : "number" : ["string", "number"],
-    enum: actualValues
-  };
-}
-function parseNeverDef2() {
-  return { not: parseAnyDef2() };
-}
-function parseNullDef2() {
-  return {
-    type: "null"
-  };
-}
-var primitiveMappings2 = {
-  ZodString: "string",
-  ZodNumber: "number",
-  ZodBigInt: "integer",
-  ZodBoolean: "boolean",
-  ZodNull: "null"
-};
-function parseUnionDef2(def, refs) {
-  const options = def.options instanceof Map ? Array.from(def.options.values()) : def.options;
-  if (options.every(
-    (x) => x._def.typeName in primitiveMappings2 && (!x._def.checks || !x._def.checks.length)
-  )) {
-    const types = options.reduce((types2, x) => {
-      const type2 = primitiveMappings2[x._def.typeName];
-      return type2 && !types2.includes(type2) ? [...types2, type2] : types2;
-    }, []);
-    return {
-      type: types.length > 1 ? types : types[0]
-    };
-  } else if (options.every((x) => x._def.typeName === "ZodLiteral" && !x.description)) {
-    const types = options.reduce(
-      (acc, x) => {
-        const type2 = typeof x._def.value;
-        switch (type2) {
-          case "string":
-          case "number":
-          case "boolean":
-            return [...acc, type2];
-          case "bigint":
-            return [...acc, "integer"];
-          case "object":
-            if (x._def.value === null) return [...acc, "null"];
-          case "symbol":
-          case "undefined":
-          case "function":
-          default:
-            return acc;
-        }
-      },
-      []
-    );
-    if (types.length === options.length) {
-      const uniqueTypes = types.filter((x, i, a) => a.indexOf(x) === i);
-      return {
-        type: uniqueTypes.length > 1 ? uniqueTypes : uniqueTypes[0],
-        enum: options.reduce(
-          (acc, x) => {
-            return acc.includes(x._def.value) ? acc : [...acc, x._def.value];
-          },
-          []
-        )
-      };
-    }
-  } else if (options.every((x) => x._def.typeName === "ZodEnum")) {
-    return {
-      type: "string",
-      enum: options.reduce(
-        (acc, x) => [
-          ...acc,
-          ...x._def.values.filter((x2) => !acc.includes(x2))
-        ],
-        []
-      )
-    };
-  }
-  return asAnyOf2(def, refs);
-}
-var asAnyOf2 = (def, refs) => {
-  const anyOf = (def.options instanceof Map ? Array.from(def.options.values()) : def.options).map(
-    (x, i) => parseDef2(x._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "anyOf", `${i}`]
-    })
-  ).filter(
-    (x) => !!x && (!refs.strictUnions || typeof x === "object" && Object.keys(x).length > 0)
-  );
-  return anyOf.length ? { anyOf } : void 0;
-};
-function parseNullableDef2(def, refs) {
-  if (["ZodString", "ZodNumber", "ZodBigInt", "ZodBoolean", "ZodNull"].includes(
-    def.innerType._def.typeName
-  ) && (!def.innerType._def.checks || !def.innerType._def.checks.length)) {
-    return {
-      type: [
-        primitiveMappings2[def.innerType._def.typeName],
-        "null"
-      ]
-    };
-  }
-  const base = parseDef2(def.innerType._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "anyOf", "0"]
-  });
-  return base && { anyOf: [base, { type: "null" }] };
-}
-function parseNumberDef2(def) {
-  const res = {
-    type: "number"
-  };
-  if (!def.checks) return res;
-  for (const check of def.checks) {
-    switch (check.kind) {
-      case "int":
-        res.type = "integer";
-        break;
-      case "min":
-        if (check.inclusive) {
-          res.minimum = check.value;
-        } else {
-          res.exclusiveMinimum = check.value;
-        }
-        break;
-      case "max":
-        if (check.inclusive) {
-          res.maximum = check.value;
-        } else {
-          res.exclusiveMaximum = check.value;
-        }
-        break;
-      case "multipleOf":
-        res.multipleOf = check.value;
-        break;
-    }
-  }
-  return res;
-}
-function parseObjectDef2(def, refs) {
-  const result = {
-    type: "object",
-    properties: {}
-  };
-  const required = [];
-  const shape = def.shape();
-  for (const propName in shape) {
-    let propDef = shape[propName];
-    if (propDef === void 0 || propDef._def === void 0) {
-      continue;
-    }
-    const propOptional = safeIsOptional2(propDef);
-    const parsedDef = parseDef2(propDef._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "properties", propName],
-      propertyPath: [...refs.currentPath, "properties", propName]
-    });
-    if (parsedDef === void 0) {
-      continue;
-    }
-    result.properties[propName] = parsedDef;
-    if (!propOptional) {
-      required.push(propName);
-    }
-  }
-  if (required.length) {
-    result.required = required;
-  }
-  const additionalProperties = decideAdditionalProperties2(def, refs);
-  if (additionalProperties !== void 0) {
-    result.additionalProperties = additionalProperties;
-  }
-  return result;
-}
-function decideAdditionalProperties2(def, refs) {
-  if (def.catchall._def.typeName !== "ZodNever") {
-    return parseDef2(def.catchall._def, {
-      ...refs,
-      currentPath: [...refs.currentPath, "additionalProperties"]
-    });
-  }
-  switch (def.unknownKeys) {
-    case "passthrough":
-      return refs.allowedAdditionalProperties;
-    case "strict":
-      return refs.rejectedAdditionalProperties;
-    case "strip":
-      return refs.removeAdditionalStrategy === "strict" ? refs.allowedAdditionalProperties : refs.rejectedAdditionalProperties;
-  }
-}
-function safeIsOptional2(schema) {
-  try {
-    return schema.isOptional();
-  } catch (e) {
-    return true;
-  }
-}
-var parseOptionalDef2 = (def, refs) => {
-  var _a17;
-  if (refs.currentPath.toString() === ((_a17 = refs.propertyPath) == null ? void 0 : _a17.toString())) {
-    return parseDef2(def.innerType._def, refs);
-  }
-  const innerSchema = parseDef2(def.innerType._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "anyOf", "1"]
-  });
-  return innerSchema ? { anyOf: [{ not: parseAnyDef2() }, innerSchema] } : parseAnyDef2();
-};
-var parsePipelineDef2 = (def, refs) => {
-  if (refs.pipeStrategy === "input") {
-    return parseDef2(def.in._def, refs);
-  } else if (refs.pipeStrategy === "output") {
-    return parseDef2(def.out._def, refs);
-  }
-  const a = parseDef2(def.in._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "allOf", "0"]
-  });
-  const b = parseDef2(def.out._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "allOf", a ? "1" : "0"]
-  });
-  return {
-    allOf: [a, b].filter((x) => x !== void 0)
-  };
-};
-function parsePromiseDef2(def, refs) {
-  return parseDef2(def.type._def, refs);
-}
-function parseSetDef2(def, refs) {
-  const items = parseDef2(def.valueType._def, {
-    ...refs,
-    currentPath: [...refs.currentPath, "items"]
-  });
-  const schema = {
-    type: "array",
-    uniqueItems: true,
-    items
-  };
-  if (def.minSize) {
-    schema.minItems = def.minSize.value;
-  }
-  if (def.maxSize) {
-    schema.maxItems = def.maxSize.value;
-  }
-  return schema;
-}
-function parseTupleDef2(def, refs) {
-  if (def.rest) {
-    return {
-      type: "array",
-      minItems: def.items.length,
-      items: def.items.map(
-        (x, i) => parseDef2(x._def, {
-          ...refs,
-          currentPath: [...refs.currentPath, "items", `${i}`]
-        })
-      ).reduce(
-        (acc, x) => x === void 0 ? acc : [...acc, x],
-        []
-      ),
-      additionalItems: parseDef2(def.rest._def, {
-        ...refs,
-        currentPath: [...refs.currentPath, "additionalItems"]
-      })
-    };
-  } else {
-    return {
-      type: "array",
-      minItems: def.items.length,
-      maxItems: def.items.length,
-      items: def.items.map(
-        (x, i) => parseDef2(x._def, {
-          ...refs,
-          currentPath: [...refs.currentPath, "items", `${i}`]
-        })
-      ).reduce(
-        (acc, x) => x === void 0 ? acc : [...acc, x],
-        []
-      )
-    };
-  }
-}
-function parseUndefinedDef2() {
-  return {
-    not: parseAnyDef2()
-  };
-}
-function parseUnknownDef2() {
-  return parseAnyDef2();
-}
-var parseReadonlyDef2 = (def, refs) => {
-  return parseDef2(def.innerType._def, refs);
-};
-var selectParser2 = (def, typeName, refs) => {
-  switch (typeName) {
-    case ZodFirstPartyTypeKind3.ZodString:
-      return parseStringDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodNumber:
-      return parseNumberDef2(def);
-    case ZodFirstPartyTypeKind3.ZodObject:
-      return parseObjectDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodBigInt:
-      return parseBigintDef2(def);
-    case ZodFirstPartyTypeKind3.ZodBoolean:
-      return parseBooleanDef2();
-    case ZodFirstPartyTypeKind3.ZodDate:
-      return parseDateDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodUndefined:
-      return parseUndefinedDef2();
-    case ZodFirstPartyTypeKind3.ZodNull:
-      return parseNullDef2();
-    case ZodFirstPartyTypeKind3.ZodArray:
-      return parseArrayDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodUnion:
-    case ZodFirstPartyTypeKind3.ZodDiscriminatedUnion:
-      return parseUnionDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodIntersection:
-      return parseIntersectionDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodTuple:
-      return parseTupleDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodRecord:
-      return parseRecordDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodLiteral:
-      return parseLiteralDef2(def);
-    case ZodFirstPartyTypeKind3.ZodEnum:
-      return parseEnumDef2(def);
-    case ZodFirstPartyTypeKind3.ZodNativeEnum:
-      return parseNativeEnumDef2(def);
-    case ZodFirstPartyTypeKind3.ZodNullable:
-      return parseNullableDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodOptional:
-      return parseOptionalDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodMap:
-      return parseMapDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodSet:
-      return parseSetDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodLazy:
-      return () => def.getter()._def;
-    case ZodFirstPartyTypeKind3.ZodPromise:
-      return parsePromiseDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodNaN:
-    case ZodFirstPartyTypeKind3.ZodNever:
-      return parseNeverDef2();
-    case ZodFirstPartyTypeKind3.ZodEffects:
-      return parseEffectsDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodAny:
-      return parseAnyDef2();
-    case ZodFirstPartyTypeKind3.ZodUnknown:
-      return parseUnknownDef2();
-    case ZodFirstPartyTypeKind3.ZodDefault:
-      return parseDefaultDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodBranded:
-      return parseBrandedDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodReadonly:
-      return parseReadonlyDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodCatch:
-      return parseCatchDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodPipeline:
-      return parsePipelineDef2(def, refs);
-    case ZodFirstPartyTypeKind3.ZodFunction:
-    case ZodFirstPartyTypeKind3.ZodVoid:
-    case ZodFirstPartyTypeKind3.ZodSymbol:
-      return void 0;
-    default:
-      return /* @__PURE__ */ ((_) => void 0)(typeName);
-  }
-};
-function parseDef2(def, refs, forceResolution = false) {
-  var _a17;
-  const seenItem = refs.seen.get(def);
-  if (refs.override) {
-    const overrideResult = (_a17 = refs.override) == null ? void 0 : _a17.call(
-      refs,
-      def,
-      refs,
-      seenItem,
-      forceResolution
-    );
-    if (overrideResult !== ignoreOverride2) {
-      return overrideResult;
-    }
-  }
-  if (seenItem && !forceResolution) {
-    const seenSchema = get$ref2(seenItem, refs);
-    if (seenSchema !== void 0) {
-      return seenSchema;
-    }
-  }
-  const newItem = { def, path: refs.currentPath, jsonSchema: void 0 };
-  refs.seen.set(def, newItem);
-  const jsonSchemaOrGetter = selectParser2(def, def.typeName, refs);
-  const jsonSchema2 = typeof jsonSchemaOrGetter === "function" ? parseDef2(jsonSchemaOrGetter(), refs) : jsonSchemaOrGetter;
-  if (jsonSchema2) {
-    addMeta2(def, refs, jsonSchema2);
-  }
-  if (refs.postProcess) {
-    const postProcessResult = refs.postProcess(jsonSchema2, def, refs);
-    newItem.jsonSchema = jsonSchema2;
-    return postProcessResult;
-  }
-  newItem.jsonSchema = jsonSchema2;
-  return jsonSchema2;
-}
-var get$ref2 = (item, refs) => {
-  switch (refs.$refStrategy) {
-    case "root":
-      return { $ref: item.path.join("/") };
-    case "relative":
-      return { $ref: getRelativePath2(refs.currentPath, item.path) };
-    case "none":
-    case "seen": {
-      if (item.path.length < refs.currentPath.length && item.path.every((value2, index) => refs.currentPath[index] === value2)) {
-        console.warn(
-          `Recursive reference detected at ${refs.currentPath.join(
-            "/"
-          )}! Defaulting to any`
-        );
-        return parseAnyDef2();
-      }
-      return refs.$refStrategy === "seen" ? parseAnyDef2() : void 0;
-    }
-  }
-};
-var addMeta2 = (def, refs, jsonSchema2) => {
-  if (def.description) {
-    jsonSchema2.description = def.description;
-  }
-  return jsonSchema2;
-};
-var getRefs2 = (options) => {
-  const _options = getDefaultOptions2(options);
-  const currentPath = _options.name !== void 0 ? [..._options.basePath, _options.definitionPath, _options.name] : _options.basePath;
-  return {
-    ..._options,
-    currentPath,
-    propertyPath: void 0,
-    seen: new Map(
-      Object.entries(_options.definitions).map(([name16, def]) => [
-        def._def,
-        {
-          def: def._def,
-          path: [..._options.basePath, _options.definitionPath, name16],
-          // Resolution of references will be forced even though seen, so it's ok that the schema is undefined here for now.
-          jsonSchema: void 0
-        }
-      ])
-    )
-  };
-};
-var zodToJsonSchema2 = (schema, options) => {
-  var _a17;
-  const refs = getRefs2(options);
-  let definitions = typeof options === "object" && options.definitions ? Object.entries(options.definitions).reduce(
-    (acc, [name24, schema2]) => {
-      var _a24;
-      return {
-        ...acc,
-        [name24]: (_a24 = parseDef2(
-          schema2._def,
-          {
-            ...refs,
-            currentPath: [...refs.basePath, refs.definitionPath, name24]
-          },
-          true
-        )) != null ? _a24 : parseAnyDef2()
-      };
-    },
-    {}
-  ) : void 0;
-  const name16 = typeof options === "string" ? options : (options == null ? void 0 : options.nameStrategy) === "title" ? void 0 : options == null ? void 0 : options.name;
-  const main = (_a17 = parseDef2(
-    schema._def,
-    name16 === void 0 ? refs : {
-      ...refs,
-      currentPath: [...refs.basePath, refs.definitionPath, name16]
-    },
-    false
-  )) != null ? _a17 : parseAnyDef2();
-  const title = typeof options === "object" && options.name !== void 0 && options.nameStrategy === "title" ? options.name : void 0;
-  if (title !== void 0) {
-    main.title = title;
-  }
-  const combined = name16 === void 0 ? definitions ? {
-    ...main,
-    [refs.definitionPath]: definitions
-  } : main : {
-    $ref: [
-      ...refs.$refStrategy === "relative" ? [] : refs.basePath,
-      refs.definitionPath,
-      name16
-    ].join("/"),
-    [refs.definitionPath]: {
-      ...definitions,
-      [name16]: main
-    }
-  };
-  combined.$schema = "http://json-schema.org/draft-07/schema#";
-  return combined;
-};
-var zod_to_json_schema_default = zodToJsonSchema2;
-function zod3Schema(zodSchema2, options) {
-  var _a17;
-  const useReferences = (_a17 = options == null ? void 0 : options.useReferences) != null ? _a17 : false;
-  return jsonSchema(
-    // defer json schema creation to avoid unnecessary computation when only validation is needed
-    () => zod_to_json_schema_default(zodSchema2, {
-      $refStrategy: useReferences ? "root" : "none"
-    }),
-    {
-      validate: async (value2) => {
-        const result = await zodSchema2.safeParseAsync(value2);
-        return result.success ? { success: true, value: result.data } : { success: false, error: result.error };
-      }
-    }
-  );
-}
-function zod4Schema(zodSchema2, options) {
-  var _a17;
-  const useReferences = (_a17 = options == null ? void 0 : options.useReferences) != null ? _a17 : false;
-  return jsonSchema(
-    // defer json schema creation to avoid unnecessary computation when only validation is needed
-    () => z42.toJSONSchema(zodSchema2, {
-      target: "draft-7",
-      io: "output",
-      reused: useReferences ? "ref" : "inline"
-    }),
-    {
-      validate: async (value2) => {
-        const result = await z42.safeParseAsync(zodSchema2, value2);
-        return result.success ? { success: true, value: result.data } : { success: false, error: result.error };
-      }
-    }
-  );
-}
-function isZod4Schema(zodSchema2) {
-  return "_zod" in zodSchema2;
-}
-function zodSchema(zodSchema2, options) {
-  if (isZod4Schema(zodSchema2)) {
-    return zod4Schema(zodSchema2, options);
-  } else {
-    return zod3Schema(zodSchema2, options);
-  }
-}
-var schemaSymbol = Symbol.for("vercel.ai.schema");
-function jsonSchema(jsonSchema2, {
-  validate
-} = {}) {
-  return {
-    [schemaSymbol]: true,
-    _type: void 0,
-    // should never be used directly
-    [validatorSymbol]: true,
-    get jsonSchema() {
-      if (typeof jsonSchema2 === "function") {
-        jsonSchema2 = jsonSchema2();
-      }
-      return jsonSchema2;
-    },
-    validate
-  };
-}
-function isSchema(value2) {
-  return typeof value2 === "object" && value2 !== null && schemaSymbol in value2 && value2[schemaSymbol] === true && "jsonSchema" in value2 && "validate" in value2;
-}
-function asSchema(schema) {
-  return schema == null ? jsonSchema({
-    properties: {},
-    additionalProperties: false
-  }) : isSchema(schema) ? schema : typeof schema === "function" ? schema() : zodSchema(schema);
-}
-var { btoa: btoa2, atob: atob2 } = globalThis;
-function convertBase64ToUint8Array(base64String) {
-  const base64Url = base64String.replace(/-/g, "+").replace(/_/g, "/");
-  const latin1string = atob2(base64Url);
-  return Uint8Array.from(latin1string, (byte) => byte.codePointAt(0));
-}
-function convertUint8ArrayToBase64(array) {
-  let latin1string = "";
-  for (let i = 0; i < array.length; i++) {
-    latin1string += String.fromCodePoint(array[i]);
-  }
-  return btoa2(latin1string);
-}
-function withoutTrailingSlash(url) {
-  return url == null ? void 0 : url.replace(/\/$/, "");
-}
-
-// node_modules/@ai-sdk/gateway/dist/index.mjs
-import { z as z24 } from "zod/v4";
-import { z as z25 } from "zod/v4";
-import { z as z32 } from "zod/v4";
-import { z as z43 } from "zod/v4";
-import { z as z52 } from "zod/v4";
-import { z as z62 } from "zod/v4";
-var import_oidc = __toESM(require_dist(), 1);
-var import_oidc2 = __toESM(require_dist(), 1);
-import { z as z72 } from "zod/v4";
-var marker15 = "vercel.ai.gateway.error";
-var symbol15 = Symbol.for(marker15);
-var _a15;
-var _b;
-var GatewayError = class _GatewayError extends (_b = Error, _a15 = symbol15, _b) {
-  constructor({
-    message,
-    statusCode = 500,
-    cause
-  }) {
-    super(message);
-    this[_a15] = true;
-    this.statusCode = statusCode;
-    this.cause = cause;
-  }
-  /**
-   * Checks if the given error is a Gateway Error.
-   * @param {unknown} error - The error to check.
-   * @returns {boolean} True if the error is a Gateway Error, false otherwise.
-   */
-  static isInstance(error) {
-    return _GatewayError.hasMarker(error);
-  }
-  static hasMarker(error) {
-    return typeof error === "object" && error !== null && symbol15 in error && error[symbol15] === true;
-  }
-};
-var name14 = "GatewayAuthenticationError";
-var marker22 = `vercel.ai.gateway.error.${name14}`;
-var symbol22 = Symbol.for(marker22);
-var _a22;
-var _b2;
-var GatewayAuthenticationError = class _GatewayAuthenticationError extends (_b2 = GatewayError, _a22 = symbol22, _b2) {
-  constructor({
-    message = "Authentication failed",
-    statusCode = 401,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a22] = true;
-    this.name = name14;
-    this.type = "authentication_error";
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol22 in error;
-  }
-  /**
-   * Creates a contextual error message when authentication fails
-   */
-  static createContextualError({
-    apiKeyProvided,
-    oidcTokenProvided,
-    message = "Authentication failed",
-    statusCode = 401,
-    cause
-  }) {
-    let contextualMessage;
-    if (apiKeyProvided) {
-      contextualMessage = `AI Gateway authentication failed: Invalid API key.
-
-Create a new API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys
-
-Provide via 'apiKey' option or 'AI_GATEWAY_API_KEY' environment variable.`;
-    } else if (oidcTokenProvided) {
-      contextualMessage = `AI Gateway authentication failed: Invalid OIDC token.
-
-Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the token.
-
-Alternatively, use an API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys`;
-    } else {
-      contextualMessage = `AI Gateway authentication failed: No authentication provided.
-
-Option 1 - API key:
-Create an API key: https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%2Fapi-keys
-Provide via 'apiKey' option or 'AI_GATEWAY_API_KEY' environment variable.
-
-Option 2 - OIDC token:
-Run 'npx vercel link' to link your project, then 'vc env pull' to fetch the token.`;
-    }
-    return new _GatewayAuthenticationError({
-      message: contextualMessage,
-      statusCode,
-      cause
-    });
-  }
-};
-var name22 = "GatewayInvalidRequestError";
-var marker32 = `vercel.ai.gateway.error.${name22}`;
-var symbol32 = Symbol.for(marker32);
-var _a32;
-var _b3;
-var GatewayInvalidRequestError = class extends (_b3 = GatewayError, _a32 = symbol32, _b3) {
-  constructor({
-    message = "Invalid request",
-    statusCode = 400,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a32] = true;
-    this.name = name22;
-    this.type = "invalid_request_error";
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol32 in error;
-  }
-};
-var name32 = "GatewayRateLimitError";
-var marker42 = `vercel.ai.gateway.error.${name32}`;
-var symbol42 = Symbol.for(marker42);
-var _a42;
-var _b4;
-var GatewayRateLimitError = class extends (_b4 = GatewayError, _a42 = symbol42, _b4) {
-  constructor({
-    message = "Rate limit exceeded",
-    statusCode = 429,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a42] = true;
-    this.name = name32;
-    this.type = "rate_limit_exceeded";
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol42 in error;
-  }
-};
-var name42 = "GatewayModelNotFoundError";
-var marker52 = `vercel.ai.gateway.error.${name42}`;
-var symbol52 = Symbol.for(marker52);
-var modelNotFoundParamSchema = lazyValidator(
-  () => zodSchema(
-    z25.object({
-      modelId: z25.string()
-    })
-  )
-);
-var _a52;
-var _b5;
-var GatewayModelNotFoundError = class extends (_b5 = GatewayError, _a52 = symbol52, _b5) {
-  constructor({
-    message = "Model not found",
-    statusCode = 404,
-    modelId,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a52] = true;
-    this.name = name42;
-    this.type = "model_not_found";
-    this.modelId = modelId;
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol52 in error;
-  }
-};
-var name52 = "GatewayInternalServerError";
-var marker62 = `vercel.ai.gateway.error.${name52}`;
-var symbol62 = Symbol.for(marker62);
-var _a62;
-var _b6;
-var GatewayInternalServerError = class extends (_b6 = GatewayError, _a62 = symbol62, _b6) {
-  constructor({
-    message = "Internal server error",
-    statusCode = 500,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a62] = true;
-    this.name = name52;
-    this.type = "internal_server_error";
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol62 in error;
-  }
-};
-var name62 = "GatewayResponseError";
-var marker72 = `vercel.ai.gateway.error.${name62}`;
-var symbol72 = Symbol.for(marker72);
-var _a72;
-var _b7;
-var GatewayResponseError = class extends (_b7 = GatewayError, _a72 = symbol72, _b7) {
-  constructor({
-    message = "Invalid response from Gateway",
-    statusCode = 502,
-    response,
-    validationError,
-    cause
-  } = {}) {
-    super({ message, statusCode, cause });
-    this[_a72] = true;
-    this.name = name62;
-    this.type = "response_error";
-    this.response = response;
-    this.validationError = validationError;
-  }
-  static isInstance(error) {
-    return GatewayError.hasMarker(error) && symbol72 in error;
-  }
-};
-async function createGatewayErrorFromResponse({
-  response,
-  statusCode,
-  defaultMessage = "Gateway request failed",
-  cause,
-  authMethod
-}) {
-  const parseResult = await safeValidateTypes({
-    value: response,
-    schema: gatewayErrorResponseSchema
-  });
-  if (!parseResult.success) {
-    return new GatewayResponseError({
-      message: `Invalid error response format: ${defaultMessage}`,
-      statusCode,
-      response,
-      validationError: parseResult.error,
-      cause
-    });
-  }
-  const validatedResponse = parseResult.value;
-  const errorType = validatedResponse.error.type;
-  const message = validatedResponse.error.message;
-  switch (errorType) {
-    case "authentication_error":
-      return GatewayAuthenticationError.createContextualError({
-        apiKeyProvided: authMethod === "api-key",
-        oidcTokenProvided: authMethod === "oidc",
-        statusCode,
-        cause
-      });
-    case "invalid_request_error":
-      return new GatewayInvalidRequestError({ message, statusCode, cause });
-    case "rate_limit_exceeded":
-      return new GatewayRateLimitError({ message, statusCode, cause });
-    case "model_not_found": {
-      const modelResult = await safeValidateTypes({
-        value: validatedResponse.error.param,
-        schema: modelNotFoundParamSchema
-      });
-      return new GatewayModelNotFoundError({
-        message,
-        statusCode,
-        modelId: modelResult.success ? modelResult.value.modelId : void 0,
-        cause
-      });
-    }
-    case "internal_server_error":
-      return new GatewayInternalServerError({ message, statusCode, cause });
-    default:
-      return new GatewayInternalServerError({ message, statusCode, cause });
-  }
-}
-var gatewayErrorResponseSchema = lazyValidator(
-  () => zodSchema(
-    z24.object({
-      error: z24.object({
-        message: z24.string(),
-        type: z24.string().nullish(),
-        param: z24.unknown().nullish(),
-        code: z24.union([z24.string(), z24.number()]).nullish()
-      })
-    })
-  )
-);
-function asGatewayError(error, authMethod) {
-  var _a83;
-  if (GatewayError.isInstance(error)) {
-    return error;
-  }
-  if (APICallError.isInstance(error)) {
-    return createGatewayErrorFromResponse({
-      response: extractApiCallResponse(error),
-      statusCode: (_a83 = error.statusCode) != null ? _a83 : 500,
-      defaultMessage: "Gateway request failed",
-      cause: error,
-      authMethod
-    });
-  }
-  return createGatewayErrorFromResponse({
-    response: {},
-    statusCode: 500,
-    defaultMessage: error instanceof Error ? `Gateway request failed: ${error.message}` : "Unknown Gateway error",
-    cause: error,
-    authMethod
-  });
-}
-function extractApiCallResponse(error) {
-  if (error.data !== void 0) {
-    return error.data;
-  }
-  if (error.responseBody != null) {
-    try {
-      return JSON.parse(error.responseBody);
-    } catch (e) {
-      return error.responseBody;
-    }
-  }
-  return {};
-}
-var GATEWAY_AUTH_METHOD_HEADER = "ai-gateway-auth-method";
-async function parseAuthMethod(headers) {
-  const result = await safeValidateTypes({
-    value: headers[GATEWAY_AUTH_METHOD_HEADER],
-    schema: gatewayAuthMethodSchema
-  });
-  return result.success ? result.value : void 0;
-}
-var gatewayAuthMethodSchema = lazyValidator(
-  () => zodSchema(z32.union([z32.literal("api-key"), z32.literal("oidc")]))
-);
-var GatewayFetchMetadata = class {
-  constructor(config2) {
-    this.config = config2;
-  }
-  async getAvailableModels() {
-    try {
-      const { value: value2 } = await getFromApi({
-        url: `${this.config.baseURL}/config`,
-        headers: await resolve(this.config.headers()),
-        successfulResponseHandler: createJsonResponseHandler(
-          gatewayAvailableModelsResponseSchema
-        ),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z43.any(),
-          errorToMessage: (data) => data
-        }),
-        fetch: this.config.fetch
-      });
-      return value2;
-    } catch (error) {
-      throw await asGatewayError(error);
-    }
-  }
-  async getCredits() {
-    try {
-      const baseUrl = new URL(this.config.baseURL);
-      const { value: value2 } = await getFromApi({
-        url: `${baseUrl.origin}/v1/credits`,
-        headers: await resolve(this.config.headers()),
-        successfulResponseHandler: createJsonResponseHandler(
-          gatewayCreditsResponseSchema
-        ),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z43.any(),
-          errorToMessage: (data) => data
-        }),
-        fetch: this.config.fetch
-      });
-      return value2;
-    } catch (error) {
-      throw await asGatewayError(error);
-    }
-  }
-};
-var gatewayAvailableModelsResponseSchema = lazyValidator(
-  () => zodSchema(
-    z43.object({
-      models: z43.array(
-        z43.object({
-          id: z43.string(),
-          name: z43.string(),
-          description: z43.string().nullish(),
-          pricing: z43.object({
-            input: z43.string(),
-            output: z43.string(),
-            input_cache_read: z43.string().nullish(),
-            input_cache_write: z43.string().nullish()
-          }).transform(
-            ({ input, output, input_cache_read, input_cache_write }) => ({
-              input,
-              output,
-              ...input_cache_read ? { cachedInputTokens: input_cache_read } : {},
-              ...input_cache_write ? { cacheCreationInputTokens: input_cache_write } : {}
-            })
-          ).nullish(),
-          specification: z43.object({
-            specificationVersion: z43.literal("v2"),
-            provider: z43.string(),
-            modelId: z43.string()
-          }),
-          modelType: z43.enum(["language", "embedding", "image"]).nullish()
-        })
-      )
-    })
-  )
-);
-var gatewayCreditsResponseSchema = lazyValidator(
-  () => zodSchema(
-    z43.object({
-      balance: z43.string(),
-      total_used: z43.string()
-    }).transform(({ balance, total_used }) => ({
-      balance,
-      totalUsed: total_used
-    }))
-  )
-);
-var GatewayLanguageModel = class {
-  constructor(modelId, config2) {
-    this.modelId = modelId;
-    this.config = config2;
-    this.specificationVersion = "v2";
-    this.supportedUrls = { "*/*": [/.*/] };
-  }
-  get provider() {
-    return this.config.provider;
-  }
-  async getArgs(options) {
-    const { abortSignal: _abortSignal, ...optionsWithoutSignal } = options;
-    return {
-      args: this.maybeEncodeFileParts(optionsWithoutSignal),
-      warnings: []
-    };
-  }
-  async doGenerate(options) {
-    const { args: args2, warnings } = await this.getArgs(options);
-    const { abortSignal } = options;
-    const resolvedHeaders = await resolve(this.config.headers());
-    try {
-      const {
-        responseHeaders,
-        value: responseBody,
-        rawValue: rawResponse
-      } = await postJsonToApi({
-        url: this.getUrl(),
-        headers: combineHeaders(
-          resolvedHeaders,
-          options.headers,
-          this.getModelConfigHeaders(this.modelId, false),
-          await resolve(this.config.o11yHeaders)
-        ),
-        body: args2,
-        successfulResponseHandler: createJsonResponseHandler(z52.any()),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z52.any(),
-          errorToMessage: (data) => data
-        }),
-        ...abortSignal && { abortSignal },
-        fetch: this.config.fetch
-      });
-      return {
-        ...responseBody,
-        request: { body: args2 },
-        response: { headers: responseHeaders, body: rawResponse },
-        warnings
-      };
-    } catch (error) {
-      throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
-    }
-  }
-  async doStream(options) {
-    const { args: args2, warnings } = await this.getArgs(options);
-    const { abortSignal } = options;
-    const resolvedHeaders = await resolve(this.config.headers());
-    try {
-      const { value: response, responseHeaders } = await postJsonToApi({
-        url: this.getUrl(),
-        headers: combineHeaders(
-          resolvedHeaders,
-          options.headers,
-          this.getModelConfigHeaders(this.modelId, true),
-          await resolve(this.config.o11yHeaders)
-        ),
-        body: args2,
-        successfulResponseHandler: createEventSourceResponseHandler(z52.any()),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z52.any(),
-          errorToMessage: (data) => data
-        }),
-        ...abortSignal && { abortSignal },
-        fetch: this.config.fetch
-      });
-      return {
-        stream: response.pipeThrough(
-          new TransformStream({
-            start(controller) {
-              if (warnings.length > 0) {
-                controller.enqueue({ type: "stream-start", warnings });
-              }
-            },
-            transform(chunk, controller) {
-              if (chunk.success) {
-                const streamPart = chunk.value;
-                if (streamPart.type === "raw" && !options.includeRawChunks) {
-                  return;
-                }
-                if (streamPart.type === "response-metadata" && streamPart.timestamp && typeof streamPart.timestamp === "string") {
-                  streamPart.timestamp = new Date(streamPart.timestamp);
-                }
-                controller.enqueue(streamPart);
-              } else {
-                controller.error(
-                  chunk.error
-                );
-              }
-            }
-          })
-        ),
-        request: { body: args2 },
-        response: { headers: responseHeaders }
-      };
-    } catch (error) {
-      throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
-    }
-  }
-  isFilePart(part) {
-    return part && typeof part === "object" && "type" in part && part.type === "file";
-  }
-  /**
-   * Encodes file parts in the prompt to base64. Mutates the passed options
-   * instance directly to avoid copying the file data.
-   * @param options - The options to encode.
-   * @returns The options with the file parts encoded.
-   */
-  maybeEncodeFileParts(options) {
-    for (const message of options.prompt) {
-      for (const part of message.content) {
-        if (this.isFilePart(part)) {
-          const filePart = part;
-          if (filePart.data instanceof Uint8Array) {
-            const buffer = Uint8Array.from(filePart.data);
-            const base64Data = Buffer.from(buffer).toString("base64");
-            filePart.data = new URL(
-              `data:${filePart.mediaType || "application/octet-stream"};base64,${base64Data}`
-            );
-          }
-        }
-      }
-    }
-    return options;
-  }
-  getUrl() {
-    return `${this.config.baseURL}/language-model`;
-  }
-  getModelConfigHeaders(modelId, streaming) {
-    return {
-      "ai-language-model-specification-version": "2",
-      "ai-language-model-id": modelId,
-      "ai-language-model-streaming": String(streaming)
-    };
-  }
-};
-var GatewayEmbeddingModel = class {
-  constructor(modelId, config2) {
-    this.modelId = modelId;
-    this.config = config2;
-    this.specificationVersion = "v2";
-    this.maxEmbeddingsPerCall = 2048;
-    this.supportsParallelCalls = true;
-  }
-  get provider() {
-    return this.config.provider;
-  }
-  async doEmbed({
-    values,
-    headers,
-    abortSignal,
-    providerOptions
-  }) {
-    var _a83;
-    const resolvedHeaders = await resolve(this.config.headers());
-    try {
-      const {
-        responseHeaders,
-        value: responseBody,
-        rawValue
-      } = await postJsonToApi({
-        url: this.getUrl(),
-        headers: combineHeaders(
-          resolvedHeaders,
-          headers != null ? headers : {},
-          this.getModelConfigHeaders(),
-          await resolve(this.config.o11yHeaders)
-        ),
-        body: {
-          input: values.length === 1 ? values[0] : values,
-          ...providerOptions ? { providerOptions } : {}
-        },
-        successfulResponseHandler: createJsonResponseHandler(
-          gatewayEmbeddingResponseSchema
-        ),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z62.any(),
-          errorToMessage: (data) => data
-        }),
-        ...abortSignal && { abortSignal },
-        fetch: this.config.fetch
-      });
-      return {
-        embeddings: responseBody.embeddings,
-        usage: (_a83 = responseBody.usage) != null ? _a83 : void 0,
-        providerMetadata: responseBody.providerMetadata,
-        response: { headers: responseHeaders, body: rawValue }
-      };
-    } catch (error) {
-      throw await asGatewayError(error, await parseAuthMethod(resolvedHeaders));
-    }
-  }
-  getUrl() {
-    return `${this.config.baseURL}/embedding-model`;
-  }
-  getModelConfigHeaders() {
-    return {
-      "ai-embedding-model-specification-version": "2",
-      "ai-model-id": this.modelId
-    };
-  }
-};
-var gatewayEmbeddingResponseSchema = lazyValidator(
-  () => zodSchema(
-    z62.object({
-      embeddings: z62.array(z62.array(z62.number())),
-      usage: z62.object({ tokens: z62.number() }).nullish(),
-      providerMetadata: z62.record(z62.string(), z62.record(z62.string(), z62.unknown())).optional()
-    })
-  )
-);
-var GatewayImageModel = class {
-  constructor(modelId, config2) {
-    this.modelId = modelId;
-    this.config = config2;
-    this.specificationVersion = "v2";
-    this.maxImagesPerCall = Number.MAX_SAFE_INTEGER;
-  }
-  get provider() {
-    return this.config.provider;
-  }
-  async doGenerate({
-    prompt,
-    n,
-    size,
-    aspectRatio,
-    seed,
-    providerOptions,
-    headers,
-    abortSignal
-  }) {
-    var _a83;
-    const resolvedHeaders = await resolve(this.config.headers());
-    try {
-      const {
-        responseHeaders,
-        value: responseBody,
-        rawValue
-      } = await postJsonToApi({
-        url: this.getUrl(),
-        headers: combineHeaders(
-          resolvedHeaders,
-          headers != null ? headers : {},
-          this.getModelConfigHeaders(),
-          await resolve(this.config.o11yHeaders)
-        ),
-        body: {
-          prompt,
-          n,
-          ...size && { size },
-          ...aspectRatio && { aspectRatio },
-          ...seed && { seed },
-          ...providerOptions && { providerOptions }
-        },
-        successfulResponseHandler: createJsonResponseHandler(
-          gatewayImageResponseSchema
-        ),
-        failedResponseHandler: createJsonErrorResponseHandler({
-          errorSchema: z72.any(),
-          errorToMessage: (data) => data
-        }),
-        ...abortSignal && { abortSignal },
-        fetch: this.config.fetch
-      });
-      return {
-        images: responseBody.images,
-        // Always base64 strings from server
-        warnings: (_a83 = responseBody.warnings) != null ? _a83 : [],
-        providerMetadata: responseBody.providerMetadata,
-        response: {
-          timestamp: /* @__PURE__ */ new Date(),
-          modelId: this.modelId,
-          headers: responseHeaders
-        }
-      };
-    } catch (error) {
-      throw asGatewayError(error, await parseAuthMethod(resolvedHeaders));
-    }
-  }
-  getUrl() {
-    return `${this.config.baseURL}/image-model`;
-  }
-  getModelConfigHeaders() {
-    return {
-      "ai-image-model-specification-version": "2",
-      "ai-model-id": this.modelId
-    };
-  }
-};
-var providerMetadataEntrySchema = z72.object({
-  images: z72.array(z72.unknown()).optional()
-}).catchall(z72.unknown());
-var gatewayImageResponseSchema = z72.object({
-  images: z72.array(z72.string()),
-  // Always base64 strings over the wire
-  warnings: z72.array(
-    z72.object({
-      type: z72.literal("other"),
-      message: z72.string()
-    })
-  ).optional(),
-  providerMetadata: z72.record(z72.string(), providerMetadataEntrySchema).optional()
-});
-async function getVercelRequestId() {
-  var _a83;
-  return (_a83 = (0, import_oidc.getContext)().headers) == null ? void 0 : _a83["x-vercel-id"];
-}
-var VERSION2 = true ? "2.0.18" : "0.0.0-test";
-var AI_GATEWAY_PROTOCOL_VERSION = "0.0.1";
-function createGatewayProvider(options = {}) {
-  var _a83, _b8;
-  let pendingMetadata = null;
-  let metadataCache = null;
-  const cacheRefreshMillis = (_a83 = options.metadataCacheRefreshMillis) != null ? _a83 : 1e3 * 60 * 5;
-  let lastFetchTime = 0;
-  const baseURL = (_b8 = withoutTrailingSlash(options.baseURL)) != null ? _b8 : "https://ai-gateway.vercel.sh/v1/ai";
-  const getHeaders = async () => {
-    const auth = await getGatewayAuthToken(options);
-    if (auth) {
-      return withUserAgentSuffix(
-        {
-          Authorization: `Bearer ${auth.token}`,
-          "ai-gateway-protocol-version": AI_GATEWAY_PROTOCOL_VERSION,
-          [GATEWAY_AUTH_METHOD_HEADER]: auth.authMethod,
-          ...options.headers
-        },
-        `ai-sdk/gateway/${VERSION2}`
-      );
-    }
-    throw GatewayAuthenticationError.createContextualError({
-      apiKeyProvided: false,
-      oidcTokenProvided: false,
-      statusCode: 401
-    });
-  };
-  const createO11yHeaders = () => {
-    const deploymentId = loadOptionalSetting({
-      settingValue: void 0,
-      environmentVariableName: "VERCEL_DEPLOYMENT_ID"
-    });
-    const environment = loadOptionalSetting({
-      settingValue: void 0,
-      environmentVariableName: "VERCEL_ENV"
-    });
-    const region = loadOptionalSetting({
-      settingValue: void 0,
-      environmentVariableName: "VERCEL_REGION"
-    });
-    return async () => {
-      const requestId = await getVercelRequestId();
-      return {
-        ...deploymentId && { "ai-o11y-deployment-id": deploymentId },
-        ...environment && { "ai-o11y-environment": environment },
-        ...region && { "ai-o11y-region": region },
-        ...requestId && { "ai-o11y-request-id": requestId }
-      };
-    };
-  };
-  const createLanguageModel = (modelId) => {
-    return new GatewayLanguageModel(modelId, {
-      provider: "gateway",
-      baseURL,
-      headers: getHeaders,
-      fetch: options.fetch,
-      o11yHeaders: createO11yHeaders()
-    });
-  };
-  const getAvailableModels = async () => {
-    var _a93, _b9, _c;
-    const now = (_c = (_b9 = (_a93 = options._internal) == null ? void 0 : _a93.currentDate) == null ? void 0 : _b9.call(_a93).getTime()) != null ? _c : Date.now();
-    if (!pendingMetadata || now - lastFetchTime > cacheRefreshMillis) {
-      lastFetchTime = now;
-      pendingMetadata = new GatewayFetchMetadata({
-        baseURL,
-        headers: getHeaders,
-        fetch: options.fetch
-      }).getAvailableModels().then((metadata) => {
-        metadataCache = metadata;
-        return metadata;
-      }).catch(async (error) => {
-        throw await asGatewayError(
-          error,
-          await parseAuthMethod(await getHeaders())
-        );
-      });
-    }
-    return metadataCache ? Promise.resolve(metadataCache) : pendingMetadata;
-  };
-  const getCredits = async () => {
-    return new GatewayFetchMetadata({
-      baseURL,
-      headers: getHeaders,
-      fetch: options.fetch
-    }).getCredits().catch(async (error) => {
-      throw await asGatewayError(
-        error,
-        await parseAuthMethod(await getHeaders())
-      );
-    });
-  };
-  const provider = function(modelId) {
-    if (new.target) {
-      throw new Error(
-        "The Gateway Provider model function cannot be called with the new keyword."
-      );
-    }
-    return createLanguageModel(modelId);
-  };
-  provider.getAvailableModels = getAvailableModels;
-  provider.getCredits = getCredits;
-  provider.imageModel = (modelId) => {
-    return new GatewayImageModel(modelId, {
-      provider: "gateway",
-      baseURL,
-      headers: getHeaders,
-      fetch: options.fetch,
-      o11yHeaders: createO11yHeaders()
-    });
-  };
-  provider.languageModel = createLanguageModel;
-  provider.textEmbeddingModel = (modelId) => {
-    return new GatewayEmbeddingModel(modelId, {
-      provider: "gateway",
-      baseURL,
-      headers: getHeaders,
-      fetch: options.fetch,
-      o11yHeaders: createO11yHeaders()
-    });
-  };
-  return provider;
-}
-var gateway = createGatewayProvider();
-async function getGatewayAuthToken(options) {
-  const apiKey = loadOptionalSetting({
-    settingValue: options.apiKey,
-    environmentVariableName: "AI_GATEWAY_API_KEY"
-  });
-  if (apiKey) {
-    return {
-      token: apiKey,
-      authMethod: "api-key"
-    };
-  }
-  try {
-    const oidcToken = await (0, import_oidc2.getVercelOidcToken)();
-    return {
-      token: oidcToken,
-      authMethod: "oidc"
-    };
-  } catch (e) {
-    return null;
-  }
-}
-
-// node_modules/ai/dist/index.mjs
-import { z as z26 } from "zod/v4";
-import { z as z63 } from "zod/v4";
-import { z as z53 } from "zod/v4";
-import { z as z33 } from "zod/v4";
-import { z as z27 } from "zod/v4";
-import { z as z44 } from "zod/v4";
-
-// node_modules/@opentelemetry/api/build/esm/platform/node/globalThis.js
-var _globalThis = typeof globalThis === "object" ? globalThis : global;
-
-// node_modules/@opentelemetry/api/build/esm/version.js
-var VERSION3 = "1.9.0";
-
-// node_modules/@opentelemetry/api/build/esm/internal/semver.js
-var re = /^(\d+)\.(\d+)\.(\d+)(-(.+))?$/;
-function _makeCompatibilityCheck(ownVersion) {
-  var acceptedVersions = /* @__PURE__ */ new Set([ownVersion]);
-  var rejectedVersions = /* @__PURE__ */ new Set();
-  var myVersionMatch = ownVersion.match(re);
-  if (!myVersionMatch) {
-    return function() {
-      return false;
-    };
-  }
-  var ownVersionParsed = {
-    major: +myVersionMatch[1],
-    minor: +myVersionMatch[2],
-    patch: +myVersionMatch[3],
-    prerelease: myVersionMatch[4]
-  };
-  if (ownVersionParsed.prerelease != null) {
-    return function isExactmatch(globalVersion) {
-      return globalVersion === ownVersion;
-    };
-  }
-  function _reject(v) {
-    rejectedVersions.add(v);
-    return false;
-  }
-  function _accept(v) {
-    acceptedVersions.add(v);
-    return true;
-  }
-  return function isCompatible2(globalVersion) {
-    if (acceptedVersions.has(globalVersion)) {
-      return true;
-    }
-    if (rejectedVersions.has(globalVersion)) {
-      return false;
-    }
-    var globalVersionMatch = globalVersion.match(re);
-    if (!globalVersionMatch) {
-      return _reject(globalVersion);
-    }
-    var globalVersionParsed = {
-      major: +globalVersionMatch[1],
-      minor: +globalVersionMatch[2],
-      patch: +globalVersionMatch[3],
-      prerelease: globalVersionMatch[4]
-    };
-    if (globalVersionParsed.prerelease != null) {
-      return _reject(globalVersion);
-    }
-    if (ownVersionParsed.major !== globalVersionParsed.major) {
-      return _reject(globalVersion);
-    }
-    if (ownVersionParsed.major === 0) {
-      if (ownVersionParsed.minor === globalVersionParsed.minor && ownVersionParsed.patch <= globalVersionParsed.patch) {
-        return _accept(globalVersion);
-      }
-      return _reject(globalVersion);
-    }
-    if (ownVersionParsed.minor <= globalVersionParsed.minor) {
-      return _accept(globalVersion);
-    }
-    return _reject(globalVersion);
-  };
-}
-var isCompatible = _makeCompatibilityCheck(VERSION3);
-
-// node_modules/@opentelemetry/api/build/esm/internal/global-utils.js
-var major = VERSION3.split(".")[0];
-var GLOBAL_OPENTELEMETRY_API_KEY = Symbol.for("opentelemetry.js.api." + major);
-var _global = _globalThis;
-function registerGlobal(type2, instance, diag, allowOverride) {
-  var _a17;
-  if (allowOverride === void 0) {
-    allowOverride = false;
-  }
-  var api = _global[GLOBAL_OPENTELEMETRY_API_KEY] = (_a17 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) !== null && _a17 !== void 0 ? _a17 : {
-    version: VERSION3
-  };
-  if (!allowOverride && api[type2]) {
-    var err = new Error("@opentelemetry/api: Attempted duplicate registration of API: " + type2);
-    diag.error(err.stack || err.message);
-    return false;
-  }
-  if (api.version !== VERSION3) {
-    var err = new Error("@opentelemetry/api: Registration of version v" + api.version + " for " + type2 + " does not match previously registered API v" + VERSION3);
-    diag.error(err.stack || err.message);
-    return false;
-  }
-  api[type2] = instance;
-  diag.debug("@opentelemetry/api: Registered a global for " + type2 + " v" + VERSION3 + ".");
-  return true;
-}
-function getGlobal(type2) {
-  var _a17, _b8;
-  var globalVersion = (_a17 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _a17 === void 0 ? void 0 : _a17.version;
-  if (!globalVersion || !isCompatible(globalVersion)) {
-    return;
-  }
-  return (_b8 = _global[GLOBAL_OPENTELEMETRY_API_KEY]) === null || _b8 === void 0 ? void 0 : _b8[type2];
-}
-function unregisterGlobal(type2, diag) {
-  diag.debug("@opentelemetry/api: Unregistering a global for " + type2 + " v" + VERSION3 + ".");
-  var api = _global[GLOBAL_OPENTELEMETRY_API_KEY];
-  if (api) {
-    delete api[type2];
-  }
-}
-
-// node_modules/@opentelemetry/api/build/esm/diag/ComponentLogger.js
-var __read = function(o, n) {
-  var m = typeof Symbol === "function" && o[Symbol.iterator];
-  if (!m) return o;
-  var i = m.call(o), r, ar = [], e;
-  try {
-    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error) {
-    e = { error };
-  } finally {
-    try {
-      if (r && !r.done && (m = i["return"])) m.call(i);
-    } finally {
-      if (e) throw e.error;
-    }
-  }
-  return ar;
-};
-var __spreadArray = function(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-    if (ar || !(i in from)) {
-      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-      ar[i] = from[i];
-    }
-  }
-  return to.concat(ar || Array.prototype.slice.call(from));
-};
-var DiagComponentLogger = (
-  /** @class */
-  (function() {
-    function DiagComponentLogger2(props) {
-      this._namespace = props.namespace || "DiagComponentLogger";
-    }
-    DiagComponentLogger2.prototype.debug = function() {
-      var args2 = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args2[_i] = arguments[_i];
-      }
-      return logProxy("debug", this._namespace, args2);
-    };
-    DiagComponentLogger2.prototype.error = function() {
-      var args2 = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args2[_i] = arguments[_i];
-      }
-      return logProxy("error", this._namespace, args2);
-    };
-    DiagComponentLogger2.prototype.info = function() {
-      var args2 = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args2[_i] = arguments[_i];
-      }
-      return logProxy("info", this._namespace, args2);
-    };
-    DiagComponentLogger2.prototype.warn = function() {
-      var args2 = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args2[_i] = arguments[_i];
-      }
-      return logProxy("warn", this._namespace, args2);
-    };
-    DiagComponentLogger2.prototype.verbose = function() {
-      var args2 = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args2[_i] = arguments[_i];
-      }
-      return logProxy("verbose", this._namespace, args2);
-    };
-    return DiagComponentLogger2;
-  })()
-);
-function logProxy(funcName, namespace, args2) {
-  var logger = getGlobal("diag");
-  if (!logger) {
-    return;
-  }
-  args2.unshift(namespace);
-  return logger[funcName].apply(logger, __spreadArray([], __read(args2), false));
-}
-
-// node_modules/@opentelemetry/api/build/esm/diag/types.js
-var DiagLogLevel;
-(function(DiagLogLevel2) {
-  DiagLogLevel2[DiagLogLevel2["NONE"] = 0] = "NONE";
-  DiagLogLevel2[DiagLogLevel2["ERROR"] = 30] = "ERROR";
-  DiagLogLevel2[DiagLogLevel2["WARN"] = 50] = "WARN";
-  DiagLogLevel2[DiagLogLevel2["INFO"] = 60] = "INFO";
-  DiagLogLevel2[DiagLogLevel2["DEBUG"] = 70] = "DEBUG";
-  DiagLogLevel2[DiagLogLevel2["VERBOSE"] = 80] = "VERBOSE";
-  DiagLogLevel2[DiagLogLevel2["ALL"] = 9999] = "ALL";
-})(DiagLogLevel || (DiagLogLevel = {}));
-
-// node_modules/@opentelemetry/api/build/esm/diag/internal/logLevelLogger.js
-function createLogLevelDiagLogger(maxLevel, logger) {
-  if (maxLevel < DiagLogLevel.NONE) {
-    maxLevel = DiagLogLevel.NONE;
-  } else if (maxLevel > DiagLogLevel.ALL) {
-    maxLevel = DiagLogLevel.ALL;
-  }
-  logger = logger || {};
-  function _filterFunc(funcName, theLevel) {
-    var theFunc = logger[funcName];
-    if (typeof theFunc === "function" && maxLevel >= theLevel) {
-      return theFunc.bind(logger);
-    }
-    return function() {
-    };
-  }
-  return {
-    error: _filterFunc("error", DiagLogLevel.ERROR),
-    warn: _filterFunc("warn", DiagLogLevel.WARN),
-    info: _filterFunc("info", DiagLogLevel.INFO),
-    debug: _filterFunc("debug", DiagLogLevel.DEBUG),
-    verbose: _filterFunc("verbose", DiagLogLevel.VERBOSE)
-  };
-}
-
-// node_modules/@opentelemetry/api/build/esm/api/diag.js
-var __read2 = function(o, n) {
-  var m = typeof Symbol === "function" && o[Symbol.iterator];
-  if (!m) return o;
-  var i = m.call(o), r, ar = [], e;
-  try {
-    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error) {
-    e = { error };
-  } finally {
-    try {
-      if (r && !r.done && (m = i["return"])) m.call(i);
-    } finally {
-      if (e) throw e.error;
-    }
-  }
-  return ar;
-};
-var __spreadArray2 = function(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-    if (ar || !(i in from)) {
-      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-      ar[i] = from[i];
-    }
-  }
-  return to.concat(ar || Array.prototype.slice.call(from));
-};
-var API_NAME = "diag";
-var DiagAPI = (
-  /** @class */
-  (function() {
-    function DiagAPI2() {
-      function _logProxy(funcName) {
-        return function() {
-          var args2 = [];
-          for (var _i = 0; _i < arguments.length; _i++) {
-            args2[_i] = arguments[_i];
-          }
-          var logger = getGlobal("diag");
-          if (!logger)
-            return;
-          return logger[funcName].apply(logger, __spreadArray2([], __read2(args2), false));
-        };
-      }
-      var self = this;
-      var setLogger = function(logger, optionsOrLogLevel) {
-        var _a17, _b8, _c;
-        if (optionsOrLogLevel === void 0) {
-          optionsOrLogLevel = { logLevel: DiagLogLevel.INFO };
-        }
-        if (logger === self) {
-          var err = new Error("Cannot use diag as the logger for itself. Please use a DiagLogger implementation like ConsoleDiagLogger or a custom implementation");
-          self.error((_a17 = err.stack) !== null && _a17 !== void 0 ? _a17 : err.message);
-          return false;
-        }
-        if (typeof optionsOrLogLevel === "number") {
-          optionsOrLogLevel = {
-            logLevel: optionsOrLogLevel
-          };
-        }
-        var oldLogger = getGlobal("diag");
-        var newLogger = createLogLevelDiagLogger((_b8 = optionsOrLogLevel.logLevel) !== null && _b8 !== void 0 ? _b8 : DiagLogLevel.INFO, logger);
-        if (oldLogger && !optionsOrLogLevel.suppressOverrideMessage) {
-          var stack = (_c = new Error().stack) !== null && _c !== void 0 ? _c : "<failed to generate stacktrace>";
-          oldLogger.warn("Current logger will be overwritten from " + stack);
-          newLogger.warn("Current logger will overwrite one already registered from " + stack);
-        }
-        return registerGlobal("diag", newLogger, self, true);
-      };
-      self.setLogger = setLogger;
-      self.disable = function() {
-        unregisterGlobal(API_NAME, self);
-      };
-      self.createComponentLogger = function(options) {
-        return new DiagComponentLogger(options);
-      };
-      self.verbose = _logProxy("verbose");
-      self.debug = _logProxy("debug");
-      self.info = _logProxy("info");
-      self.warn = _logProxy("warn");
-      self.error = _logProxy("error");
-    }
-    DiagAPI2.instance = function() {
-      if (!this._instance) {
-        this._instance = new DiagAPI2();
-      }
-      return this._instance;
-    };
-    return DiagAPI2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/context/context.js
-function createContextKey(description) {
-  return Symbol.for(description);
-}
-var BaseContext = (
-  /** @class */
-  /* @__PURE__ */ (function() {
-    function BaseContext2(parentContext) {
-      var self = this;
-      self._currentContext = parentContext ? new Map(parentContext) : /* @__PURE__ */ new Map();
-      self.getValue = function(key) {
-        return self._currentContext.get(key);
-      };
-      self.setValue = function(key, value2) {
-        var context = new BaseContext2(self._currentContext);
-        context._currentContext.set(key, value2);
-        return context;
-      };
-      self.deleteValue = function(key) {
-        var context = new BaseContext2(self._currentContext);
-        context._currentContext.delete(key);
-        return context;
-      };
-    }
-    return BaseContext2;
-  })()
-);
-var ROOT_CONTEXT = new BaseContext();
-
-// node_modules/@opentelemetry/api/build/esm/context/NoopContextManager.js
-var __read3 = function(o, n) {
-  var m = typeof Symbol === "function" && o[Symbol.iterator];
-  if (!m) return o;
-  var i = m.call(o), r, ar = [], e;
-  try {
-    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error) {
-    e = { error };
-  } finally {
-    try {
-      if (r && !r.done && (m = i["return"])) m.call(i);
-    } finally {
-      if (e) throw e.error;
-    }
-  }
-  return ar;
-};
-var __spreadArray3 = function(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-    if (ar || !(i in from)) {
-      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-      ar[i] = from[i];
-    }
-  }
-  return to.concat(ar || Array.prototype.slice.call(from));
-};
-var NoopContextManager = (
-  /** @class */
-  (function() {
-    function NoopContextManager2() {
-    }
-    NoopContextManager2.prototype.active = function() {
-      return ROOT_CONTEXT;
-    };
-    NoopContextManager2.prototype.with = function(_context, fn, thisArg) {
-      var args2 = [];
-      for (var _i = 3; _i < arguments.length; _i++) {
-        args2[_i - 3] = arguments[_i];
-      }
-      return fn.call.apply(fn, __spreadArray3([thisArg], __read3(args2), false));
-    };
-    NoopContextManager2.prototype.bind = function(_context, target) {
-      return target;
-    };
-    NoopContextManager2.prototype.enable = function() {
-      return this;
-    };
-    NoopContextManager2.prototype.disable = function() {
-      return this;
-    };
-    return NoopContextManager2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/api/context.js
-var __read4 = function(o, n) {
-  var m = typeof Symbol === "function" && o[Symbol.iterator];
-  if (!m) return o;
-  var i = m.call(o), r, ar = [], e;
-  try {
-    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error) {
-    e = { error };
-  } finally {
-    try {
-      if (r && !r.done && (m = i["return"])) m.call(i);
-    } finally {
-      if (e) throw e.error;
-    }
-  }
-  return ar;
-};
-var __spreadArray4 = function(to, from, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-    if (ar || !(i in from)) {
-      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-      ar[i] = from[i];
-    }
-  }
-  return to.concat(ar || Array.prototype.slice.call(from));
-};
-var API_NAME2 = "context";
-var NOOP_CONTEXT_MANAGER = new NoopContextManager();
-var ContextAPI = (
-  /** @class */
-  (function() {
-    function ContextAPI2() {
-    }
-    ContextAPI2.getInstance = function() {
-      if (!this._instance) {
-        this._instance = new ContextAPI2();
-      }
-      return this._instance;
-    };
-    ContextAPI2.prototype.setGlobalContextManager = function(contextManager) {
-      return registerGlobal(API_NAME2, contextManager, DiagAPI.instance());
-    };
-    ContextAPI2.prototype.active = function() {
-      return this._getContextManager().active();
-    };
-    ContextAPI2.prototype.with = function(context, fn, thisArg) {
-      var _a17;
-      var args2 = [];
-      for (var _i = 3; _i < arguments.length; _i++) {
-        args2[_i - 3] = arguments[_i];
-      }
-      return (_a17 = this._getContextManager()).with.apply(_a17, __spreadArray4([context, fn, thisArg], __read4(args2), false));
-    };
-    ContextAPI2.prototype.bind = function(context, target) {
-      return this._getContextManager().bind(context, target);
-    };
-    ContextAPI2.prototype._getContextManager = function() {
-      return getGlobal(API_NAME2) || NOOP_CONTEXT_MANAGER;
-    };
-    ContextAPI2.prototype.disable = function() {
-      this._getContextManager().disable();
-      unregisterGlobal(API_NAME2, DiagAPI.instance());
-    };
-    return ContextAPI2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace/trace_flags.js
-var TraceFlags;
-(function(TraceFlags2) {
-  TraceFlags2[TraceFlags2["NONE"] = 0] = "NONE";
-  TraceFlags2[TraceFlags2["SAMPLED"] = 1] = "SAMPLED";
-})(TraceFlags || (TraceFlags = {}));
-
-// node_modules/@opentelemetry/api/build/esm/trace/invalid-span-constants.js
-var INVALID_SPANID = "0000000000000000";
-var INVALID_TRACEID = "00000000000000000000000000000000";
-var INVALID_SPAN_CONTEXT = {
-  traceId: INVALID_TRACEID,
-  spanId: INVALID_SPANID,
-  traceFlags: TraceFlags.NONE
-};
-
-// node_modules/@opentelemetry/api/build/esm/trace/NonRecordingSpan.js
-var NonRecordingSpan = (
-  /** @class */
-  (function() {
-    function NonRecordingSpan2(_spanContext) {
-      if (_spanContext === void 0) {
-        _spanContext = INVALID_SPAN_CONTEXT;
-      }
-      this._spanContext = _spanContext;
-    }
-    NonRecordingSpan2.prototype.spanContext = function() {
-      return this._spanContext;
-    };
-    NonRecordingSpan2.prototype.setAttribute = function(_key, _value) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.setAttributes = function(_attributes) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.addEvent = function(_name, _attributes) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.addLink = function(_link) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.addLinks = function(_links) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.setStatus = function(_status) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.updateName = function(_name) {
-      return this;
-    };
-    NonRecordingSpan2.prototype.end = function(_endTime) {
-    };
-    NonRecordingSpan2.prototype.isRecording = function() {
-      return false;
-    };
-    NonRecordingSpan2.prototype.recordException = function(_exception, _time) {
-    };
-    return NonRecordingSpan2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace/context-utils.js
-var SPAN_KEY = createContextKey("OpenTelemetry Context Key SPAN");
-function getSpan(context) {
-  return context.getValue(SPAN_KEY) || void 0;
-}
-function getActiveSpan() {
-  return getSpan(ContextAPI.getInstance().active());
-}
-function setSpan(context, span) {
-  return context.setValue(SPAN_KEY, span);
-}
-function deleteSpan(context) {
-  return context.deleteValue(SPAN_KEY);
-}
-function setSpanContext(context, spanContext) {
-  return setSpan(context, new NonRecordingSpan(spanContext));
-}
-function getSpanContext(context) {
-  var _a17;
-  return (_a17 = getSpan(context)) === null || _a17 === void 0 ? void 0 : _a17.spanContext();
-}
-
-// node_modules/@opentelemetry/api/build/esm/trace/spancontext-utils.js
-var VALID_TRACEID_REGEX = /^([0-9a-f]{32})$/i;
-var VALID_SPANID_REGEX = /^[0-9a-f]{16}$/i;
-function isValidTraceId(traceId) {
-  return VALID_TRACEID_REGEX.test(traceId) && traceId !== INVALID_TRACEID;
-}
-function isValidSpanId(spanId) {
-  return VALID_SPANID_REGEX.test(spanId) && spanId !== INVALID_SPANID;
-}
-function isSpanContextValid(spanContext) {
-  return isValidTraceId(spanContext.traceId) && isValidSpanId(spanContext.spanId);
-}
-function wrapSpanContext(spanContext) {
-  return new NonRecordingSpan(spanContext);
-}
-
-// node_modules/@opentelemetry/api/build/esm/trace/NoopTracer.js
-var contextApi = ContextAPI.getInstance();
-var NoopTracer = (
-  /** @class */
-  (function() {
-    function NoopTracer2() {
-    }
-    NoopTracer2.prototype.startSpan = function(name16, options, context) {
-      if (context === void 0) {
-        context = contextApi.active();
-      }
-      var root = Boolean(options === null || options === void 0 ? void 0 : options.root);
-      if (root) {
-        return new NonRecordingSpan();
-      }
-      var parentFromContext = context && getSpanContext(context);
-      if (isSpanContext(parentFromContext) && isSpanContextValid(parentFromContext)) {
-        return new NonRecordingSpan(parentFromContext);
-      } else {
-        return new NonRecordingSpan();
-      }
-    };
-    NoopTracer2.prototype.startActiveSpan = function(name16, arg2, arg3, arg4) {
-      var opts;
-      var ctx;
-      var fn;
-      if (arguments.length < 2) {
-        return;
-      } else if (arguments.length === 2) {
-        fn = arg2;
-      } else if (arguments.length === 3) {
-        opts = arg2;
-        fn = arg3;
-      } else {
-        opts = arg2;
-        ctx = arg3;
-        fn = arg4;
-      }
-      var parentContext = ctx !== null && ctx !== void 0 ? ctx : contextApi.active();
-      var span = this.startSpan(name16, opts, parentContext);
-      var contextWithSpanSet = setSpan(parentContext, span);
-      return contextApi.with(contextWithSpanSet, fn, void 0, span);
-    };
-    return NoopTracer2;
-  })()
-);
-function isSpanContext(spanContext) {
-  return typeof spanContext === "object" && typeof spanContext["spanId"] === "string" && typeof spanContext["traceId"] === "string" && typeof spanContext["traceFlags"] === "number";
-}
-
-// node_modules/@opentelemetry/api/build/esm/trace/ProxyTracer.js
-var NOOP_TRACER = new NoopTracer();
-var ProxyTracer = (
-  /** @class */
-  (function() {
-    function ProxyTracer2(_provider, name16, version, options) {
-      this._provider = _provider;
-      this.name = name16;
-      this.version = version;
-      this.options = options;
-    }
-    ProxyTracer2.prototype.startSpan = function(name16, options, context) {
-      return this._getTracer().startSpan(name16, options, context);
-    };
-    ProxyTracer2.prototype.startActiveSpan = function(_name, _options, _context, _fn) {
-      var tracer = this._getTracer();
-      return Reflect.apply(tracer.startActiveSpan, tracer, arguments);
-    };
-    ProxyTracer2.prototype._getTracer = function() {
-      if (this._delegate) {
-        return this._delegate;
-      }
-      var tracer = this._provider.getDelegateTracer(this.name, this.version, this.options);
-      if (!tracer) {
-        return NOOP_TRACER;
-      }
-      this._delegate = tracer;
-      return this._delegate;
-    };
-    return ProxyTracer2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace/NoopTracerProvider.js
-var NoopTracerProvider = (
-  /** @class */
-  (function() {
-    function NoopTracerProvider2() {
-    }
-    NoopTracerProvider2.prototype.getTracer = function(_name, _version, _options) {
-      return new NoopTracer();
-    };
-    return NoopTracerProvider2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace/ProxyTracerProvider.js
-var NOOP_TRACER_PROVIDER = new NoopTracerProvider();
-var ProxyTracerProvider = (
-  /** @class */
-  (function() {
-    function ProxyTracerProvider2() {
-    }
-    ProxyTracerProvider2.prototype.getTracer = function(name16, version, options) {
-      var _a17;
-      return (_a17 = this.getDelegateTracer(name16, version, options)) !== null && _a17 !== void 0 ? _a17 : new ProxyTracer(this, name16, version, options);
-    };
-    ProxyTracerProvider2.prototype.getDelegate = function() {
-      var _a17;
-      return (_a17 = this._delegate) !== null && _a17 !== void 0 ? _a17 : NOOP_TRACER_PROVIDER;
-    };
-    ProxyTracerProvider2.prototype.setDelegate = function(delegate) {
-      this._delegate = delegate;
-    };
-    ProxyTracerProvider2.prototype.getDelegateTracer = function(name16, version, options) {
-      var _a17;
-      return (_a17 = this._delegate) === null || _a17 === void 0 ? void 0 : _a17.getTracer(name16, version, options);
-    };
-    return ProxyTracerProvider2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace/status.js
-var SpanStatusCode;
-(function(SpanStatusCode2) {
-  SpanStatusCode2[SpanStatusCode2["UNSET"] = 0] = "UNSET";
-  SpanStatusCode2[SpanStatusCode2["OK"] = 1] = "OK";
-  SpanStatusCode2[SpanStatusCode2["ERROR"] = 2] = "ERROR";
-})(SpanStatusCode || (SpanStatusCode = {}));
-
-// node_modules/@opentelemetry/api/build/esm/api/trace.js
-var API_NAME3 = "trace";
-var TraceAPI = (
-  /** @class */
-  (function() {
-    function TraceAPI2() {
-      this._proxyTracerProvider = new ProxyTracerProvider();
-      this.wrapSpanContext = wrapSpanContext;
-      this.isSpanContextValid = isSpanContextValid;
-      this.deleteSpan = deleteSpan;
-      this.getSpan = getSpan;
-      this.getActiveSpan = getActiveSpan;
-      this.getSpanContext = getSpanContext;
-      this.setSpan = setSpan;
-      this.setSpanContext = setSpanContext;
-    }
-    TraceAPI2.getInstance = function() {
-      if (!this._instance) {
-        this._instance = new TraceAPI2();
-      }
-      return this._instance;
-    };
-    TraceAPI2.prototype.setGlobalTracerProvider = function(provider) {
-      var success = registerGlobal(API_NAME3, this._proxyTracerProvider, DiagAPI.instance());
-      if (success) {
-        this._proxyTracerProvider.setDelegate(provider);
-      }
-      return success;
-    };
-    TraceAPI2.prototype.getTracerProvider = function() {
-      return getGlobal(API_NAME3) || this._proxyTracerProvider;
-    };
-    TraceAPI2.prototype.getTracer = function(name16, version) {
-      return this.getTracerProvider().getTracer(name16, version);
-    };
-    TraceAPI2.prototype.disable = function() {
-      unregisterGlobal(API_NAME3, DiagAPI.instance());
-      this._proxyTracerProvider = new ProxyTracerProvider();
-    };
-    return TraceAPI2;
-  })()
-);
-
-// node_modules/@opentelemetry/api/build/esm/trace-api.js
-var trace = TraceAPI.getInstance();
-
-// node_modules/ai/dist/index.mjs
-import { z as z73 } from "zod/v4";
-import { z as z82 } from "zod/v4";
-var __defProp2 = Object.defineProperty;
-var __export2 = (target, all) => {
-  for (var name16 in all)
-    __defProp2(target, name16, { get: all[name16], enumerable: true });
-};
-var name15 = "AI_NoOutputSpecifiedError";
-var marker16 = `vercel.ai.error.${name15}`;
-var symbol16 = Symbol.for(marker16);
-var _a16;
-_a16 = symbol16;
-function formatWarning(warning) {
-  const prefix = "AI SDK Warning:";
-  switch (warning.type) {
-    case "unsupported-setting": {
-      let message = `${prefix} The "${warning.setting}" setting is not supported by this model`;
-      if (warning.details) {
-        message += ` - ${warning.details}`;
-      }
-      return message;
-    }
-    case "unsupported-tool": {
-      const toolName = "name" in warning.tool ? warning.tool.name : "unknown tool";
-      let message = `${prefix} The tool "${toolName}" is not supported by this model`;
-      if (warning.details) {
-        message += ` - ${warning.details}`;
-      }
-      return message;
-    }
-    case "other": {
-      return `${prefix} ${warning.message}`;
-    }
-    default: {
-      return `${prefix} ${JSON.stringify(warning, null, 2)}`;
-    }
-  }
-}
-var FIRST_WARNING_INFO_MESSAGE = "AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.";
-var hasLoggedBefore = false;
-var logWarnings = (warnings) => {
-  if (warnings.length === 0) {
-    return;
-  }
-  const logger = globalThis.AI_SDK_LOG_WARNINGS;
-  if (logger === false) {
-    return;
-  }
-  if (typeof logger === "function") {
-    logger(warnings);
-    return;
-  }
-  if (!hasLoggedBefore) {
-    hasLoggedBefore = true;
-    console.info(FIRST_WARNING_INFO_MESSAGE);
-  }
-  for (const warning of warnings) {
-    console.warn(formatWarning(warning));
-  }
-};
-var name23 = "AI_InvalidArgumentError";
-var marker23 = `vercel.ai.error.${name23}`;
-var symbol23 = Symbol.for(marker23);
-var _a23;
-var InvalidArgumentError3 = class extends AISDKError {
-  constructor({
-    parameter,
-    value: value2,
-    message
-  }) {
-    super({
-      name: name23,
-      message: `Invalid argument for parameter ${parameter}: ${message}`
-    });
-    this[_a23] = true;
-    this.parameter = parameter;
-    this.value = value2;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker23);
-  }
-};
-_a23 = symbol23;
-var name33 = "AI_InvalidStreamPartError";
-var marker33 = `vercel.ai.error.${name33}`;
-var symbol33 = Symbol.for(marker33);
-var _a33;
-_a33 = symbol33;
-var name43 = "AI_InvalidToolInputError";
-var marker43 = `vercel.ai.error.${name43}`;
-var symbol43 = Symbol.for(marker43);
-var _a43;
-_a43 = symbol43;
-var name53 = "AI_NoImageGeneratedError";
-var marker53 = `vercel.ai.error.${name53}`;
-var symbol53 = Symbol.for(marker53);
-var _a53;
-_a53 = symbol53;
-var name63 = "AI_NoObjectGeneratedError";
-var marker63 = `vercel.ai.error.${name63}`;
-var symbol63 = Symbol.for(marker63);
-var _a63;
-var NoObjectGeneratedError = class extends AISDKError {
-  constructor({
-    message = "No object generated.",
-    cause,
-    text: text2,
-    response,
-    usage,
-    finishReason
-  }) {
-    super({ name: name63, message, cause });
-    this[_a63] = true;
-    this.text = text2;
-    this.response = response;
-    this.usage = usage;
-    this.finishReason = finishReason;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker63);
-  }
-};
-_a63 = symbol63;
-var name72 = "AI_NoOutputGeneratedError";
-var marker73 = `vercel.ai.error.${name72}`;
-var symbol73 = Symbol.for(marker73);
-var _a73;
-_a73 = symbol73;
-var name82 = "AI_NoSuchToolError";
-var marker82 = `vercel.ai.error.${name82}`;
-var symbol82 = Symbol.for(marker82);
-var _a82;
-_a82 = symbol82;
-var name92 = "AI_ToolCallRepairError";
-var marker92 = `vercel.ai.error.${name92}`;
-var symbol92 = Symbol.for(marker92);
-var _a92;
-_a92 = symbol92;
-var UnsupportedModelVersionError = class extends AISDKError {
-  constructor(options) {
-    super({
-      name: "AI_UnsupportedModelVersionError",
-      message: `Unsupported model version ${options.version} for provider "${options.provider}" and model "${options.modelId}". AI SDK 5 only supports models that implement specification version "v2".`
-    });
-    this.version = options.version;
-    this.provider = options.provider;
-    this.modelId = options.modelId;
-  }
-};
-var name102 = "AI_InvalidDataContentError";
-var marker102 = `vercel.ai.error.${name102}`;
-var symbol102 = Symbol.for(marker102);
-var _a102;
-_a102 = symbol102;
-var name112 = "AI_InvalidMessageRoleError";
-var marker112 = `vercel.ai.error.${name112}`;
-var symbol112 = Symbol.for(marker112);
-var _a112;
-var InvalidMessageRoleError = class extends AISDKError {
-  constructor({
-    role,
-    message = `Invalid message role: '${role}'. Must be one of: "system", "user", "assistant", "tool".`
-  }) {
-    super({ name: name112, message });
-    this[_a112] = true;
-    this.role = role;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker112);
-  }
-};
-_a112 = symbol112;
-var name122 = "AI_MessageConversionError";
-var marker122 = `vercel.ai.error.${name122}`;
-var symbol122 = Symbol.for(marker122);
-var _a122;
-_a122 = symbol122;
-var name132 = "AI_DownloadError";
-var marker132 = `vercel.ai.error.${name132}`;
-var symbol132 = Symbol.for(marker132);
-var _a132;
-var DownloadError = class extends AISDKError {
-  constructor({
-    url,
-    statusCode,
-    statusText,
-    cause,
-    message = cause == null ? `Failed to download ${url}: ${statusCode} ${statusText}` : `Failed to download ${url}: ${cause}`
-  }) {
-    super({ name: name132, message, cause });
-    this[_a132] = true;
-    this.url = url;
-    this.statusCode = statusCode;
-    this.statusText = statusText;
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker132);
-  }
-};
-_a132 = symbol132;
-var name142 = "AI_RetryError";
-var marker142 = `vercel.ai.error.${name142}`;
-var symbol142 = Symbol.for(marker142);
-var _a142;
-var RetryError = class extends AISDKError {
-  constructor({
-    message,
-    reason,
-    errors
-  }) {
-    super({ name: name142, message });
-    this[_a142] = true;
-    this.reason = reason;
-    this.errors = errors;
-    this.lastError = errors[errors.length - 1];
-  }
-  static isInstance(error) {
-    return AISDKError.hasMarker(error, marker142);
-  }
-};
-_a142 = symbol142;
-function resolveLanguageModel(model) {
-  if (typeof model !== "string") {
-    if (model.specificationVersion !== "v2") {
-      throw new UnsupportedModelVersionError({
-        version: model.specificationVersion,
-        provider: model.provider,
-        modelId: model.modelId
-      });
-    }
-    return model;
-  }
-  return getGlobalProvider().languageModel(model);
-}
-function getGlobalProvider() {
-  var _a162;
-  return (_a162 = globalThis.AI_SDK_DEFAULT_PROVIDER) != null ? _a162 : gateway;
-}
-var imageMediaTypeSignatures = [
-  {
-    mediaType: "image/gif",
-    bytesPrefix: [71, 73, 70]
-    // GIF
-  },
-  {
-    mediaType: "image/png",
-    bytesPrefix: [137, 80, 78, 71]
-    // PNG
-  },
-  {
-    mediaType: "image/jpeg",
-    bytesPrefix: [255, 216]
-    // JPEG
-  },
-  {
-    mediaType: "image/webp",
-    bytesPrefix: [
-      82,
-      73,
-      70,
-      70,
-      // "RIFF"
-      null,
-      null,
-      null,
-      null,
-      // file size (variable)
-      87,
-      69,
-      66,
-      80
-      // "WEBP"
-    ]
-  },
-  {
-    mediaType: "image/bmp",
-    bytesPrefix: [66, 77]
-  },
-  {
-    mediaType: "image/tiff",
-    bytesPrefix: [73, 73, 42, 0]
-  },
-  {
-    mediaType: "image/tiff",
-    bytesPrefix: [77, 77, 0, 42]
-  },
-  {
-    mediaType: "image/avif",
-    bytesPrefix: [
-      0,
-      0,
-      0,
-      32,
-      102,
-      116,
-      121,
-      112,
-      97,
-      118,
-      105,
-      102
-    ]
-  },
-  {
-    mediaType: "image/heic",
-    bytesPrefix: [
-      0,
-      0,
-      0,
-      32,
-      102,
-      116,
-      121,
-      112,
-      104,
-      101,
-      105,
-      99
-    ]
-  }
-];
-var stripID3 = (data) => {
-  const bytes = typeof data === "string" ? convertBase64ToUint8Array(data) : data;
-  const id3Size = (bytes[6] & 127) << 21 | (bytes[7] & 127) << 14 | (bytes[8] & 127) << 7 | bytes[9] & 127;
-  return bytes.slice(id3Size + 10);
-};
-function stripID3TagsIfPresent(data) {
-  const hasId3 = typeof data === "string" && data.startsWith("SUQz") || typeof data !== "string" && data.length > 10 && data[0] === 73 && // 'I'
-  data[1] === 68 && // 'D'
-  data[2] === 51;
-  return hasId3 ? stripID3(data) : data;
-}
-function detectMediaType({
-  data,
-  signatures
-}) {
-  const processedData = stripID3TagsIfPresent(data);
-  const bytes = typeof processedData === "string" ? convertBase64ToUint8Array(
-    processedData.substring(0, Math.min(processedData.length, 24))
-  ) : processedData;
-  for (const signature of signatures) {
-    if (bytes.length >= signature.bytesPrefix.length && signature.bytesPrefix.every(
-      (byte, index) => byte === null || bytes[index] === byte
-    )) {
-      return signature.mediaType;
-    }
-  }
-  return void 0;
-}
-var VERSION4 = true ? "5.0.106" : "0.0.0-test";
-var download = async ({ url }) => {
-  var _a162;
-  const urlText = url.toString();
-  try {
-    const response = await fetch(urlText, {
-      headers: withUserAgentSuffix(
-        {},
-        `ai-sdk/${VERSION4}`,
-        getRuntimeEnvironmentUserAgent()
-      )
-    });
-    if (!response.ok) {
-      throw new DownloadError({
-        url: urlText,
-        statusCode: response.status,
-        statusText: response.statusText
-      });
-    }
-    return {
-      data: new Uint8Array(await response.arrayBuffer()),
-      mediaType: (_a162 = response.headers.get("content-type")) != null ? _a162 : void 0
-    };
-  } catch (error) {
-    if (DownloadError.isInstance(error)) {
-      throw error;
-    }
-    throw new DownloadError({ url: urlText, cause: error });
-  }
-};
-var createDefaultDownloadFunction = (download2 = download) => (requestedDownloads) => Promise.all(
-  requestedDownloads.map(
-    async (requestedDownload) => requestedDownload.isUrlSupportedByModel ? null : download2(requestedDownload)
-  )
-);
-function splitDataUrl(dataUrl) {
-  try {
-    const [header, base64Content] = dataUrl.split(",");
-    return {
-      mediaType: header.split(";")[0].split(":")[1],
-      base64Content
-    };
-  } catch (error) {
-    return {
-      mediaType: void 0,
-      base64Content: void 0
-    };
-  }
-}
-var dataContentSchema = z26.union([
-  z26.string(),
-  z26.instanceof(Uint8Array),
-  z26.instanceof(ArrayBuffer),
-  z26.custom(
-    // Buffer might not be available in some environments such as CloudFlare:
-    (value2) => {
-      var _a162, _b8;
-      return (_b8 = (_a162 = globalThis.Buffer) == null ? void 0 : _a162.isBuffer(value2)) != null ? _b8 : false;
-    },
-    { message: "Must be a Buffer" }
-  )
-]);
-function convertToLanguageModelV2DataContent(content) {
-  if (content instanceof Uint8Array) {
-    return { data: content, mediaType: void 0 };
-  }
-  if (content instanceof ArrayBuffer) {
-    return { data: new Uint8Array(content), mediaType: void 0 };
-  }
-  if (typeof content === "string") {
-    try {
-      content = new URL(content);
-    } catch (error) {
-    }
-  }
-  if (content instanceof URL && content.protocol === "data:") {
-    const { mediaType: dataUrlMediaType, base64Content } = splitDataUrl(
-      content.toString()
-    );
-    if (dataUrlMediaType == null || base64Content == null) {
-      throw new AISDKError({
-        name: "InvalidDataContentError",
-        message: `Invalid data URL format in content ${content.toString()}`
-      });
-    }
-    return { data: base64Content, mediaType: dataUrlMediaType };
-  }
-  return { data: content, mediaType: void 0 };
-}
-function convertDataContentToBase64String(content) {
-  if (typeof content === "string") {
-    return content;
-  }
-  if (content instanceof ArrayBuffer) {
-    return convertUint8ArrayToBase64(new Uint8Array(content));
-  }
-  return convertUint8ArrayToBase64(content);
-}
-async function convertToLanguageModelPrompt({
-  prompt,
-  supportedUrls,
-  download: download2 = createDefaultDownloadFunction()
-}) {
-  const downloadedAssets = await downloadAssets(
-    prompt.messages,
-    download2,
-    supportedUrls
-  );
-  return [
-    ...prompt.system != null ? [{ role: "system", content: prompt.system }] : [],
-    ...prompt.messages.map(
-      (message) => convertToLanguageModelMessage({ message, downloadedAssets })
-    )
-  ];
-}
-function convertToLanguageModelMessage({
-  message,
-  downloadedAssets
-}) {
-  const role = message.role;
-  switch (role) {
-    case "system": {
-      return {
-        role: "system",
-        content: message.content,
-        providerOptions: message.providerOptions
-      };
-    }
-    case "user": {
-      if (typeof message.content === "string") {
-        return {
-          role: "user",
-          content: [{ type: "text", text: message.content }],
-          providerOptions: message.providerOptions
-        };
-      }
-      return {
-        role: "user",
-        content: message.content.map((part) => convertPartToLanguageModelPart(part, downloadedAssets)).filter((part) => part.type !== "text" || part.text !== ""),
-        providerOptions: message.providerOptions
-      };
-    }
-    case "assistant": {
-      if (typeof message.content === "string") {
-        return {
-          role: "assistant",
-          content: [{ type: "text", text: message.content }],
-          providerOptions: message.providerOptions
-        };
-      }
-      return {
-        role: "assistant",
-        content: message.content.filter(
-          // remove empty text parts (no text, and no provider options):
-          (part) => part.type !== "text" || part.text !== "" || part.providerOptions != null
-        ).map((part) => {
-          const providerOptions = part.providerOptions;
-          switch (part.type) {
-            case "file": {
-              const { data, mediaType } = convertToLanguageModelV2DataContent(
-                part.data
-              );
-              return {
-                type: "file",
-                data,
-                filename: part.filename,
-                mediaType: mediaType != null ? mediaType : part.mediaType,
-                providerOptions
-              };
-            }
-            case "reasoning": {
-              return {
-                type: "reasoning",
-                text: part.text,
-                providerOptions
-              };
-            }
-            case "text": {
-              return {
-                type: "text",
-                text: part.text,
-                providerOptions
-              };
-            }
-            case "tool-call": {
-              return {
-                type: "tool-call",
-                toolCallId: part.toolCallId,
-                toolName: part.toolName,
-                input: part.input,
-                providerExecuted: part.providerExecuted,
-                providerOptions
-              };
-            }
-            case "tool-result": {
-              return {
-                type: "tool-result",
-                toolCallId: part.toolCallId,
-                toolName: part.toolName,
-                output: part.output,
-                providerOptions
-              };
-            }
-          }
-        }),
-        providerOptions: message.providerOptions
-      };
-    }
-    case "tool": {
-      return {
-        role: "tool",
-        content: message.content.map((part) => ({
-          type: "tool-result",
-          toolCallId: part.toolCallId,
-          toolName: part.toolName,
-          output: part.output,
-          providerOptions: part.providerOptions
-        })),
-        providerOptions: message.providerOptions
-      };
-    }
-    default: {
-      const _exhaustiveCheck = role;
-      throw new InvalidMessageRoleError({ role: _exhaustiveCheck });
-    }
-  }
-}
-async function downloadAssets(messages, download2, supportedUrls) {
-  const plannedDownloads = messages.filter((message) => message.role === "user").map((message) => message.content).filter(
-    (content) => Array.isArray(content)
-  ).flat().filter(
-    (part) => part.type === "image" || part.type === "file"
-  ).map((part) => {
-    var _a162;
-    const mediaType = (_a162 = part.mediaType) != null ? _a162 : part.type === "image" ? "image/*" : void 0;
-    let data = part.type === "image" ? part.image : part.data;
-    if (typeof data === "string") {
-      try {
-        data = new URL(data);
-      } catch (ignored) {
-      }
-    }
-    return { mediaType, data };
-  }).filter(
-    (part) => part.data instanceof URL
-  ).map((part) => ({
-    url: part.data,
-    isUrlSupportedByModel: part.mediaType != null && isUrlSupported({
-      url: part.data.toString(),
-      mediaType: part.mediaType,
-      supportedUrls
-    })
-  }));
-  const downloadedFiles = await download2(plannedDownloads);
-  return Object.fromEntries(
-    downloadedFiles.map(
-      (file, index) => file == null ? null : [
-        plannedDownloads[index].url.toString(),
-        { data: file.data, mediaType: file.mediaType }
-      ]
-    ).filter((file) => file != null)
-  );
-}
-function convertPartToLanguageModelPart(part, downloadedAssets) {
-  var _a162;
-  if (part.type === "text") {
-    return {
-      type: "text",
-      text: part.text,
-      providerOptions: part.providerOptions
-    };
-  }
-  let originalData;
-  const type2 = part.type;
-  switch (type2) {
-    case "image":
-      originalData = part.image;
-      break;
-    case "file":
-      originalData = part.data;
-      break;
-    default:
-      throw new Error(`Unsupported part type: ${type2}`);
-  }
-  const { data: convertedData, mediaType: convertedMediaType } = convertToLanguageModelV2DataContent(originalData);
-  let mediaType = convertedMediaType != null ? convertedMediaType : part.mediaType;
-  let data = convertedData;
-  if (data instanceof URL) {
-    const downloadedFile = downloadedAssets[data.toString()];
-    if (downloadedFile) {
-      data = downloadedFile.data;
-      mediaType != null ? mediaType : mediaType = downloadedFile.mediaType;
-    }
-  }
-  switch (type2) {
-    case "image": {
-      if (data instanceof Uint8Array || typeof data === "string") {
-        mediaType = (_a162 = detectMediaType({ data, signatures: imageMediaTypeSignatures })) != null ? _a162 : mediaType;
-      }
-      return {
-        type: "file",
-        mediaType: mediaType != null ? mediaType : "image/*",
-        // any image
-        filename: void 0,
-        data,
-        providerOptions: part.providerOptions
-      };
-    }
-    case "file": {
-      if (mediaType == null) {
-        throw new Error(`Media type is missing for file part`);
-      }
-      return {
-        type: "file",
-        mediaType,
-        filename: part.filename,
-        data,
-        providerOptions: part.providerOptions
-      };
-    }
-  }
-}
-function prepareCallSettings({
-  maxOutputTokens,
-  temperature,
-  topP,
-  topK,
-  presencePenalty,
-  frequencyPenalty,
-  seed,
-  stopSequences
-}) {
-  if (maxOutputTokens != null) {
-    if (!Number.isInteger(maxOutputTokens)) {
-      throw new InvalidArgumentError3({
-        parameter: "maxOutputTokens",
-        value: maxOutputTokens,
-        message: "maxOutputTokens must be an integer"
-      });
-    }
-    if (maxOutputTokens < 1) {
-      throw new InvalidArgumentError3({
-        parameter: "maxOutputTokens",
-        value: maxOutputTokens,
-        message: "maxOutputTokens must be >= 1"
-      });
-    }
-  }
-  if (temperature != null) {
-    if (typeof temperature !== "number") {
-      throw new InvalidArgumentError3({
-        parameter: "temperature",
-        value: temperature,
-        message: "temperature must be a number"
-      });
-    }
-  }
-  if (topP != null) {
-    if (typeof topP !== "number") {
-      throw new InvalidArgumentError3({
-        parameter: "topP",
-        value: topP,
-        message: "topP must be a number"
-      });
-    }
-  }
-  if (topK != null) {
-    if (typeof topK !== "number") {
-      throw new InvalidArgumentError3({
-        parameter: "topK",
-        value: topK,
-        message: "topK must be a number"
-      });
-    }
-  }
-  if (presencePenalty != null) {
-    if (typeof presencePenalty !== "number") {
-      throw new InvalidArgumentError3({
-        parameter: "presencePenalty",
-        value: presencePenalty,
-        message: "presencePenalty must be a number"
-      });
-    }
-  }
-  if (frequencyPenalty != null) {
-    if (typeof frequencyPenalty !== "number") {
-      throw new InvalidArgumentError3({
-        parameter: "frequencyPenalty",
-        value: frequencyPenalty,
-        message: "frequencyPenalty must be a number"
-      });
-    }
-  }
-  if (seed != null) {
-    if (!Number.isInteger(seed)) {
-      throw new InvalidArgumentError3({
-        parameter: "seed",
-        value: seed,
-        message: "seed must be an integer"
-      });
-    }
-  }
-  return {
-    maxOutputTokens,
-    temperature,
-    topP,
-    topK,
-    presencePenalty,
-    frequencyPenalty,
-    stopSequences,
-    seed
-  };
-}
-var jsonValueSchema = z27.lazy(
-  () => z27.union([
-    z27.null(),
-    z27.string(),
-    z27.number(),
-    z27.boolean(),
-    z27.record(z27.string(), jsonValueSchema),
-    z27.array(jsonValueSchema)
-  ])
-);
-var providerMetadataSchema = z33.record(
-  z33.string(),
-  z33.record(z33.string(), jsonValueSchema)
-);
-var textPartSchema = z44.object({
-  type: z44.literal("text"),
-  text: z44.string(),
-  providerOptions: providerMetadataSchema.optional()
-});
-var imagePartSchema = z44.object({
-  type: z44.literal("image"),
-  image: z44.union([dataContentSchema, z44.instanceof(URL)]),
-  mediaType: z44.string().optional(),
-  providerOptions: providerMetadataSchema.optional()
-});
-var filePartSchema = z44.object({
-  type: z44.literal("file"),
-  data: z44.union([dataContentSchema, z44.instanceof(URL)]),
-  filename: z44.string().optional(),
-  mediaType: z44.string(),
-  providerOptions: providerMetadataSchema.optional()
-});
-var reasoningPartSchema = z44.object({
-  type: z44.literal("reasoning"),
-  text: z44.string(),
-  providerOptions: providerMetadataSchema.optional()
-});
-var toolCallPartSchema = z44.object({
-  type: z44.literal("tool-call"),
-  toolCallId: z44.string(),
-  toolName: z44.string(),
-  input: z44.unknown(),
-  providerOptions: providerMetadataSchema.optional(),
-  providerExecuted: z44.boolean().optional()
-});
-var outputSchema = z44.discriminatedUnion("type", [
-  z44.object({
-    type: z44.literal("text"),
-    value: z44.string()
-  }),
-  z44.object({
-    type: z44.literal("json"),
-    value: jsonValueSchema
-  }),
-  z44.object({
-    type: z44.literal("error-text"),
-    value: z44.string()
-  }),
-  z44.object({
-    type: z44.literal("error-json"),
-    value: jsonValueSchema
-  }),
-  z44.object({
-    type: z44.literal("content"),
-    value: z44.array(
-      z44.union([
-        z44.object({
-          type: z44.literal("text"),
-          text: z44.string()
-        }),
-        z44.object({
-          type: z44.literal("media"),
-          data: z44.string(),
-          mediaType: z44.string()
-        })
-      ])
-    )
-  })
-]);
-var toolResultPartSchema = z44.object({
-  type: z44.literal("tool-result"),
-  toolCallId: z44.string(),
-  toolName: z44.string(),
-  output: outputSchema,
-  providerOptions: providerMetadataSchema.optional()
-});
-var systemModelMessageSchema = z53.object(
-  {
-    role: z53.literal("system"),
-    content: z53.string(),
-    providerOptions: providerMetadataSchema.optional()
-  }
-);
-var userModelMessageSchema = z53.object({
-  role: z53.literal("user"),
-  content: z53.union([
-    z53.string(),
-    z53.array(z53.union([textPartSchema, imagePartSchema, filePartSchema]))
-  ]),
-  providerOptions: providerMetadataSchema.optional()
-});
-var assistantModelMessageSchema = z53.object({
-  role: z53.literal("assistant"),
-  content: z53.union([
-    z53.string(),
-    z53.array(
-      z53.union([
-        textPartSchema,
-        filePartSchema,
-        reasoningPartSchema,
-        toolCallPartSchema,
-        toolResultPartSchema
-      ])
-    )
-  ]),
-  providerOptions: providerMetadataSchema.optional()
-});
-var toolModelMessageSchema = z53.object({
-  role: z53.literal("tool"),
-  content: z53.array(toolResultPartSchema),
-  providerOptions: providerMetadataSchema.optional()
-});
-var modelMessageSchema = z53.union([
-  systemModelMessageSchema,
-  userModelMessageSchema,
-  assistantModelMessageSchema,
-  toolModelMessageSchema
-]);
-async function standardizePrompt(prompt) {
-  if (prompt.prompt == null && prompt.messages == null) {
-    throw new InvalidPromptError({
-      prompt,
-      message: "prompt or messages must be defined"
-    });
-  }
-  if (prompt.prompt != null && prompt.messages != null) {
-    throw new InvalidPromptError({
-      prompt,
-      message: "prompt and messages cannot be defined at the same time"
-    });
-  }
-  if (prompt.system != null && typeof prompt.system !== "string") {
-    throw new InvalidPromptError({
-      prompt,
-      message: "system must be a string"
-    });
-  }
-  let messages;
-  if (prompt.prompt != null && typeof prompt.prompt === "string") {
-    messages = [{ role: "user", content: prompt.prompt }];
-  } else if (prompt.prompt != null && Array.isArray(prompt.prompt)) {
-    messages = prompt.prompt;
-  } else if (prompt.messages != null) {
-    messages = prompt.messages;
-  } else {
-    throw new InvalidPromptError({
-      prompt,
-      message: "prompt or messages must be defined"
-    });
-  }
-  if (messages.length === 0) {
-    throw new InvalidPromptError({
-      prompt,
-      message: "messages must not be empty"
-    });
-  }
-  const validationResult = await safeValidateTypes({
-    value: messages,
-    schema: z63.array(modelMessageSchema)
-  });
-  if (!validationResult.success) {
-    throw new InvalidPromptError({
-      prompt,
-      message: "The messages must be a ModelMessage[]. If you have passed a UIMessage[], you can use convertToModelMessages to convert them.",
-      cause: validationResult.error
-    });
-  }
-  return {
-    messages,
-    system: prompt.system
-  };
-}
-function wrapGatewayError(error) {
-  if (GatewayAuthenticationError.isInstance(error) || GatewayModelNotFoundError.isInstance(error)) {
-    return new AISDKError({
-      name: "GatewayError",
-      message: "Vercel AI Gateway access failed. If you want to use AI SDK providers directly, use the providers, e.g. @ai-sdk/openai, or register a different global default provider.",
-      cause: error
-    });
-  }
-  return error;
-}
-function assembleOperationName({
-  operationId,
-  telemetry: telemetry2
-}) {
-  return {
-    // standardized operation and resource name:
-    "operation.name": `${operationId}${(telemetry2 == null ? void 0 : telemetry2.functionId) != null ? ` ${telemetry2.functionId}` : ""}`,
-    "resource.name": telemetry2 == null ? void 0 : telemetry2.functionId,
-    // detailed, AI SDK specific data:
-    "ai.operationId": operationId,
-    "ai.telemetry.functionId": telemetry2 == null ? void 0 : telemetry2.functionId
-  };
-}
-function getBaseTelemetryAttributes({
-  model,
-  settings,
-  telemetry: telemetry2,
-  headers
-}) {
-  var _a162;
-  return {
-    "ai.model.provider": model.provider,
-    "ai.model.id": model.modelId,
-    // settings:
-    ...Object.entries(settings).reduce((attributes, [key, value2]) => {
-      attributes[`ai.settings.${key}`] = value2;
-      return attributes;
-    }, {}),
-    // add metadata as attributes:
-    ...Object.entries((_a162 = telemetry2 == null ? void 0 : telemetry2.metadata) != null ? _a162 : {}).reduce(
-      (attributes, [key, value2]) => {
-        attributes[`ai.telemetry.metadata.${key}`] = value2;
-        return attributes;
-      },
-      {}
-    ),
-    // request headers
-    ...Object.entries(headers != null ? headers : {}).reduce((attributes, [key, value2]) => {
-      if (value2 !== void 0) {
-        attributes[`ai.request.headers.${key}`] = value2;
-      }
-      return attributes;
-    }, {})
-  };
-}
-var noopTracer = {
-  startSpan() {
-    return noopSpan;
-  },
-  startActiveSpan(name16, arg1, arg2, arg3) {
-    if (typeof arg1 === "function") {
-      return arg1(noopSpan);
-    }
-    if (typeof arg2 === "function") {
-      return arg2(noopSpan);
-    }
-    if (typeof arg3 === "function") {
-      return arg3(noopSpan);
-    }
-  }
-};
-var noopSpan = {
-  spanContext() {
-    return noopSpanContext;
-  },
-  setAttribute() {
-    return this;
-  },
-  setAttributes() {
-    return this;
-  },
-  addEvent() {
-    return this;
-  },
-  addLink() {
-    return this;
-  },
-  addLinks() {
-    return this;
-  },
-  setStatus() {
-    return this;
-  },
-  updateName() {
-    return this;
-  },
-  end() {
-    return this;
-  },
-  isRecording() {
-    return false;
-  },
-  recordException() {
-    return this;
-  }
-};
-var noopSpanContext = {
-  traceId: "",
-  spanId: "",
-  traceFlags: 0
-};
-function getTracer({
-  isEnabled = false,
-  tracer
-} = {}) {
-  if (!isEnabled) {
-    return noopTracer;
-  }
-  if (tracer) {
-    return tracer;
-  }
-  return trace.getTracer("ai");
-}
-function recordSpan({
-  name: name16,
-  tracer,
-  attributes,
-  fn,
-  endWhenDone = true
-}) {
-  return tracer.startActiveSpan(name16, { attributes }, async (span) => {
-    try {
-      const result = await fn(span);
-      if (endWhenDone) {
-        span.end();
-      }
-      return result;
-    } catch (error) {
-      try {
-        recordErrorOnSpan(span, error);
-      } finally {
-        span.end();
-      }
-      throw error;
-    }
-  });
-}
-function recordErrorOnSpan(span, error) {
-  if (error instanceof Error) {
-    span.recordException({
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: error.message
-    });
-  } else {
-    span.setStatus({ code: SpanStatusCode.ERROR });
-  }
-}
-function selectTelemetryAttributes({
-  telemetry: telemetry2,
-  attributes
-}) {
-  if ((telemetry2 == null ? void 0 : telemetry2.isEnabled) !== true) {
-    return {};
-  }
-  return Object.entries(attributes).reduce((attributes2, [key, value2]) => {
-    if (value2 == null) {
-      return attributes2;
-    }
-    if (typeof value2 === "object" && "input" in value2 && typeof value2.input === "function") {
-      if ((telemetry2 == null ? void 0 : telemetry2.recordInputs) === false) {
-        return attributes2;
-      }
-      const result = value2.input();
-      return result == null ? attributes2 : { ...attributes2, [key]: result };
-    }
-    if (typeof value2 === "object" && "output" in value2 && typeof value2.output === "function") {
-      if ((telemetry2 == null ? void 0 : telemetry2.recordOutputs) === false) {
-        return attributes2;
-      }
-      const result = value2.output();
-      return result == null ? attributes2 : { ...attributes2, [key]: result };
-    }
-    return { ...attributes2, [key]: value2 };
-  }, {});
-}
-function stringifyForTelemetry(prompt) {
-  return JSON.stringify(
-    prompt.map((message) => ({
-      ...message,
-      content: typeof message.content === "string" ? message.content : message.content.map(
-        (part) => part.type === "file" ? {
-          ...part,
-          data: part.data instanceof Uint8Array ? convertDataContentToBase64String(part.data) : part.data
-        } : part
-      )
-    }))
-  );
-}
-function getRetryDelayInMs({
-  error,
-  exponentialBackoffDelay
-}) {
-  const headers = error.responseHeaders;
-  if (!headers)
-    return exponentialBackoffDelay;
-  let ms;
-  const retryAfterMs = headers["retry-after-ms"];
-  if (retryAfterMs) {
-    const timeoutMs = parseFloat(retryAfterMs);
-    if (!Number.isNaN(timeoutMs)) {
-      ms = timeoutMs;
-    }
-  }
-  const retryAfter = headers["retry-after"];
-  if (retryAfter && ms === void 0) {
-    const timeoutSeconds = parseFloat(retryAfter);
-    if (!Number.isNaN(timeoutSeconds)) {
-      ms = timeoutSeconds * 1e3;
-    } else {
-      ms = Date.parse(retryAfter) - Date.now();
-    }
-  }
-  if (ms != null && !Number.isNaN(ms) && 0 <= ms && (ms < 60 * 1e3 || ms < exponentialBackoffDelay)) {
-    return ms;
-  }
-  return exponentialBackoffDelay;
-}
-var retryWithExponentialBackoffRespectingRetryHeaders = ({
-  maxRetries = 2,
-  initialDelayInMs = 2e3,
-  backoffFactor = 2,
-  abortSignal
-} = {}) => async (f) => _retryWithExponentialBackoff(f, {
-  maxRetries,
-  delayInMs: initialDelayInMs,
-  backoffFactor,
-  abortSignal
-});
-async function _retryWithExponentialBackoff(f, {
-  maxRetries,
-  delayInMs,
-  backoffFactor,
-  abortSignal
-}, errors = []) {
-  try {
-    return await f();
-  } catch (error) {
-    if (isAbortError(error)) {
-      throw error;
-    }
-    if (maxRetries === 0) {
-      throw error;
-    }
-    const errorMessage = getErrorMessage2(error);
-    const newErrors = [...errors, error];
-    const tryNumber = newErrors.length;
-    if (tryNumber > maxRetries) {
-      throw new RetryError({
-        message: `Failed after ${tryNumber} attempts. Last error: ${errorMessage}`,
-        reason: "maxRetriesExceeded",
-        errors: newErrors
-      });
-    }
-    if (error instanceof Error && APICallError.isInstance(error) && error.isRetryable === true && tryNumber <= maxRetries) {
-      await delay(
-        getRetryDelayInMs({
-          error,
-          exponentialBackoffDelay: delayInMs
-        }),
-        { abortSignal }
-      );
-      return _retryWithExponentialBackoff(
-        f,
-        {
-          maxRetries,
-          delayInMs: backoffFactor * delayInMs,
-          backoffFactor,
-          abortSignal
-        },
-        newErrors
-      );
-    }
-    if (tryNumber === 1) {
-      throw error;
-    }
-    throw new RetryError({
-      message: `Failed after ${tryNumber} attempts with non-retryable error: '${errorMessage}'`,
-      reason: "errorNotRetryable",
-      errors: newErrors
-    });
-  }
-}
-function prepareRetries({
-  maxRetries,
-  abortSignal
-}) {
-  if (maxRetries != null) {
-    if (!Number.isInteger(maxRetries)) {
-      throw new InvalidArgumentError3({
-        parameter: "maxRetries",
-        value: maxRetries,
-        message: "maxRetries must be an integer"
-      });
-    }
-    if (maxRetries < 0) {
-      throw new InvalidArgumentError3({
-        parameter: "maxRetries",
-        value: maxRetries,
-        message: "maxRetries must be >= 0"
-      });
-    }
-  }
-  const maxRetriesResult = maxRetries != null ? maxRetries : 2;
-  return {
-    maxRetries: maxRetriesResult,
-    retry: retryWithExponentialBackoffRespectingRetryHeaders({
-      maxRetries: maxRetriesResult,
-      abortSignal
-    })
-  };
-}
-function extractTextContent(content) {
-  const parts = content.filter(
-    (content2) => content2.type === "text"
-  );
-  if (parts.length === 0) {
-    return void 0;
-  }
-  return parts.map((content2) => content2.text).join("");
-}
-var originalGenerateId = createIdGenerator({
-  prefix: "aitxt",
-  size: 24
-});
-function prepareHeaders(headers, defaultHeaders) {
-  const responseHeaders = new Headers(headers != null ? headers : {});
-  for (const [key, value2] of Object.entries(defaultHeaders)) {
-    if (!responseHeaders.has(key)) {
-      responseHeaders.set(key, value2);
-    }
-  }
-  return responseHeaders;
-}
-var JsonToSseTransformStream = class extends TransformStream {
-  constructor() {
-    super({
-      transform(part, controller) {
-        controller.enqueue(`data: ${JSON.stringify(part)}
-
-`);
-      },
-      flush(controller) {
-        controller.enqueue("data: [DONE]\n\n");
-      }
-    });
-  }
-};
-var uiMessageChunkSchema = lazyValidator(
-  () => zodSchema(
-    z73.union([
-      z73.strictObject({
-        type: z73.literal("text-start"),
-        id: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("text-delta"),
-        id: z73.string(),
-        delta: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("text-end"),
-        id: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("error"),
-        errorText: z73.string()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-input-start"),
-        toolCallId: z73.string(),
-        toolName: z73.string(),
-        providerExecuted: z73.boolean().optional(),
-        dynamic: z73.boolean().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-input-delta"),
-        toolCallId: z73.string(),
-        inputTextDelta: z73.string()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-input-available"),
-        toolCallId: z73.string(),
-        toolName: z73.string(),
-        input: z73.unknown(),
-        providerExecuted: z73.boolean().optional(),
-        providerMetadata: providerMetadataSchema.optional(),
-        dynamic: z73.boolean().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-input-error"),
-        toolCallId: z73.string(),
-        toolName: z73.string(),
-        input: z73.unknown(),
-        providerExecuted: z73.boolean().optional(),
-        providerMetadata: providerMetadataSchema.optional(),
-        dynamic: z73.boolean().optional(),
-        errorText: z73.string()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-output-available"),
-        toolCallId: z73.string(),
-        output: z73.unknown(),
-        providerExecuted: z73.boolean().optional(),
-        dynamic: z73.boolean().optional(),
-        preliminary: z73.boolean().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("tool-output-error"),
-        toolCallId: z73.string(),
-        errorText: z73.string(),
-        providerExecuted: z73.boolean().optional(),
-        dynamic: z73.boolean().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("reasoning-start"),
-        id: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("reasoning-delta"),
-        id: z73.string(),
-        delta: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("reasoning-end"),
-        id: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("source-url"),
-        sourceId: z73.string(),
-        url: z73.string(),
-        title: z73.string().optional(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("source-document"),
-        sourceId: z73.string(),
-        mediaType: z73.string(),
-        title: z73.string(),
-        filename: z73.string().optional(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("file"),
-        url: z73.string(),
-        mediaType: z73.string(),
-        providerMetadata: providerMetadataSchema.optional()
-      }),
-      z73.strictObject({
-        type: z73.custom(
-          (value2) => typeof value2 === "string" && value2.startsWith("data-"),
-          { message: 'Type must start with "data-"' }
-        ),
-        id: z73.string().optional(),
-        data: z73.unknown(),
-        transient: z73.boolean().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("start-step")
-      }),
-      z73.strictObject({
-        type: z73.literal("finish-step")
-      }),
-      z73.strictObject({
-        type: z73.literal("start"),
-        messageId: z73.string().optional(),
-        messageMetadata: z73.unknown().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("finish"),
-        finishReason: z73.enum([
-          "stop",
-          "length",
-          "content-filter",
-          "tool-calls",
-          "error",
-          "other",
-          "unknown"
-        ]).optional(),
-        messageMetadata: z73.unknown().optional()
-      }),
-      z73.strictObject({
-        type: z73.literal("abort")
-      }),
-      z73.strictObject({
-        type: z73.literal("message-metadata"),
-        messageMetadata: z73.unknown()
-      })
-    ])
-  )
-);
-function fixJson(input) {
-  const stack = ["ROOT"];
-  let lastValidIndex = -1;
-  let literalStart = null;
-  function processValueStart(char, i, swapState) {
-    {
-      switch (char) {
-        case '"': {
-          lastValidIndex = i;
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_STRING");
-          break;
-        }
-        case "f":
-        case "t":
-        case "n": {
-          lastValidIndex = i;
-          literalStart = i;
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_LITERAL");
-          break;
-        }
-        case "-": {
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_NUMBER");
-          break;
-        }
-        case "0":
-        case "1":
-        case "2":
-        case "3":
-        case "4":
-        case "5":
-        case "6":
-        case "7":
-        case "8":
-        case "9": {
-          lastValidIndex = i;
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_NUMBER");
-          break;
-        }
-        case "{": {
-          lastValidIndex = i;
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_OBJECT_START");
-          break;
-        }
-        case "[": {
-          lastValidIndex = i;
-          stack.pop();
-          stack.push(swapState);
-          stack.push("INSIDE_ARRAY_START");
-          break;
-        }
-      }
-    }
-  }
-  function processAfterObjectValue(char, i) {
-    switch (char) {
-      case ",": {
-        stack.pop();
-        stack.push("INSIDE_OBJECT_AFTER_COMMA");
-        break;
-      }
-      case "}": {
-        lastValidIndex = i;
-        stack.pop();
-        break;
-      }
-    }
-  }
-  function processAfterArrayValue(char, i) {
-    switch (char) {
-      case ",": {
-        stack.pop();
-        stack.push("INSIDE_ARRAY_AFTER_COMMA");
-        break;
-      }
-      case "]": {
-        lastValidIndex = i;
-        stack.pop();
-        break;
-      }
-    }
-  }
-  for (let i = 0; i < input.length; i++) {
-    const char = input[i];
-    const currentState = stack[stack.length - 1];
-    switch (currentState) {
-      case "ROOT":
-        processValueStart(char, i, "FINISH");
-        break;
-      case "INSIDE_OBJECT_START": {
-        switch (char) {
-          case '"': {
-            stack.pop();
-            stack.push("INSIDE_OBJECT_KEY");
-            break;
-          }
-          case "}": {
-            lastValidIndex = i;
-            stack.pop();
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_OBJECT_AFTER_COMMA": {
-        switch (char) {
-          case '"': {
-            stack.pop();
-            stack.push("INSIDE_OBJECT_KEY");
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_OBJECT_KEY": {
-        switch (char) {
-          case '"': {
-            stack.pop();
-            stack.push("INSIDE_OBJECT_AFTER_KEY");
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_OBJECT_AFTER_KEY": {
-        switch (char) {
-          case ":": {
-            stack.pop();
-            stack.push("INSIDE_OBJECT_BEFORE_VALUE");
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_OBJECT_BEFORE_VALUE": {
-        processValueStart(char, i, "INSIDE_OBJECT_AFTER_VALUE");
-        break;
-      }
-      case "INSIDE_OBJECT_AFTER_VALUE": {
-        processAfterObjectValue(char, i);
-        break;
-      }
-      case "INSIDE_STRING": {
-        switch (char) {
-          case '"': {
-            stack.pop();
-            lastValidIndex = i;
-            break;
-          }
-          case "\\": {
-            stack.push("INSIDE_STRING_ESCAPE");
-            break;
-          }
-          default: {
-            lastValidIndex = i;
-          }
-        }
-        break;
-      }
-      case "INSIDE_ARRAY_START": {
-        switch (char) {
-          case "]": {
-            lastValidIndex = i;
-            stack.pop();
-            break;
-          }
-          default: {
-            lastValidIndex = i;
-            processValueStart(char, i, "INSIDE_ARRAY_AFTER_VALUE");
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_ARRAY_AFTER_VALUE": {
-        switch (char) {
-          case ",": {
-            stack.pop();
-            stack.push("INSIDE_ARRAY_AFTER_COMMA");
-            break;
-          }
-          case "]": {
-            lastValidIndex = i;
-            stack.pop();
-            break;
-          }
-          default: {
-            lastValidIndex = i;
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_ARRAY_AFTER_COMMA": {
-        processValueStart(char, i, "INSIDE_ARRAY_AFTER_VALUE");
-        break;
-      }
-      case "INSIDE_STRING_ESCAPE": {
-        stack.pop();
-        lastValidIndex = i;
-        break;
-      }
-      case "INSIDE_NUMBER": {
-        switch (char) {
-          case "0":
-          case "1":
-          case "2":
-          case "3":
-          case "4":
-          case "5":
-          case "6":
-          case "7":
-          case "8":
-          case "9": {
-            lastValidIndex = i;
-            break;
-          }
-          case "e":
-          case "E":
-          case "-":
-          case ".": {
-            break;
-          }
-          case ",": {
-            stack.pop();
-            if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
-              processAfterArrayValue(char, i);
-            }
-            if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
-              processAfterObjectValue(char, i);
-            }
-            break;
-          }
-          case "}": {
-            stack.pop();
-            if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
-              processAfterObjectValue(char, i);
-            }
-            break;
-          }
-          case "]": {
-            stack.pop();
-            if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
-              processAfterArrayValue(char, i);
-            }
-            break;
-          }
-          default: {
-            stack.pop();
-            break;
-          }
-        }
-        break;
-      }
-      case "INSIDE_LITERAL": {
-        const partialLiteral = input.substring(literalStart, i + 1);
-        if (!"false".startsWith(partialLiteral) && !"true".startsWith(partialLiteral) && !"null".startsWith(partialLiteral)) {
-          stack.pop();
-          if (stack[stack.length - 1] === "INSIDE_OBJECT_AFTER_VALUE") {
-            processAfterObjectValue(char, i);
-          } else if (stack[stack.length - 1] === "INSIDE_ARRAY_AFTER_VALUE") {
-            processAfterArrayValue(char, i);
-          }
-        } else {
-          lastValidIndex = i;
-        }
-        break;
-      }
-    }
-  }
-  let result = input.slice(0, lastValidIndex + 1);
-  for (let i = stack.length - 1; i >= 0; i--) {
-    const state = stack[i];
-    switch (state) {
-      case "INSIDE_STRING": {
-        result += '"';
-        break;
-      }
-      case "INSIDE_OBJECT_KEY":
-      case "INSIDE_OBJECT_AFTER_KEY":
-      case "INSIDE_OBJECT_AFTER_COMMA":
-      case "INSIDE_OBJECT_START":
-      case "INSIDE_OBJECT_BEFORE_VALUE":
-      case "INSIDE_OBJECT_AFTER_VALUE": {
-        result += "}";
-        break;
-      }
-      case "INSIDE_ARRAY_START":
-      case "INSIDE_ARRAY_AFTER_COMMA":
-      case "INSIDE_ARRAY_AFTER_VALUE": {
-        result += "]";
-        break;
-      }
-      case "INSIDE_LITERAL": {
-        const partialLiteral = input.substring(literalStart, input.length);
-        if ("true".startsWith(partialLiteral)) {
-          result += "true".slice(partialLiteral.length);
-        } else if ("false".startsWith(partialLiteral)) {
-          result += "false".slice(partialLiteral.length);
-        } else if ("null".startsWith(partialLiteral)) {
-          result += "null".slice(partialLiteral.length);
-        }
-      }
-    }
-  }
-  return result;
-}
-async function parsePartialJson(jsonText) {
-  if (jsonText === void 0) {
-    return { value: void 0, state: "undefined-input" };
-  }
-  let result = await safeParseJSON({ text: jsonText });
-  if (result.success) {
-    return { value: result.value, state: "successful-parse" };
-  }
-  result = await safeParseJSON({ text: fixJson(jsonText) });
-  if (result.success) {
-    return { value: result.value, state: "repaired-parse" };
-  }
-  return { value: void 0, state: "failed-parse" };
-}
-function createAsyncIterableStream(source) {
-  const stream = source.pipeThrough(new TransformStream());
-  stream[Symbol.asyncIterator] = function() {
-    const reader = this.getReader();
-    let finished = false;
-    async function cleanup(cancelStream) {
-      var _a162;
-      finished = true;
-      try {
-        if (cancelStream) {
-          await ((_a162 = reader.cancel) == null ? void 0 : _a162.call(reader));
-        }
-      } finally {
-        try {
-          reader.releaseLock();
-        } catch (e) {
-        }
-      }
-    }
-    return {
-      /**
-       * Reads the next chunk from the stream.
-       * @returns A promise resolving to the next IteratorResult.
-       */
-      async next() {
-        if (finished) {
-          return { done: true, value: void 0 };
-        }
-        const { done, value: value2 } = await reader.read();
-        if (done) {
-          await cleanup(true);
-          return { done: true, value: void 0 };
-        }
-        return { done: false, value: value2 };
-      },
-      /**
-       * Called on early exit (e.g., break from for-await).
-       * Ensures the stream is cancelled and resources are released.
-       * @returns A promise resolving to a completed IteratorResult.
-       */
-      async return() {
-        await cleanup(true);
-        return { done: true, value: void 0 };
-      },
-      /**
-       * Called on early exit with error.
-       * Ensures the stream is cancelled and resources are released, then rethrows the error.
-       * @param err The error to throw.
-       * @returns A promise that rejects with the provided error.
-       */
-      async throw(err) {
-        await cleanup(true);
-        throw err;
-      }
-    };
-  };
-  return stream;
-}
-var originalGenerateId2 = createIdGenerator({
-  prefix: "aitxt",
-  size: 24
-});
-function extractReasoningContent(content) {
-  const parts = content.filter(
-    (content2) => content2.type === "reasoning"
-  );
-  return parts.length === 0 ? void 0 : parts.map((content2) => content2.text).join("\n");
-}
-var noSchemaOutputStrategy = {
-  type: "no-schema",
-  jsonSchema: void 0,
-  async validatePartialResult({ value: value2, textDelta }) {
-    return { success: true, value: { partial: value2, textDelta } };
-  },
-  async validateFinalResult(value2, context) {
-    return value2 === void 0 ? {
-      success: false,
-      error: new NoObjectGeneratedError({
-        message: "No object generated: response did not match schema.",
-        text: context.text,
-        response: context.response,
-        usage: context.usage,
-        finishReason: context.finishReason
-      })
-    } : { success: true, value: value2 };
-  },
-  createElementStream() {
-    throw new UnsupportedFunctionalityError({
-      functionality: "element streams in no-schema mode"
-    });
-  }
-};
-var objectOutputStrategy = (schema) => ({
-  type: "object",
-  jsonSchema: schema.jsonSchema,
-  async validatePartialResult({ value: value2, textDelta }) {
-    return {
-      success: true,
-      value: {
-        // Note: currently no validation of partial results:
-        partial: value2,
-        textDelta
-      }
-    };
-  },
-  async validateFinalResult(value2) {
-    return safeValidateTypes({ value: value2, schema });
-  },
-  createElementStream() {
-    throw new UnsupportedFunctionalityError({
-      functionality: "element streams in object mode"
-    });
-  }
-});
-var arrayOutputStrategy = (schema) => {
-  const { $schema, ...itemSchema } = schema.jsonSchema;
-  return {
-    type: "array",
-    // wrap in object that contains array of elements, since most LLMs will not
-    // be able to generate an array directly:
-    // possible future optimization: use arrays directly when model supports grammar-guided generation
-    jsonSchema: {
-      $schema: "http://json-schema.org/draft-07/schema#",
-      type: "object",
-      properties: {
-        elements: { type: "array", items: itemSchema }
-      },
-      required: ["elements"],
-      additionalProperties: false
-    },
-    async validatePartialResult({
-      value: value2,
-      latestObject,
-      isFirstDelta,
-      isFinalDelta
-    }) {
-      var _a162;
-      if (!isJSONObject(value2) || !isJSONArray(value2.elements)) {
-        return {
-          success: false,
-          error: new TypeValidationError({
-            value: value2,
-            cause: "value must be an object that contains an array of elements"
-          })
-        };
-      }
-      const inputArray = value2.elements;
-      const resultArray = [];
-      for (let i = 0; i < inputArray.length; i++) {
-        const element = inputArray[i];
-        const result = await safeValidateTypes({ value: element, schema });
-        if (i === inputArray.length - 1 && !isFinalDelta) {
-          continue;
-        }
-        if (!result.success) {
-          return result;
-        }
-        resultArray.push(result.value);
-      }
-      const publishedElementCount = (_a162 = latestObject == null ? void 0 : latestObject.length) != null ? _a162 : 0;
-      let textDelta = "";
-      if (isFirstDelta) {
-        textDelta += "[";
-      }
-      if (publishedElementCount > 0) {
-        textDelta += ",";
-      }
-      textDelta += resultArray.slice(publishedElementCount).map((element) => JSON.stringify(element)).join(",");
-      if (isFinalDelta) {
-        textDelta += "]";
-      }
-      return {
-        success: true,
-        value: {
-          partial: resultArray,
-          textDelta
-        }
-      };
-    },
-    async validateFinalResult(value2) {
-      if (!isJSONObject(value2) || !isJSONArray(value2.elements)) {
-        return {
-          success: false,
-          error: new TypeValidationError({
-            value: value2,
-            cause: "value must be an object that contains an array of elements"
-          })
-        };
-      }
-      const inputArray = value2.elements;
-      for (const element of inputArray) {
-        const result = await safeValidateTypes({ value: element, schema });
-        if (!result.success) {
-          return result;
-        }
-      }
-      return { success: true, value: inputArray };
-    },
-    createElementStream(originalStream) {
-      let publishedElements = 0;
-      return createAsyncIterableStream(
-        originalStream.pipeThrough(
-          new TransformStream({
-            transform(chunk, controller) {
-              switch (chunk.type) {
-                case "object": {
-                  const array = chunk.object;
-                  for (; publishedElements < array.length; publishedElements++) {
-                    controller.enqueue(array[publishedElements]);
-                  }
-                  break;
-                }
-                case "text-delta":
-                case "finish":
-                case "error":
-                  break;
-                default: {
-                  const _exhaustiveCheck = chunk;
-                  throw new Error(
-                    `Unsupported chunk type: ${_exhaustiveCheck}`
-                  );
-                }
-              }
-            }
-          })
-        )
-      );
-    }
-  };
-};
-var enumOutputStrategy = (enumValues) => {
-  return {
-    type: "enum",
-    // wrap in object that contains result, since most LLMs will not
-    // be able to generate an enum value directly:
-    // possible future optimization: use enums directly when model supports top-level enums
-    jsonSchema: {
-      $schema: "http://json-schema.org/draft-07/schema#",
-      type: "object",
-      properties: {
-        result: { type: "string", enum: enumValues }
-      },
-      required: ["result"],
-      additionalProperties: false
-    },
-    async validateFinalResult(value2) {
-      if (!isJSONObject(value2) || typeof value2.result !== "string") {
-        return {
-          success: false,
-          error: new TypeValidationError({
-            value: value2,
-            cause: 'value must be an object that contains a string in the "result" property.'
-          })
-        };
-      }
-      const result = value2.result;
-      return enumValues.includes(result) ? { success: true, value: result } : {
-        success: false,
-        error: new TypeValidationError({
-          value: value2,
-          cause: "value must be a string in the enum"
-        })
-      };
-    },
-    async validatePartialResult({ value: value2, textDelta }) {
-      if (!isJSONObject(value2) || typeof value2.result !== "string") {
-        return {
-          success: false,
-          error: new TypeValidationError({
-            value: value2,
-            cause: 'value must be an object that contains a string in the "result" property.'
-          })
-        };
-      }
-      const result = value2.result;
-      const possibleEnumValues = enumValues.filter(
-        (enumValue) => enumValue.startsWith(result)
-      );
-      if (value2.result.length === 0 || possibleEnumValues.length === 0) {
-        return {
-          success: false,
-          error: new TypeValidationError({
-            value: value2,
-            cause: "value must be a string in the enum"
-          })
-        };
-      }
-      return {
-        success: true,
-        value: {
-          partial: possibleEnumValues.length > 1 ? result : possibleEnumValues[0],
-          textDelta
-        }
-      };
-    },
-    createElementStream() {
-      throw new UnsupportedFunctionalityError({
-        functionality: "element streams in enum mode"
-      });
-    }
-  };
-};
-function getOutputStrategy({
-  output,
-  schema,
-  enumValues
-}) {
-  switch (output) {
-    case "object":
-      return objectOutputStrategy(asSchema(schema));
-    case "array":
-      return arrayOutputStrategy(asSchema(schema));
-    case "enum":
-      return enumOutputStrategy(enumValues);
-    case "no-schema":
-      return noSchemaOutputStrategy;
-    default: {
-      const _exhaustiveCheck = output;
-      throw new Error(`Unsupported output: ${_exhaustiveCheck}`);
-    }
-  }
-}
-async function parseAndValidateObjectResult(result, outputStrategy, context) {
-  const parseResult = await safeParseJSON({ text: result });
-  if (!parseResult.success) {
-    throw new NoObjectGeneratedError({
-      message: "No object generated: could not parse the response.",
-      cause: parseResult.error,
-      text: result,
-      response: context.response,
-      usage: context.usage,
-      finishReason: context.finishReason
-    });
-  }
-  const validationResult = await outputStrategy.validateFinalResult(
-    parseResult.value,
-    {
-      text: result,
-      response: context.response,
-      usage: context.usage
-    }
-  );
-  if (!validationResult.success) {
-    throw new NoObjectGeneratedError({
-      message: "No object generated: response did not match schema.",
-      cause: validationResult.error,
-      text: result,
-      response: context.response,
-      usage: context.usage,
-      finishReason: context.finishReason
-    });
-  }
-  return validationResult.value;
-}
-async function parseAndValidateObjectResultWithRepair(result, outputStrategy, repairText, context) {
-  try {
-    return await parseAndValidateObjectResult(result, outputStrategy, context);
-  } catch (error) {
-    if (repairText != null && NoObjectGeneratedError.isInstance(error) && (JSONParseError.isInstance(error.cause) || TypeValidationError.isInstance(error.cause))) {
-      const repairedText = await repairText({
-        text: result,
-        error: error.cause
-      });
-      if (repairedText === null) {
-        throw error;
-      }
-      return await parseAndValidateObjectResult(
-        repairedText,
-        outputStrategy,
-        context
-      );
-    }
-    throw error;
-  }
-}
-function validateObjectGenerationInput({
-  output,
-  schema,
-  schemaName,
-  schemaDescription,
-  enumValues
-}) {
-  if (output != null && output !== "object" && output !== "array" && output !== "enum" && output !== "no-schema") {
-    throw new InvalidArgumentError3({
-      parameter: "output",
-      value: output,
-      message: "Invalid output type."
-    });
-  }
-  if (output === "no-schema") {
-    if (schema != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schema",
-        value: schema,
-        message: "Schema is not supported for no-schema output."
-      });
-    }
-    if (schemaDescription != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schemaDescription",
-        value: schemaDescription,
-        message: "Schema description is not supported for no-schema output."
-      });
-    }
-    if (schemaName != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schemaName",
-        value: schemaName,
-        message: "Schema name is not supported for no-schema output."
-      });
-    }
-    if (enumValues != null) {
-      throw new InvalidArgumentError3({
-        parameter: "enumValues",
-        value: enumValues,
-        message: "Enum values are not supported for no-schema output."
-      });
-    }
-  }
-  if (output === "object") {
-    if (schema == null) {
-      throw new InvalidArgumentError3({
-        parameter: "schema",
-        value: schema,
-        message: "Schema is required for object output."
-      });
-    }
-    if (enumValues != null) {
-      throw new InvalidArgumentError3({
-        parameter: "enumValues",
-        value: enumValues,
-        message: "Enum values are not supported for object output."
-      });
-    }
-  }
-  if (output === "array") {
-    if (schema == null) {
-      throw new InvalidArgumentError3({
-        parameter: "schema",
-        value: schema,
-        message: "Element schema is required for array output."
-      });
-    }
-    if (enumValues != null) {
-      throw new InvalidArgumentError3({
-        parameter: "enumValues",
-        value: enumValues,
-        message: "Enum values are not supported for array output."
-      });
-    }
-  }
-  if (output === "enum") {
-    if (schema != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schema",
-        value: schema,
-        message: "Schema is not supported for enum output."
-      });
-    }
-    if (schemaDescription != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schemaDescription",
-        value: schemaDescription,
-        message: "Schema description is not supported for enum output."
-      });
-    }
-    if (schemaName != null) {
-      throw new InvalidArgumentError3({
-        parameter: "schemaName",
-        value: schemaName,
-        message: "Schema name is not supported for enum output."
-      });
-    }
-    if (enumValues == null) {
-      throw new InvalidArgumentError3({
-        parameter: "enumValues",
-        value: enumValues,
-        message: "Enum values are required for enum output."
-      });
-    }
-    for (const value2 of enumValues) {
-      if (typeof value2 !== "string") {
-        throw new InvalidArgumentError3({
-          parameter: "enumValues",
-          value: value2,
-          message: "Enum values must be strings."
-        });
-      }
-    }
-  }
-}
-var originalGenerateId3 = createIdGenerator({ prefix: "aiobj", size: 24 });
-async function generateObject(options) {
-  const {
-    model: modelArg,
-    output = "object",
-    system,
-    prompt,
-    messages,
-    maxRetries: maxRetriesArg,
-    abortSignal,
-    headers,
-    experimental_repairText: repairText,
-    experimental_telemetry: telemetry2,
-    experimental_download: download2,
-    providerOptions,
-    _internal: {
-      generateId: generateId3 = originalGenerateId3,
-      currentDate = () => /* @__PURE__ */ new Date()
-    } = {},
-    ...settings
-  } = options;
-  const model = resolveLanguageModel(modelArg);
-  const enumValues = "enum" in options ? options.enum : void 0;
-  const {
-    schema: inputSchema,
-    schemaDescription,
-    schemaName
-  } = "schema" in options ? options : {};
-  validateObjectGenerationInput({
-    output,
-    schema: inputSchema,
-    schemaName,
-    schemaDescription,
-    enumValues
-  });
-  const { maxRetries, retry } = prepareRetries({
-    maxRetries: maxRetriesArg,
-    abortSignal
-  });
-  const outputStrategy = getOutputStrategy({
-    output,
-    schema: inputSchema,
-    enumValues
-  });
-  const callSettings = prepareCallSettings(settings);
-  const headersWithUserAgent = withUserAgentSuffix(
-    headers != null ? headers : {},
-    `ai/${VERSION4}`
-  );
-  const baseTelemetryAttributes = getBaseTelemetryAttributes({
-    model,
-    telemetry: telemetry2,
-    headers: headersWithUserAgent,
-    settings: { ...callSettings, maxRetries }
-  });
-  const tracer = getTracer(telemetry2);
-  try {
-    return await recordSpan({
-      name: "ai.generateObject",
-      attributes: selectTelemetryAttributes({
-        telemetry: telemetry2,
-        attributes: {
-          ...assembleOperationName({
-            operationId: "ai.generateObject",
-            telemetry: telemetry2
-          }),
-          ...baseTelemetryAttributes,
-          // specific settings that only make sense on the outer level:
-          "ai.prompt": {
-            input: () => JSON.stringify({ system, prompt, messages })
-          },
-          "ai.schema": outputStrategy.jsonSchema != null ? { input: () => JSON.stringify(outputStrategy.jsonSchema) } : void 0,
-          "ai.schema.name": schemaName,
-          "ai.schema.description": schemaDescription,
-          "ai.settings.output": outputStrategy.type
-        }
-      }),
-      tracer,
-      fn: async (span) => {
-        var _a162;
-        let result;
-        let finishReason;
-        let usage;
-        let warnings;
-        let response;
-        let request;
-        let resultProviderMetadata;
-        let reasoning;
-        const standardizedPrompt = await standardizePrompt({
-          system,
-          prompt,
-          messages
-        });
-        const promptMessages = await convertToLanguageModelPrompt({
-          prompt: standardizedPrompt,
-          supportedUrls: await model.supportedUrls,
-          download: download2
-        });
-        const generateResult = await retry(
-          () => recordSpan({
-            name: "ai.generateObject.doGenerate",
-            attributes: selectTelemetryAttributes({
-              telemetry: telemetry2,
-              attributes: {
-                ...assembleOperationName({
-                  operationId: "ai.generateObject.doGenerate",
-                  telemetry: telemetry2
-                }),
-                ...baseTelemetryAttributes,
-                "ai.prompt.messages": {
-                  input: () => stringifyForTelemetry(promptMessages)
-                },
-                // standardized gen-ai llm span attributes:
-                "gen_ai.system": model.provider,
-                "gen_ai.request.model": model.modelId,
-                "gen_ai.request.frequency_penalty": callSettings.frequencyPenalty,
-                "gen_ai.request.max_tokens": callSettings.maxOutputTokens,
-                "gen_ai.request.presence_penalty": callSettings.presencePenalty,
-                "gen_ai.request.temperature": callSettings.temperature,
-                "gen_ai.request.top_k": callSettings.topK,
-                "gen_ai.request.top_p": callSettings.topP
-              }
-            }),
-            tracer,
-            fn: async (span2) => {
-              var _a17, _b8, _c, _d, _e, _f, _g, _h;
-              const result2 = await model.doGenerate({
-                responseFormat: {
-                  type: "json",
-                  schema: outputStrategy.jsonSchema,
-                  name: schemaName,
-                  description: schemaDescription
-                },
-                ...prepareCallSettings(settings),
-                prompt: promptMessages,
-                providerOptions,
-                abortSignal,
-                headers: headersWithUserAgent
-              });
-              const responseData = {
-                id: (_b8 = (_a17 = result2.response) == null ? void 0 : _a17.id) != null ? _b8 : generateId3(),
-                timestamp: (_d = (_c = result2.response) == null ? void 0 : _c.timestamp) != null ? _d : currentDate(),
-                modelId: (_f = (_e = result2.response) == null ? void 0 : _e.modelId) != null ? _f : model.modelId,
-                headers: (_g = result2.response) == null ? void 0 : _g.headers,
-                body: (_h = result2.response) == null ? void 0 : _h.body
-              };
-              const text2 = extractTextContent(result2.content);
-              const reasoning2 = extractReasoningContent(result2.content);
-              if (text2 === void 0) {
-                throw new NoObjectGeneratedError({
-                  message: "No object generated: the model did not return a response.",
-                  response: responseData,
-                  usage: result2.usage,
-                  finishReason: result2.finishReason
-                });
-              }
-              span2.setAttributes(
-                selectTelemetryAttributes({
-                  telemetry: telemetry2,
-                  attributes: {
-                    "ai.response.finishReason": result2.finishReason,
-                    "ai.response.object": { output: () => text2 },
-                    "ai.response.id": responseData.id,
-                    "ai.response.model": responseData.modelId,
-                    "ai.response.timestamp": responseData.timestamp.toISOString(),
-                    "ai.response.providerMetadata": JSON.stringify(
-                      result2.providerMetadata
-                    ),
-                    // TODO rename telemetry attributes to inputTokens and outputTokens
-                    "ai.usage.promptTokens": result2.usage.inputTokens,
-                    "ai.usage.completionTokens": result2.usage.outputTokens,
-                    // standardized gen-ai llm span attributes:
-                    "gen_ai.response.finish_reasons": [result2.finishReason],
-                    "gen_ai.response.id": responseData.id,
-                    "gen_ai.response.model": responseData.modelId,
-                    "gen_ai.usage.input_tokens": result2.usage.inputTokens,
-                    "gen_ai.usage.output_tokens": result2.usage.outputTokens
-                  }
-                })
-              );
-              return {
-                ...result2,
-                objectText: text2,
-                reasoning: reasoning2,
-                responseData
-              };
-            }
-          })
-        );
-        result = generateResult.objectText;
-        finishReason = generateResult.finishReason;
-        usage = generateResult.usage;
-        warnings = generateResult.warnings;
-        resultProviderMetadata = generateResult.providerMetadata;
-        request = (_a162 = generateResult.request) != null ? _a162 : {};
-        response = generateResult.responseData;
-        reasoning = generateResult.reasoning;
-        logWarnings(warnings);
-        const object2 = await parseAndValidateObjectResultWithRepair(
-          result,
-          outputStrategy,
-          repairText,
-          {
-            response,
-            usage,
-            finishReason
-          }
-        );
-        span.setAttributes(
-          selectTelemetryAttributes({
-            telemetry: telemetry2,
-            attributes: {
-              "ai.response.finishReason": finishReason,
-              "ai.response.object": {
-                output: () => JSON.stringify(object2)
-              },
-              "ai.response.providerMetadata": JSON.stringify(
-                resultProviderMetadata
-              ),
-              // TODO rename telemetry attributes to inputTokens and outputTokens
-              "ai.usage.promptTokens": usage.inputTokens,
-              "ai.usage.completionTokens": usage.outputTokens
-            }
-          })
-        );
-        return new DefaultGenerateObjectResult({
-          object: object2,
-          reasoning,
-          finishReason,
-          usage,
-          warnings,
-          request,
-          response,
-          providerMetadata: resultProviderMetadata
-        });
-      }
-    });
-  } catch (error) {
-    throw wrapGatewayError(error);
-  }
-}
-var DefaultGenerateObjectResult = class {
-  constructor(options) {
-    this.object = options.object;
-    this.finishReason = options.finishReason;
-    this.usage = options.usage;
-    this.warnings = options.warnings;
-    this.providerMetadata = options.providerMetadata;
-    this.response = options.response;
-    this.request = options.request;
-    this.reasoning = options.reasoning;
-  }
-  toJsonResponse(init) {
-    var _a162;
-    return new Response(JSON.stringify(this.object), {
-      status: (_a162 = init == null ? void 0 : init.status) != null ? _a162 : 200,
-      headers: prepareHeaders(init == null ? void 0 : init.headers, {
-        "content-type": "application/json; charset=utf-8"
-      })
-    });
-  }
-};
-var originalGenerateId4 = createIdGenerator({ prefix: "aiobj", size: 24 });
-var output_exports = {};
-__export2(output_exports, {
-  object: () => object,
-  text: () => text
-});
-var text = () => ({
-  type: "text",
-  responseFormat: { type: "text" },
-  async parsePartial({ text: text2 }) {
-    return { partial: text2 };
-  },
-  async parseOutput({ text: text2 }) {
-    return text2;
-  }
-});
-var object = ({
-  schema: inputSchema
-}) => {
-  const schema = asSchema(inputSchema);
-  return {
-    type: "object",
-    responseFormat: {
-      type: "json",
-      schema: schema.jsonSchema
-    },
-    async parsePartial({ text: text2 }) {
-      const result = await parsePartialJson(text2);
-      switch (result.state) {
-        case "failed-parse":
-        case "undefined-input":
-          return void 0;
-        case "repaired-parse":
-        case "successful-parse":
-          return {
-            // Note: currently no validation of partial results:
-            partial: result.value
-          };
-        default: {
-          const _exhaustiveCheck = result.state;
-          throw new Error(`Unsupported parse state: ${_exhaustiveCheck}`);
-        }
-      }
-    },
-    async parseOutput({ text: text2 }, context) {
-      const parseResult = await safeParseJSON({ text: text2 });
-      if (!parseResult.success) {
-        throw new NoObjectGeneratedError({
-          message: "No object generated: could not parse the response.",
-          cause: parseResult.error,
-          text: text2,
-          response: context.response,
-          usage: context.usage,
-          finishReason: context.finishReason
-        });
-      }
-      const validationResult = await safeValidateTypes({
-        value: parseResult.value,
-        schema
-      });
-      if (!validationResult.success) {
-        throw new NoObjectGeneratedError({
-          message: "No object generated: response did not match schema.",
-          cause: validationResult.error,
-          text: text2,
-          response: context.response,
-          usage: context.usage,
-          finishReason: context.finishReason
-        });
-      }
-      return validationResult.value;
-    }
-  };
-};
-var name152 = "AI_NoSuchProviderError";
-var marker152 = `vercel.ai.error.${name152}`;
-var symbol152 = Symbol.for(marker152);
-var _a152;
-_a152 = symbol152;
-var uiMessagesSchema = lazyValidator(
-  () => zodSchema(
-    z82.array(
-      z82.object({
-        id: z82.string(),
-        role: z82.enum(["system", "user", "assistant"]),
-        metadata: z82.unknown().optional(),
-        parts: z82.array(
-          z82.union([
-            z82.object({
-              type: z82.literal("text"),
-              text: z82.string(),
-              state: z82.enum(["streaming", "done"]).optional(),
-              providerMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("reasoning"),
-              text: z82.string(),
-              state: z82.enum(["streaming", "done"]).optional(),
-              providerMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("source-url"),
-              sourceId: z82.string(),
-              url: z82.string(),
-              title: z82.string().optional(),
-              providerMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("source-document"),
-              sourceId: z82.string(),
-              mediaType: z82.string(),
-              title: z82.string(),
-              filename: z82.string().optional(),
-              providerMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("file"),
-              mediaType: z82.string(),
-              filename: z82.string().optional(),
-              url: z82.string(),
-              providerMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("step-start")
-            }),
-            z82.object({
-              type: z82.string().startsWith("data-"),
-              id: z82.string().optional(),
-              data: z82.unknown()
-            }),
-            z82.object({
-              type: z82.literal("dynamic-tool"),
-              toolName: z82.string(),
-              toolCallId: z82.string(),
-              state: z82.literal("input-streaming"),
-              input: z82.unknown().optional(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional()
-            }),
-            z82.object({
-              type: z82.literal("dynamic-tool"),
-              toolName: z82.string(),
-              toolCallId: z82.string(),
-              state: z82.literal("input-available"),
-              input: z82.unknown(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.literal("dynamic-tool"),
-              toolName: z82.string(),
-              toolCallId: z82.string(),
-              state: z82.literal("output-available"),
-              input: z82.unknown(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.unknown(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              preliminary: z82.boolean().optional()
-            }),
-            z82.object({
-              type: z82.literal("dynamic-tool"),
-              toolName: z82.string(),
-              toolCallId: z82.string(),
-              state: z82.literal("output-error"),
-              input: z82.unknown(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.never().optional(),
-              errorText: z82.string(),
-              callProviderMetadata: providerMetadataSchema.optional()
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("input-streaming"),
-              providerExecuted: z82.boolean().optional(),
-              input: z82.unknown().optional(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              approval: z82.never().optional()
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("input-available"),
-              providerExecuted: z82.boolean().optional(),
-              input: z82.unknown(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              approval: z82.never().optional()
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("approval-requested"),
-              input: z82.unknown(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              approval: z82.object({
-                id: z82.string(),
-                approved: z82.never().optional(),
-                reason: z82.never().optional()
-              })
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("approval-responded"),
-              input: z82.unknown(),
-              providerExecuted: z82.boolean().optional(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              approval: z82.object({
-                id: z82.string(),
-                approved: z82.boolean(),
-                reason: z82.string().optional()
-              })
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("output-available"),
-              providerExecuted: z82.boolean().optional(),
-              input: z82.unknown(),
-              output: z82.unknown(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              preliminary: z82.boolean().optional(),
-              approval: z82.object({
-                id: z82.string(),
-                approved: z82.literal(true),
-                reason: z82.string().optional()
-              }).optional()
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("output-error"),
-              providerExecuted: z82.boolean().optional(),
-              input: z82.unknown(),
-              output: z82.never().optional(),
-              errorText: z82.string(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              approval: z82.object({
-                id: z82.string(),
-                approved: z82.literal(true),
-                reason: z82.string().optional()
-              }).optional()
-            }),
-            z82.object({
-              type: z82.string().startsWith("tool-"),
-              toolCallId: z82.string(),
-              state: z82.literal("output-denied"),
-              providerExecuted: z82.boolean().optional(),
-              input: z82.unknown(),
-              output: z82.never().optional(),
-              errorText: z82.never().optional(),
-              callProviderMetadata: providerMetadataSchema.optional(),
-              approval: z82.object({
-                id: z82.string(),
-                approved: z82.literal(false),
-                reason: z82.string().optional()
-              })
-            })
-          ])
-        ).nonempty("Message must contain at least one part")
-      })
-    ).nonempty("Messages array must not be empty")
-  )
-);
-
 // src/node/services/workspaceTitleGenerator.ts
+init_dist11();
 import { z as z28 } from "zod";
 
 // src/node/services/log.ts
@@ -24347,8 +31506,11 @@ function parseBoolEnv(value2) {
 // src/common/constants/paths.ts
 import { homedir } from "os";
 import { join } from "path";
-var UNIX_DIR_NAME = ".unix";
+var UNIX_DIR_NAME = ".lattice";
 function getUnixHome() {
+  if (process.env.LATTICE_ROOT) {
+    return process.env.LATTICE_ROOT;
+  }
   if (process.env.UNIX_ROOT) {
     return process.env.UNIX_ROOT;
   }
@@ -24396,10 +31558,10 @@ var chalkGray = typeof source_default.gray === "function" ? source_default.gray 
 var chalkRed = typeof source_default.red === "function" ? source_default.red : (text2) => text2;
 var chalkYellow = typeof source_default.yellow === "function" ? source_default.yellow : (text2) => text2;
 function getTimestamp() {
-  const now = /* @__PURE__ */ new Date();
-  let hours = now.getHours();
-  const minutes = now.getMinutes();
-  const milliseconds = now.getMilliseconds();
+  const now2 = /* @__PURE__ */ new Date();
+  let hours = now2.getHours();
+  const minutes = now2.getMinutes();
+  const milliseconds = now2.getMilliseconds();
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
   hours = hours ? hours : 12;
@@ -24667,32 +31829,33 @@ function parseBedrockModelName(modelId) {
 
 // src/common/constants/knownModels.ts
 var MODEL_DEFINITIONS = {
-  COPILOT_SONNET: {
-    provider: "github-copilot",
-    providerModelId: "claude-sonnet-4.5",
-    aliases: ["copilot", "copilot-sonnet"],
-    warm: true,
-    tokenizerOverride: "anthropic/claude-sonnet-4.5"
-  },
-  COPILOT_GPT: {
-    provider: "github-copilot",
-    providerModelId: "gpt-4o",
-    aliases: ["copilot-gpt"],
-    warm: true,
-    tokenizerOverride: "openai/gpt-5"
-  },
-  // Direct Copilot API (non-airgapped environments)
+  // Direct Copilot API (default - works in most environments)
   COPILOT_DIRECT_SONNET: {
     provider: "github-copilot-direct",
     providerModelId: "claude-sonnet-4.5",
-    aliases: ["copilot-direct", "copilot-direct-sonnet"],
-    warm: false,
+    aliases: ["copilot", "copilot-sonnet", "copilot-direct"],
+    warm: true,
     tokenizerOverride: "anthropic/claude-sonnet-4.5"
   },
   COPILOT_DIRECT_GPT: {
     provider: "github-copilot-direct",
     providerModelId: "gpt-4o",
-    aliases: ["copilot-direct-gpt"],
+    aliases: ["copilot-gpt", "copilot-direct-gpt"],
+    warm: true,
+    tokenizerOverride: "openai/gpt-5"
+  },
+  // VS Code LM Proxy mode (for airgapped environments)
+  COPILOT_PROXY_SONNET: {
+    provider: "github-copilot",
+    providerModelId: "claude-sonnet-4.5",
+    aliases: ["copilot-proxy", "copilot-proxy-sonnet"],
+    warm: false,
+    tokenizerOverride: "anthropic/claude-sonnet-4.5"
+  },
+  COPILOT_PROXY_GPT: {
+    provider: "github-copilot",
+    providerModelId: "gpt-4o",
+    aliases: ["copilot-proxy-gpt"],
     warm: false,
     tokenizerOverride: "openai/gpt-5"
   },
@@ -24792,7 +31955,7 @@ function toKnownModelEntry(key, definition) {
 function getKnownModel(key) {
   return KNOWN_MODELS[key];
 }
-var DEFAULT_MODEL_KEY = "COPILOT_SONNET";
+var DEFAULT_MODEL_KEY = "COPILOT_DIRECT_SONNET";
 var DEFAULT_MODEL = KNOWN_MODELS[DEFAULT_MODEL_KEY].id;
 var DEFAULT_WARM_MODELS = Object.values(KNOWN_MODELS).filter((model) => model.warm).map((model) => model.id);
 var MODEL_ABBREVIATIONS = Object.fromEntries(
@@ -24824,7 +31987,12 @@ var MODEL_ABBREVIATION_EXAMPLES = ["opus", "sonnet"].map((abbrev) => ({
 }));
 
 // src/node/services/workspaceTitleGenerator.ts
-var DEFAULT_NAME_GENERATION_MODELS = [getKnownModel("HAIKU").id, getKnownModel("GPT_MINI").id];
+var DEFAULT_NAME_GENERATION_MODELS = [
+  getKnownModel("COPILOT_DIRECT_SONNET").id,
+  getKnownModel("COPILOT_DIRECT_GPT").id,
+  getKnownModel("HAIKU").id,
+  getKnownModel("GPT_MINI").id
+];
 var workspaceIdentitySchema = z28.object({
   name: z28.string().regex(/^[a-z0-9-]+$/).min(2).max(20).describe(
     "Codebase area (1-2 words): lowercase, hyphens only, e.g. 'sidebar', 'auth', 'config'"
@@ -24882,25 +32050,59 @@ async function generateWorkspaceIdentity(message, modelString, aiService) {
     if (!modelResult.success) {
       return Err(modelResult.error);
     }
-    const result = await generateObject({
-      model: modelResult.data,
-      schema: workspaceIdentitySchema,
-      mode: "json",
-      prompt: `Generate a workspace name and title for this development task:
+    try {
+      const result = await generateObject({
+        model: modelResult.data,
+        schema: workspaceIdentitySchema,
+        mode: "json",
+        prompt: `Generate a workspace name and title for this development task:
 
 "${message}"
 
 Requirements:
 - name: The area of the codebase being worked on (1-2 words, git-safe: lowercase, hyphens only). Random bytes will be appended for uniqueness, so focus on the area not the specific task. Examples: "sidebar", "auth", "config", "api"
 - title: A 2-5 word description in verb-noun format. Examples: "Fix plan mode", "Add user authentication", "Refactor sidebar layout"`
-    });
-    const suffix = generateNameSuffix();
-    const sanitizedName = sanitizeBranchName(result.object.name, 20);
-    const nameWithSuffix = `${sanitizedName}-${suffix}`;
-    return Ok({
-      name: nameWithSuffix,
-      title: result.object.title.trim()
-    });
+      });
+      const suffix = generateNameSuffix();
+      const sanitizedName = sanitizeBranchName(result.object.name, 20);
+      const nameWithSuffix = `${sanitizedName}-${suffix}`;
+      return Ok({
+        name: nameWithSuffix,
+        title: result.object.title.trim()
+      });
+    } catch (structuredError) {
+      log.debug("Structured output failed, trying text fallback", { error: structuredError });
+      const { generateText: generateText2 } = await Promise.resolve().then(() => (init_dist11(), dist_exports2));
+      const textResult = await generateText2({
+        model: modelResult.data,
+        prompt: `Generate a workspace name and title for this development task. Respond ONLY with a JSON object, no other text:
+
+Task: "${message}"
+
+Requirements:
+- name: The area of the codebase being worked on (1-2 words, git-safe: lowercase letters and hyphens only). Examples: "sidebar", "auth", "config", "api"
+- title: A 2-5 word description in verb-noun format. Examples: "Fix plan mode", "Add user authentication"
+
+Respond with ONLY this JSON format:
+{"name": "area-name", "title": "Short Task Title"}`
+      });
+      const text2 = textResult.text.trim();
+      const jsonMatch = text2.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Could not find JSON in response");
+      }
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed.name || !parsed.title) {
+        throw new Error("Missing name or title in response");
+      }
+      const suffix = generateNameSuffix();
+      const sanitizedName = sanitizeBranchName(parsed.name, 20);
+      const nameWithSuffix = `${sanitizedName}-${suffix}`;
+      return Ok({
+        name: nameWithSuffix,
+        title: parsed.title.trim()
+      });
+    }
   } catch (error) {
     const messageText = error instanceof Error ? error.message : String(error);
     log.error("Failed to generate workspace identity with AI", error);
@@ -25017,7 +32219,7 @@ function hasSrcBaseDir(config2) {
 
 // src/node/runtime/initHook.ts
 async function checkInitHookExists(projectPath) {
-  const hookPath = path2.join(projectPath, ".unix", "init");
+  const hookPath = path2.join(projectPath, ".lattice", "init");
   try {
     await fsPromises.access(hookPath, fs2.constants.X_OK);
     return true;
@@ -25026,7 +32228,7 @@ async function checkInitHookExists(projectPath) {
   }
 }
 function getInitHookPath(projectPath) {
-  return path2.join(projectPath, ".unix", "init");
+  return path2.join(projectPath, ".lattice", "init");
 }
 function getUnixEnv(projectPath, runtime, workspaceName, options) {
   if (!projectPath) {
@@ -25321,8 +32523,8 @@ function getBashPath(params = {}) {
     return cachedBashPath;
   }
   const nowFn = params.nowFn ?? Date.now;
-  const now = nowFn();
-  if (cachedBashPathError && now - cachedBashPathError.lastCheckedMs < BASH_PATH_ERROR_COOLDOWN_MS) {
+  const now2 = nowFn();
+  if (cachedBashPathError && now2 - cachedBashPathError.lastCheckedMs < BASH_PATH_ERROR_COOLDOWN_MS) {
     throw new Error(cachedBashPathError.message);
   }
   try {
@@ -25336,7 +32538,7 @@ function getBashPath(params = {}) {
     return cachedBashPath;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    cachedBashPathError = { message, lastCheckedMs: now };
+    cachedBashPathError = { message, lastCheckedMs: now2 };
     throw error;
   }
 }
@@ -26140,7 +33342,7 @@ async function getCurrentBranch(projectPath) {
 }
 
 // src/common/utils/planStorage.ts
-var DEFAULT_UNIX_HOME = "~/.unix";
+var DEFAULT_UNIX_HOME = "~/.lattice";
 function getPlanFilePath(workspaceName, projectName, unixHome = DEFAULT_UNIX_HOME) {
   return `${unixHome}/plans/${projectName}/${workspaceName}.md`;
 }
@@ -28141,14 +35343,14 @@ var LatticeSSHRuntime = class extends SSHRuntime {
     super(baseConfig, transport);
     /**
      * Timestamp of last time we (a) successfully used the runtime or (b) decided not
-     * to block the user (unknown Coder CLI error).
+     * to block the user (unknown Lattice CLI error).
      * Used to avoid running expensive status checks on every message while still
-     * catching auto-stopped workspaces after long inactivity.
+     * catching auto-stopped agents after long inactivity.
      */
     this.lastActivityAtMs = 0;
     /**
      * Flags for WorkspaceService to customize create flow:
-     * - deferredRuntimeAccess: skip srcBaseDir resolution (Coder host doesn't exist yet)
+     * - deferredRuntimeAccess: skip srcBaseDir resolution (Lattice host doesn't exist yet)
      * - configLevelCollisionDetection: use config-based collision check (can't reach host)
      */
     this.createFlags = {
@@ -28181,8 +35383,8 @@ var LatticeSSHRuntime = class extends SSHRuntime {
         errorType: "runtime_not_ready"
       };
     }
-    const now = Date.now();
-    if (this.lastActivityAtMs !== 0 && now - this.lastActivityAtMs < LATTICE_INACTIVITY_THRESHOLD_MS) {
+    const now2 = Date.now();
+    if (this.lastActivityAtMs !== 0 && now2 - this.lastActivityAtMs < LATTICE_INACTIVITY_THRESHOLD_MS) {
       return { ready: true };
     }
     if (this.ensureReadyPromise) {
@@ -28383,7 +35585,7 @@ var LatticeSSHRuntime = class extends SSHRuntime {
     return Promise.resolve(
       Ok({
         ...config2,
-        host: `${workspaceName}.lattice`,
+        host: `lattice.${workspaceName}`,
         lattice: { ...latticeConf, workspaceName }
       })
     );
@@ -28406,7 +35608,7 @@ var LatticeSSHRuntime = class extends SSHRuntime {
     const exists = await this.latticeService.workspaceExists(workspaceName);
     if (exists) {
       return Err(
-        `A Lattice workspace named "${workspaceName}" already exists. Either switch to "Existing" mode to use it, delete/rename it in Coder, or choose a different unix workspace name.`
+        `A Lattice agent named "${workspaceName}" already exists. Either switch to "Existing" mode to use it, delete/rename it in Lattice, or choose a different unix workspace name.`
       );
     }
     return Ok(void 0);
@@ -28418,7 +35620,7 @@ var LatticeSSHRuntime = class extends SSHRuntime {
    */
   createWorkspace(params) {
     const workspacePath = this.getWorkspacePath(params.projectPath, params.directoryName);
-    params.initLogger.logStep("Workspace path computed (Coder provisioning will follow)");
+    params.initLogger.logStep("Workspace path computed (Lattice provisioning will follow)");
     return Promise.resolve({
       success: true,
       workspacePath
@@ -28481,7 +35683,7 @@ var LatticeSSHRuntime = class extends SSHRuntime {
       }
       return {
         success: false,
-        error: `SSH delete failed: ${sshResult.error}; Coder delete also failed: ${message}`
+        error: `SSH delete failed: ${sshResult.error}; Lattice delete also failed: ${message}`
       };
     }
     return sshResult;
@@ -28497,10 +35699,10 @@ var LatticeSSHRuntime = class extends SSHRuntime {
   async forkWorkspace(params) {
     const result = await super.forkWorkspace(params);
     if (!result.success) return result;
-    const sharedCoderConfig = { ...this.latticeConfig, existingWorkspace: true };
-    this.latticeConfig = sharedCoderConfig;
+    const sharedLatticeConfig = { ...this.latticeConfig, existingWorkspace: true };
+    this.latticeConfig = sharedLatticeConfig;
     const sshConfig = this.getConfig();
-    const sharedRuntimeConfig = { type: "ssh", ...sshConfig, lattice: sharedCoderConfig };
+    const sharedRuntimeConfig = { type: "ssh", ...sshConfig, lattice: sharedLatticeConfig };
     return {
       ...result,
       forkedRuntimeConfig: sharedRuntimeConfig,
@@ -28519,7 +35721,7 @@ var LatticeSSHRuntime = class extends SSHRuntime {
         throw new Error("Lattice workspace name is required (should be set by finalizeConfig)");
       }
       if (!this.latticeConfig.template) {
-        throw new Error("Coder template is required for new workspaces");
+        throw new Error("Lattice template is required for new agents");
       }
       initLogger.logStep(`Creating Lattice workspace "${latticeWorkspaceName}"...`);
       try {
@@ -28578,14 +35780,14 @@ var LatticeSSHRuntime = class extends SSHRuntime {
         throw new Error(`Failed connecting to Lattice workspace: ${errorMsg}`);
       }
     }
-    initLogger.logStep("Configuring SSH for Coder...");
+    initLogger.logStep("Configuring SSH for Lattice...");
     try {
       await this.latticeService.ensureSSHConfig();
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      log.error("Failed to configure SSH for Coder", { error });
+      log.error("Failed to configure SSH for Lattice", { error });
       initLogger.logStderr(`Failed to configure SSH: ${errorMsg}`);
-      throw new Error(`Failed to configure SSH for Coder: ${errorMsg}`);
+      throw new Error(`Failed to configure SSH for Lattice: ${errorMsg}`);
     }
     initLogger.logStep("Preparing workspace directory...");
     const parentDir = path9.posix.dirname(params.workspacePath);
@@ -29458,14 +36660,14 @@ var SSH2ConnectionPool = class {
   }
   reportFailure(config2, errorMessage) {
     const key = makeConnectionKey2(config2);
-    const now = /* @__PURE__ */ new Date();
+    const now2 = /* @__PURE__ */ new Date();
     const current = this.health.get(key);
     const failures = (current?.consecutiveFailures ?? 0) + 1;
     const backoffIndex = Math.min(failures - 1, BACKOFF_SCHEDULE2.length - 1);
     const backoffSeconds = withJitter2(BACKOFF_SCHEDULE2[backoffIndex]);
     this.health.set(key, {
       status: "unhealthy",
-      lastFailure: now,
+      lastFailure: now2,
       lastError: errorMessage,
       consecutiveFailures: failures,
       backoffUntil: new Date(Date.now() + backoffSeconds * 1e3),
@@ -31598,7 +38800,7 @@ var DevcontainerRuntime = class extends LocalBaseRuntime {
     if (!workspaceRoot) {
       return super.tempDir();
     }
-    const tmpPath = this.remoteWorkspaceFolder ? path15.posix.join(workspaceRoot, ".unix", "tmp") : path15.join(workspaceRoot, ".unix", "tmp");
+    const tmpPath = this.remoteWorkspaceFolder ? path15.posix.join(workspaceRoot, ".lattice", "tmp") : path15.join(workspaceRoot, ".lattice", "tmp");
     return Promise.resolve(tmpPath);
   }
   /**
@@ -32142,7 +39344,7 @@ function normalizeAgentAiDefaults(raw) {
 // src/common/constants/workspace.ts
 var DEFAULT_RUNTIME_CONFIG = {
   type: "worktree",
-  srcBaseDir: "~/.unix/src"
+  srcBaseDir: "~/.lattice/src"
 };
 
 // src/common/utils/paths.ts

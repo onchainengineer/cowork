@@ -67,7 +67,7 @@ export interface ToolConfiguration {
    * Used for streaming bash stdout/stderr to the UI without sending it to the model.
    */
   emitChatEvent?: (event: WorkspaceChatMessage) => void;
-  /** Workspace session directory (e.g. ~/.unix/sessions/<workspaceId>) for persistent tool state */
+  /** Workspace session directory (e.g. ~/.lattice/sessions/<workspaceId>) for persistent tool state */
   workspaceSessionDir?: string;
   /** Workspace ID for tracking background processes and plan storage */
   workspaceId?: string;
@@ -203,9 +203,9 @@ function wrapToolsWithModelOnlyNotifications(
  * Wrap tools with hook support.
  *
  * If any of these exist, each tool execution is wrapped:
- * - `.unix/tool_pre` (pre-hook)
- * - `.unix/tool_post` (post-hook)
- * - `.unix/tool_hook` (legacy pre+post)
+ * - `.lattice/tool_pre` (pre-hook)
+ * - `.lattice/tool_post` (post-hook)
+ * - `.lattice/tool_hook` (legacy pre+post)
  */
 function wrapToolsWithHooks(
   tools: Record<string, Tool>,

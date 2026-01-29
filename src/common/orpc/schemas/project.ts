@@ -94,7 +94,7 @@ export const WorkspaceConfigSchema = z.object({
   }),
   mcp: WorkspaceMCPOverridesSchema.optional().meta({
     description:
-      "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.unix/mcp.local.jsonc)",
+      "LEGACY: Per-workspace MCP overrides (migrated to <workspace>/.lattice/mcp.local.jsonc)",
   }),
   archivedAt: z.string().optional().meta({
     description:

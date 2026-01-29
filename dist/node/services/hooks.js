@@ -106,14 +106,14 @@ function joinPathLike(basePath, ...parts) {
  */
 async function getHookPath(runtime, projectDir) {
     // Check project-level hook first
-    const projectHook = joinPathLike(projectDir, ".unix", HOOK_FILENAME);
+    const projectHook = joinPathLike(projectDir, ".lattice", HOOK_FILENAME);
     if (await isFile(runtime, projectHook)) {
         return projectHook;
     }
     // Fall back to user-level hook (resolve ~ for SSH compatibility)
     try {
         const homeDir = await runtime.resolvePath("~");
-        const userHook = joinPathLike(homeDir, ".unix", HOOK_FILENAME);
+        const userHook = joinPathLike(homeDir, ".lattice", HOOK_FILENAME);
         if (await isFile(runtime, userHook)) {
             return userHook;
         }
@@ -130,14 +130,14 @@ async function getHookPath(runtime, projectDir) {
  */
 async function getToolEnvPath(runtime, projectDir) {
     // Check project-level tool_env first
-    const projectEnv = joinPathLike(projectDir, ".unix", TOOL_ENV_FILENAME);
+    const projectEnv = joinPathLike(projectDir, ".lattice", TOOL_ENV_FILENAME);
     if (await isFile(runtime, projectEnv)) {
         return projectEnv;
     }
     // Fall back to user-level tool_env (resolve ~ for SSH compatibility)
     try {
         const homeDir = await runtime.resolvePath("~");
-        const userEnv = joinPathLike(homeDir, ".unix", TOOL_ENV_FILENAME);
+        const userEnv = joinPathLike(homeDir, ".lattice", TOOL_ENV_FILENAME);
         if (await isFile(runtime, userEnv)) {
             return userEnv;
         }
@@ -153,13 +153,13 @@ async function getToolEnvPath(runtime, projectDir) {
  * Returns null if no tool_pre exists.
  */
 async function getPreHookPath(runtime, projectDir) {
-    const projectHook = joinPathLike(projectDir, ".unix", PRE_HOOK_FILENAME);
+    const projectHook = joinPathLike(projectDir, ".lattice", PRE_HOOK_FILENAME);
     if (await isFile(runtime, projectHook)) {
         return projectHook;
     }
     try {
         const homeDir = await runtime.resolvePath("~");
-        const userHook = joinPathLike(homeDir, ".unix", PRE_HOOK_FILENAME);
+        const userHook = joinPathLike(homeDir, ".lattice", PRE_HOOK_FILENAME);
         if (await isFile(runtime, userHook)) {
             return userHook;
         }
@@ -175,13 +175,13 @@ async function getPreHookPath(runtime, projectDir) {
  * Returns null if no tool_post exists.
  */
 async function getPostHookPath(runtime, projectDir) {
-    const projectHook = joinPathLike(projectDir, ".unix", POST_HOOK_FILENAME);
+    const projectHook = joinPathLike(projectDir, ".lattice", POST_HOOK_FILENAME);
     if (await isFile(runtime, projectHook)) {
         return projectHook;
     }
     try {
         const homeDir = await runtime.resolvePath("~");
-        const userHook = joinPathLike(homeDir, ".unix", POST_HOOK_FILENAME);
+        const userHook = joinPathLike(homeDir, ".lattice", POST_HOOK_FILENAME);
         if (await isFile(runtime, userHook)) {
             return userHook;
         }

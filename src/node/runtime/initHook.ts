@@ -19,7 +19,7 @@ import type { ThinkingLevel } from "@/common/types/thinking";
  * @returns true if hook exists and is executable, false otherwise
  */
 export async function checkInitHookExists(projectPath: string): Promise<boolean> {
-  const hookPath = path.join(projectPath, ".unix", "init");
+  const hookPath = path.join(projectPath, ".lattice", "init");
 
   try {
     await fsPromises.access(hookPath, fs.constants.X_OK);
@@ -33,7 +33,7 @@ export async function checkInitHookExists(projectPath: string): Promise<boolean>
  * Get the init hook path for a project
  */
 export function getInitHookPath(projectPath: string): string {
-  return path.join(projectPath, ".unix", "init");
+  return path.join(projectPath, ".lattice", "init");
 }
 
 /**

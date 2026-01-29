@@ -160,9 +160,9 @@ function wrapToolsWithModelOnlyNotifications(tools, config) {
  * Wrap tools with hook support.
  *
  * If any of these exist, each tool execution is wrapped:
- * - `.unix/tool_pre` (pre-hook)
- * - `.unix/tool_post` (post-hook)
- * - `.unix/tool_hook` (legacy pre+post)
+ * - `.lattice/tool_pre` (pre-hook)
+ * - `.lattice/tool_post` (post-hook)
+ * - `.lattice/tool_hook` (legacy pre+post)
  */
 function wrapToolsWithHooks(tools, config) {
     // Hooks require workspaceId, cwd, and runtime

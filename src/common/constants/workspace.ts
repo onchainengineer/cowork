@@ -7,5 +7,5 @@ import type { RuntimeConfig } from "@/common/types/runtime";
  */
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   type: "worktree",
-  srcBaseDir: "~/.unix/src",
+  srcBaseDir: "~/.lattice/src",
 } as const;

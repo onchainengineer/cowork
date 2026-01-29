@@ -125,7 +125,7 @@ export function gitStatusCommand(workspaceId?: string) {
   console.log(`Found ${workspaces.length} workspaces\n`);
 
   if (workspaces.length === 0) {
-    console.log("No workspaces found! Check that ~/.unix/src/ contains workspace directories.");
+    console.log("No workspaces found! Check that ~/.lattice/src/ contains workspace directories.");
     process.exit(1);
   }
 

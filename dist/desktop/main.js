@@ -576,7 +576,7 @@ if (gotTheLock) {
     void electron_1.app.whenReady().then(async () => {
         try {
             console.log("App ready, creating window...");
-            // Migrate from .cmux to .unix directory structure if needed
+            // Migrate from .unix to .lattice directory structure if needed
             (0, paths_1.migrateLegacyUnixHome)();
             // Install React DevTools in development
             if (!electron_1.app.isPackaged) {

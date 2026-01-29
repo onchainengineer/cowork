@@ -436,7 +436,7 @@ exports.TOOL_DEFINITIONS = {
     },
     agent_skill_read: {
         description: "Load an Agent Skill's SKILL.md (YAML frontmatter + markdown body) by name. " +
-            "Skills are discovered from <projectRoot>/.unix/skills/<name>/SKILL.md and ~/.unix/skills/<name>/SKILL.md.",
+            "Skills are discovered from <projectRoot>/.lattice/skills/<name>/SKILL.md and ~/.lattice/skills/<name>/SKILL.md.",
         schema: zod_1.z
             .object({
             name: schemas_1.SkillNameSchema.describe("Skill name (directory name under the skills root)"),
