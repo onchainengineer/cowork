@@ -250,6 +250,7 @@ const webviewBuild = {
   },
   bundle: true,
   outdir: "out",
+  external: ["fs", "path", "os", "crypto", "child_process", "net", "tls", "http", "https", "stream", "zlib", "util", "events", "buffer", "url", "assert", "querystring"],
   platform: "browser",
   jsx: "automatic",
   format: "esm",
