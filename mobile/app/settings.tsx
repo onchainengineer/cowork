@@ -95,7 +95,7 @@ export default function Settings(): JSX.Element {
             variant="caption"
             style={{ marginTop: spacing.xs, color: theme.colors.foregroundMuted }}
           >
-            Tip: Set UNIX_SERVER_AUTH_TOKEN on the server and pass the token here. The app forwards
+            Tip: Set LATTICE_SERVER_AUTH_TOKEN on the server and pass the token here. The app forwards
             it as a query parameter on WebSocket connections.
           </ThemedText>
         </View>

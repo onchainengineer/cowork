@@ -33,7 +33,7 @@ program
 const options = program.opts();
 const HOST = options.host as string;
 const PORT = Number.parseInt(String(options.port), 10);
-const rawAuthToken = (options.authToken as string | undefined) ?? process.env.UNIX_SERVER_AUTH_TOKEN;
+const rawAuthToken = (options.authToken as string | undefined) ?? process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN;
 const AUTH_TOKEN = rawAuthToken?.trim() ? rawAuthToken.trim() : undefined;
 const ADD_PROJECT_PATH = options.addProject as string | undefined;
 // SSH host for editor deep links (CLI flag > env var > config file, resolved later)

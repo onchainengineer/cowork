@@ -31,7 +31,7 @@ async function discoverServer(): Promise<ServerDiscovery> {
   if (process.env.UNIX_SERVER_URL) {
     return {
       baseUrl: process.env.UNIX_SERVER_URL,
-      authToken: process.env.UNIX_SERVER_AUTH_TOKEN,
+      authToken: process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN,
     };
   }
 
@@ -52,7 +52,7 @@ async function discoverServer(): Promise<ServerDiscovery> {
   // Priority 3: Default fallback (standalone server on default port)
   return {
     baseUrl: "http://localhost:3000",
-    authToken: process.env.UNIX_SERVER_AUTH_TOKEN,
+    authToken: process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN,
   };
 }
 

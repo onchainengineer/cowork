@@ -334,7 +334,7 @@ async function loadServices(): Promise<void> {
   await services.initialize();
 
   // Generate auth token (use env var or random per-session)
-  const authToken = process.env.UNIX_SERVER_AUTH_TOKEN ?? randomBytes(32).toString("hex");
+  const authToken = process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN ?? randomBytes(32).toString("hex");
 
   // Store auth token so the API server can be restarted via Settings.
   services.serverService.setApiAuthToken(authToken);
