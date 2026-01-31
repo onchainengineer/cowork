@@ -20,7 +20,7 @@ import { ModelRegistry } from "./modelRegistry";
 import { HfDownloader } from "./hfDownloader";
 import { PythonWorkerManager } from "./workerManager";
 import { LatticeLanguageModel } from "./latticeLanguageModel";
-import { detectPython, checkPythonDependencies, findWorkerScript } from "./backendDetection";
+import { detectPython, checkPythonDependencies } from "./backendDetection";
 import type { DownloadProgress, ModelInfo } from "./types";
 import { log } from "@/node/services/log";
 
@@ -68,27 +68,6 @@ export class InferenceService extends EventEmitter {
       log.warn("[inference] Python setup failed — local inference unavailable");
     }
   }
-
-  private async ensurePythonEnv(): Promise<void> {
-    const home = process.env.HOME ?? os.homedir();
-    const venvDir = path.join(home, ".lattice", "inference-venv");
-    if (fs.existsSync(path.join(venvDir, "bin", "python3"))) return;
-    log.info("[inference] creating venv");
-    let sysPy = "python3";
-    try { sysPy = execSync("which python3", { encoding: "utf-8" }).trim(); }
-    catch { return; }
-    try { execSync(sysPy + " -m venv " + venvDir, { encoding: "utf-8", timeout: 60000 }); }
-    catch { return; }
-    const pip = path.join(venvDir, "bin", "pip");
-    try {
-      if (process.platform === "darwin" && process.arch === "arm64") {
-        execSync(pip + " install mlx mlx-lm", { encoding: "utf-8", timeout: 300000 });
-      } else {
-        execSync(pip + " install llama-cpp-python", { encoding: "utf-8", timeout: 300000 });
-      }
-    } catch { /* non-fatal */ }
-  }
-
 
   /**
    * Whether local inference is available (Python + deps found).
