@@ -85,9 +85,9 @@ export const PROVIDER_DEFINITIONS = {
   },
   "lattice-inference": {
     displayName: "Lattice Inference",
-    import: () => import("@ai-sdk/openai"),
-    factoryName: "createOpenAI",
-    requiresApiKey: false, // Local on-device inference via latticeRuntime
+    import: () => Promise.resolve({}), // No external SDK — custom LanguageModelV2 via InferenceService
+    factoryName: "",
+    requiresApiKey: false, // Local on-device inference, no API key needed
   },
 } as const satisfies Record<string, ProviderDefinition>;
 

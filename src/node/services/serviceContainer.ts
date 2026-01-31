@@ -53,6 +53,7 @@ import { TaskService } from "@/node/services/taskService";
 import { getSigningService, type SigningService } from "@/node/services/signingService";
 import { latticeService, type LatticeService } from "@/node/services/latticeService";
 import { setGlobalLatticeService } from "@/node/runtime/runtimeFactory";
+import { InferenceService } from "@/node/services/inference";
 
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
 const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Hi, I'm Unix.
@@ -103,6 +104,7 @@ export class ServiceContainer {
   public readonly sessionUsageService: SessionUsageService;
   public readonly signingService: SigningService;
   public readonly latticeService: LatticeService;
+  public readonly inferenceService: InferenceService;
   private readonly initStateManager: InitStateManager;
   private readonly extensionMetadata: ExtensionMetadataService;
   private readonly ptyService: PTYService;
@@ -191,6 +193,10 @@ export class ServiceContainer {
     // Register globally so all createRuntime calls can create LatticeSSHRuntime
     setGlobalLatticeService(this.latticeService);
 
+    // Local on-device inference (Lattice Inference)
+    this.inferenceService = new InferenceService(config.rootDir);
+    this.aiService.setInferenceService(this.inferenceService);
+
     // Backend timing stats (behind feature flag).
     this.aiService.on("stream-start", (data: StreamStartEvent) =>
       this.sessionTimingService.handleStreamStart(data)
@@ -240,6 +246,11 @@ export class ServiceContainer {
     // Skip getLatticeInfo() to avoid caching "unavailable" if coder isn't installed yet
     void this.latticeService.ensureSSHConfig().catch(() => {
       // Ignore errors - coder may not be installed
+    });
+
+    // Initialize local inference (Python detection, backend availability)
+    void this.inferenceService.initialize().catch((err) => {
+      log.warn("[ServiceContainer] Inference service init failed (non-fatal)", { error: err });
     });
 
     // Ensure the built-in Chat with Unix system workspace exists.
@@ -330,6 +341,7 @@ export class ServiceContainer {
    */
   async shutdown(): Promise<void> {
     this.idleCompactionService.stop();
+    await this.inferenceService.dispose();
     await this.telemetryService.shutdown();
   }
 
@@ -347,6 +359,7 @@ export class ServiceContainer {
    */
   async dispose(): Promise<void> {
     this.mcpServerManager.dispose();
+    await this.inferenceService.dispose();
     await this.backgroundProcessManager.terminateAll();
   }
 }

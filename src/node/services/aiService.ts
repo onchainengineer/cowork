@@ -463,6 +463,7 @@ export class AIService extends EventEmitter {
   private lastLlmRequestByWorkspace = new Map<string, DebugLlmRequestSnapshot>();
   private taskService?: TaskService;
   private extraTools?: Record<string, Tool>;
+  private inferenceService?: import("@/node/services/inference").InferenceService;
 
   constructor(
     config: Config,
@@ -506,6 +507,10 @@ export class AIService extends EventEmitter {
 
   setTaskService(taskService: TaskService): void {
     this.taskService = taskService;
+  }
+
+  setInferenceService(service: import("@/node/services/inference").InferenceService): void {
+    this.inferenceService = service;
   }
 
   /**
@@ -885,22 +890,29 @@ export class AIService extends EventEmitter {
         return Ok(provider(modelId));
       }
 
-      // Handle Lattice Inference provider (local on-device inference via latticeRuntime)
+      // Handle Lattice Inference provider (local on-device inference via Python worker)
       if (providerName === "lattice-inference") {
-        const baseFetch = getProviderFetch(providerConfig);
+        if (!this.inferenceService) {
+          return Err({
+            type: "provider_not_supported",
+            provider: providerName,
+          });
+        }
 
-        // Lazy-load OpenAI-compatible SDK (latticeInference speaks OpenAI protocol)
-        const { createOpenAI } = await PROVIDER_REGISTRY["lattice-inference"]();
+        if (!this.inferenceService.isAvailable) {
+          return Err({
+            type: "runtime_not_ready",
+            message: "Python inference runtime not found. Install Python 3 and run: pip install mlx-lm",
+          });
+        }
 
-        // Default to latticeRuntime's inference API endpoint
-        const baseURL = providerConfig?.baseUrl || "http://localhost:7080/api/v2/inference";
+        // Load the model if not already loaded (or if a different model is requested)
+        const loadedId = this.inferenceService.loadedModelId;
+        if (!loadedId || loadedId !== modelId) {
+          await this.inferenceService.loadModel(modelId);
+        }
 
-        const provider = createOpenAI({
-          baseURL,
-          apiKey: "lattice-local", // latticeInference doesn't validate API keys
-          fetch: baseFetch,
-        });
-        return Ok(provider(modelId));
+        return Ok(this.inferenceService.getLanguageModel(modelId) as LanguageModel);
       }
 
       // Handle OpenRouter provider

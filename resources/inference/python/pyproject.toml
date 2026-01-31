@@ -1,0 +1,23 @@
+[project]
+name = "latticeinference-worker"
+version = "0.1.0"
+description = "latticeInference Python worker for MLX and llama.cpp backends"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+
+[project.optional-dependencies]
+mlx = ["mlx>=0.22.0", "mlx-lm>=0.22.0"]
+llamacpp = ["llama-cpp-python>=0.3.0"]
+all = ["mlx>=0.22.0", "mlx-lm>=0.22.0", "llama-cpp-python>=0.3.0"]
+dev = ["pytest>=8.0", "ruff>=0.8.0"]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
