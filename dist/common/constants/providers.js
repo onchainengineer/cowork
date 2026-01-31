@@ -108,6 +108,12 @@ exports.PROVIDER_DEFINITIONS = {
         factoryName: "createOllama",
         requiresApiKey: false, // Local service
     },
+    "lattice-inference": {
+        displayName: "Lattice Inference",
+        import: () => Promise.resolve({}), // No external SDK — custom LanguageModelV2 via InferenceService
+        factoryName: "",
+        requiresApiKey: false, // Local on-device inference, no API key needed
+    },
 };
 /**
  * Array of all supported provider names (for UI lists, iteration, etc.)

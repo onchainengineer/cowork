@@ -366,6 +366,7 @@ class AIService extends events_1.EventEmitter {
     lastLlmRequestByWorkspace = new Map();
     taskService;
     extraTools;
+    inferenceService;
     constructor(config, historyService, partialService, initStateManager, backgroundProcessManager, sessionUsageService, workspaceMcpOverridesService) {
         super();
         // Increase max listeners to accommodate multiple concurrent workspace listeners
@@ -397,6 +398,9 @@ class AIService extends events_1.EventEmitter {
     }
     setTaskService(taskService) {
         this.taskService = taskService;
+    }
+    setInferenceService(service) {
+        this.inferenceService = service;
     }
     /**
      * Set extra tools to include in every tool call.
@@ -718,6 +722,27 @@ class AIService extends events_1.EventEmitter {
                     compatibility: "strict",
                 });
                 return (0, result_1.Ok)(provider(modelId));
+            }
+            // Handle Lattice Inference provider (local on-device inference via Python worker)
+            if (providerName === "lattice-inference") {
+                if (!this.inferenceService) {
+                    return (0, result_1.Err)({
+                        type: "provider_not_supported",
+                        provider: providerName,
+                    });
+                }
+                if (!this.inferenceService.isAvailable) {
+                    return (0, result_1.Err)({
+                        type: "runtime_not_ready",
+                        message: "Python inference runtime not found. Install Python 3 and run: pip install mlx-lm",
+                    });
+                }
+                // Load the model if not already loaded (or if a different model is requested)
+                const loadedId = this.inferenceService.loadedModelId;
+                if (!loadedId || loadedId !== modelId) {
+                    await this.inferenceService.loadModel(modelId);
+                }
+                return (0, result_1.Ok)(this.inferenceService.getLanguageModel(modelId));
             }
             // Handle OpenRouter provider
             if (providerName === "openrouter") {

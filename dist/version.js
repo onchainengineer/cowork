@@ -4,8 +4,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VERSION = void 0;
 exports.VERSION = {
-    git_commit: "8bc1837f",
-    git_describe: "8bc1837f",
-    buildTime: "2026-01-29T09:35:20Z",
+    git_commit: "5b8807c1",
+    git_describe: "5b8807c1-dirty",
+    buildTime: "2026-01-31T13:38:18Z",
 };
 //# sourceMappingURL=version.js.map

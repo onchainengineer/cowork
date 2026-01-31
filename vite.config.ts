@@ -116,7 +116,9 @@ export default defineConfig(({ mode }) => {
       alias: aliasMap,
     },
     ...(isProfiling ? { define: { __PROFILE__: "true" } } : {}),
-    base: "./",
+    // When embedded in latticeRuntime, Mux is served at /app/*.
+    // Use env var to switch between standalone ("./") and embedded ("/app/") mode.
+    base: process.env.LATTICE_EMBED ? "/app/" : "./",
     build: {
       outDir: "dist",
       assetsDir: ".",

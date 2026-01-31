@@ -1,4 +1,4 @@
-import{createRequire}frommodule;globalThis.require=createRequire(import.meta.url);
+import{createRequire}from'module';globalThis.require=createRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -43943,7 +43943,7 @@ async function discoverServer() {
   if (process.env.UNIX_SERVER_URL) {
     return {
       baseUrl: process.env.UNIX_SERVER_URL,
-      authToken: process.env.UNIX_SERVER_AUTH_TOKEN
+      authToken: process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN
     };
   }
   try {
@@ -43959,7 +43959,7 @@ async function discoverServer() {
   }
   return {
     baseUrl: "http://localhost:3000",
-    authToken: process.env.UNIX_SERVER_AUTH_TOKEN
+    authToken: process.env.LATTICE_SERVER_AUTH_TOKEN ?? process.env.UNIX_SERVER_AUTH_TOKEN
   };
 }
 (async () => {

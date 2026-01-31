@@ -72,6 +72,7 @@ const taskService_1 = require("../../node/services/taskService");
 const signingService_1 = require("../../node/services/signingService");
 const latticeService_1 = require("../../node/services/latticeService");
 const runtimeFactory_1 = require("../../node/runtime/runtimeFactory");
+const inference_1 = require("../../node/services/inference");
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
 const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Hi, I'm Unix.
 
@@ -120,6 +121,7 @@ class ServiceContainer {
     sessionUsageService;
     signingService;
     latticeService;
+    inferenceService;
     initStateManager;
     extensionMetadata;
     ptyService;
@@ -173,6 +175,9 @@ class ServiceContainer {
         this.latticeService = latticeService_1.latticeService;
         // Register globally so all createRuntime calls can create LatticeSSHRuntime
         (0, runtimeFactory_1.setGlobalLatticeService)(this.latticeService);
+        // Local on-device inference (Lattice Inference)
+        this.inferenceService = new inference_1.InferenceService(config.rootDir);
+        this.aiService.setInferenceService(this.inferenceService);
         // Backend timing stats (behind feature flag).
         this.aiService.on("stream-start", (data) => this.sessionTimingService.handleStreamStart(data));
         this.aiService.on("stream-delta", (data) => this.sessionTimingService.handleStreamDelta(data));
@@ -203,6 +208,10 @@ class ServiceContainer {
         // Skip getLatticeInfo() to avoid caching "unavailable" if coder isn't installed yet
         void this.latticeService.ensureSSHConfig().catch(() => {
             // Ignore errors - coder may not be installed
+        });
+        // Initialize local inference (Python detection, backend availability)
+        void this.inferenceService.initialize().catch((err) => {
+            log_1.log.warn("[ServiceContainer] Inference service init failed (non-fatal)", { error: err });
         });
         // Ensure the built-in Chat with Unix system workspace exists.
         // Defensive: startup-time initialization must never crash the app.
@@ -274,6 +283,7 @@ class ServiceContainer {
      */
     async shutdown() {
         this.idleCompactionService.stop();
+        await this.inferenceService.dispose();
         await this.telemetryService.shutdown();
     }
     setProjectDirectoryPicker(picker) {
@@ -288,6 +298,7 @@ class ServiceContainer {
      */
     async dispose() {
         this.mcpServerManager.dispose();
+        await this.inferenceService.dispose();
         await this.backgroundProcessManager.terminateAll();
     }
 }
