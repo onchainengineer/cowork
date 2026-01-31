@@ -1234,6 +1234,19 @@ export const inference = {
       }),
     ),
   },
+
+  // ─── Benchmark (Sprint 2) ────────────────────────────────────────────
+  runBenchmark: {
+    input: z.object({ modelId: z.string().optional() }),
+    output: z.object({
+      model: z.string(),
+      completion_tokens: z.number(),
+      total_time_ms: z.number(),
+      time_to_first_token_ms: z.number(),
+      tokens_per_second: z.number(),
+      peak_memory_bytes: z.number(),
+    }),
+  },
 };
 
 // Debug endpoints (test-only, not for production use)

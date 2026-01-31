@@ -239,6 +239,14 @@ export function useInference() {
     }
   }, [api, refreshClusterStatus, clearMessages]);
 
+  const runBenchmark = useCallback(
+    async (modelId?: string) => {
+      if (!api) throw new Error("API not available");
+      return api.inference.runBenchmark({ modelId });
+    },
+    [api],
+  );
+
   return {
     status,
     models,
@@ -255,6 +263,7 @@ export function useInference() {
     loadModel,
     unloadModel,
     discoverNodes,
+    runBenchmark,
     clearMessages,
     refreshModels,
     refreshPoolStatus,

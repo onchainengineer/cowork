@@ -203,4 +203,26 @@ export class InferredHttpClient {
       return "";
     }
   }
+
+  // ─── Benchmark ────────────────────────────────────────────────────────
+
+  async runBenchmark(modelId?: string): Promise<{
+    model: string;
+    completion_tokens: number;
+    total_time_ms: number;
+    time_to_first_token_ms: number;
+    tokens_per_second: number;
+    peak_memory_bytes: number;
+  }> {
+    const resp = await fetch(`${this.baseUrl}/inference/benchmark`, {
+      method: "POST",
+      headers: this.headers(),
+      body: JSON.stringify({ model: modelId ?? "", max_tokens: 128 }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!resp.ok) {
+      throw new Error(`Benchmark failed: ${resp.status}`);
+    }
+    return resp.json();
+  }
 }

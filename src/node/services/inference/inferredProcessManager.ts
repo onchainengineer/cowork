@@ -14,6 +14,8 @@ export interface InferredProcessOptions {
   joinUrl?: string;
   /** Enable mDNS zero-config LAN discovery (default: true in Go binary) */
   enableMDNS?: boolean;
+  /** KV cache quantization bits (0=fp16, 4=int4, 8=int8) */
+  kvCacheBits?: number;
 }
 
 /**
@@ -109,6 +111,9 @@ export class InferredProcessManager extends EventEmitter {
     // mDNS is enabled by default in Go binary; only pass flag to explicitly disable
     if (this.options.enableMDNS === false) {
       args.push("-mdns=false");
+    }
+    if (this.options.kvCacheBits && this.options.kvCacheBits > 0) {
+      args.push("-kv-cache-bits", String(this.options.kvCacheBits));
     }
 
     log.info(`[inferred] spawning: ${this.binaryPath} ${args.join(" ")}`);

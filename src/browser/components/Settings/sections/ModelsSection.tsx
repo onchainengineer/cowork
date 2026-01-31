@@ -3,6 +3,8 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
+  ClipboardCopy,
+  ClipboardCheck,
   Download,
   Loader2,
   Play,
@@ -129,6 +131,7 @@ export function ModelsSection() {
     loadModel,
     unloadModel,
     discoverNodes,
+    runBenchmark,
     clearMessages: clearInferenceMessages,
     refreshPoolStatus,
     refreshClusterStatus,
@@ -141,6 +144,7 @@ export function ModelsSection() {
   const [showMetrics, setShowMetrics] = useState(false);
   const [discovering, setDiscovering] = useState(false);
   const [benchmarking, setBenchmarking] = useState(false);
+  const [metricsCopied, setMetricsCopied] = useState(false);
   const [benchmarkResult, setBenchmarkResult] = useState<{
     tokensPerSecond: number;
     timeToFirstToken: number;
@@ -175,34 +179,12 @@ export function ModelsSection() {
     setBenchmarking(true);
     setBenchmarkResult(null);
     try {
-      // Simple benchmark: time a short inference request
-      const start = performance.now();
-      // Use the chat completions endpoint with a short prompt to measure performance
-      // This is a lightweight client-side benchmark that measures round-trip time
-      const resp = await fetch(
-        `http://127.0.0.1:${inferenceStatus?.available ? "8000" : "0"}/v1/chat/completions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: modelId,
-            messages: [{ role: "user", content: "Write a haiku about computing." }],
-            max_tokens: 64,
-            stream: false,
-          }),
-          signal: AbortSignal.timeout(30000),
-        },
-      );
-      const elapsed = performance.now() - start;
-      if (resp.ok) {
-        const data = await resp.json();
-        const tokens = data?.usage?.completion_tokens ?? 0;
-        setBenchmarkResult({
-          tokensPerSecond: tokens > 0 ? tokens / (elapsed / 1000) : 0,
-          timeToFirstToken: elapsed,
-          totalTime: elapsed,
-        });
-      }
+      const result = await runBenchmark(modelId);
+      setBenchmarkResult({
+        tokensPerSecond: result.tokens_per_second,
+        timeToFirstToken: result.time_to_first_token_ms,
+        totalTime: result.total_time_ms,
+      });
     } catch {
       // Benchmark failed silently — metrics section shows "no data"
     } finally {
@@ -976,14 +958,37 @@ export function ModelsSection() {
                 <Activity className="h-3 w-3" />
                 Performance Metrics
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 px-1.5 text-[10px]"
-                onClick={() => setShowMetrics(!showMetrics)}
-              >
-                {showMetrics ? "Hide" : "Show"}
-              </Button>
+              <div className="flex items-center gap-1">
+                {showMetrics && metrics && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 gap-1 px-1.5 text-[10px]"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(metrics).then(() => {
+                        setMetricsCopied(true);
+                        setTimeout(() => setMetricsCopied(false), 2000);
+                      });
+                    }}
+                    title="Copy Prometheus metrics (paste into Grafana)"
+                  >
+                    {metricsCopied ? (
+                      <ClipboardCheck className="h-2.5 w-2.5 text-green-500" />
+                    ) : (
+                      <ClipboardCopy className="h-2.5 w-2.5" />
+                    )}
+                    {metricsCopied ? "Copied!" : "Copy"}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-[10px]"
+                  onClick={() => setShowMetrics(!showMetrics)}
+                >
+                  {showMetrics ? "Hide" : "Show"}
+                </Button>
+              </div>
             </div>
 
             {showMetrics && (

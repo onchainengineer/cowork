@@ -2096,6 +2096,14 @@ export const router = (authToken?: string) => {
         .input(schemas.inference.getClusterNodes.input)
         .output(schemas.inference.getClusterNodes.output)
         .handler(async ({ context }) => context.inferenceService.getClusterNodes()),
+
+      // ─── Benchmark (Sprint 2) ─────────────────────────────────────────
+      runBenchmark: t
+        .input(schemas.inference.runBenchmark.input)
+        .output(schemas.inference.runBenchmark.output)
+        .handler(async ({ context, input }) =>
+          context.inferenceService.runBenchmark(input.modelId),
+        ),
     },
   });
 };

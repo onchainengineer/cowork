@@ -275,6 +275,22 @@ export class InferenceService extends EventEmitter {
     return this.httpClient.getMetrics();
   }
 
+  // ─── Benchmark ─────────────────────────────────────────────────────
+
+  async runBenchmark(modelId?: string): Promise<{
+    model: string;
+    completion_tokens: number;
+    total_time_ms: number;
+    time_to_first_token_ms: number;
+    tokens_per_second: number;
+    peak_memory_bytes: number;
+  }> {
+    if (!this.httpClient) {
+      throw new Error("Inference service not available");
+    }
+    return this.httpClient.runBenchmark(modelId);
+  }
+
   // ─── Internal Helpers ───────────────────────────────────────────────
 
   private async ensureRunning(): Promise<void> {
