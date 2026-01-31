@@ -249,8 +249,12 @@ build-static: ## Copy static assets to dist
 	@mkdir -p dist
 	@cp static/splash.html dist/splash.html
 	@cp -r public/* dist/
-	@# Bundle Python inference worker for local on-device AI
-	@cp -r resources/inference dist/inference
+	@# Bundle Python inference worker from latticeInference submodule
+	@mkdir -p dist/inference/python
+	@cp -r vendor/latticeInference/python/worker.py dist/inference/python/
+	@cp -r vendor/latticeInference/python/backends dist/inference/python/
+	@cp -r vendor/latticeInference/python/models dist/inference/python/
+	@cp vendor/latticeInference/python/pyproject.toml dist/inference/python/
 	@# Copy TypeScript lib files for PTC runtime type validation (es5 through es2023).
 	@# electron-builder ignores .d.ts files by default and this cannot be overridden:
 	@# https://github.com/electron-userland/electron-builder/issues/5064

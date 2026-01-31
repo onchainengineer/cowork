@@ -99,17 +99,22 @@ export function findWorkerScript(appResourcesPath?: string): string {
 
   // Development: relative to compiled JS output
   const projectRoot = path.resolve(__dirname, "..", "..", "..", "..");
+  // Submodule path (vendor/latticeInference/python/)
+  candidates.push(
+    path.join(projectRoot, "vendor", "latticeInference", "python", "worker.py"),
+  );
+  // Legacy path (resources/inference/python/) — backwards compat
   candidates.push(
     path.join(projectRoot, "resources", "inference", "python", "worker.py"),
   );
-  // Also check dist/inference/ (after build-static)
+  // Built dist path (after build-static)
   candidates.push(
     path.join(projectRoot, "dist", "inference", "python", "worker.py"),
   );
 
   // Development: relative to cwd
   candidates.push(
-    path.join(process.cwd(), "resources", "inference", "python", "worker.py"),
+    path.join(process.cwd(), "vendor", "latticeInference", "python", "worker.py"),
   );
 
   // Standard install location
