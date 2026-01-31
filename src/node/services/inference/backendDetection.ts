@@ -83,25 +83,28 @@ export function detectDistributedBackend(
 export function findWorkerScript(appResourcesPath?: string): string {
   const candidates: string[] = [];
 
-  // Electron production: resources/ directory inside the app bundle
+  // Electron production: asar-unpacked dist/ inside the app bundle
   if (appResourcesPath) {
     candidates.push(
-      path.join(appResourcesPath, "inference", "python", "worker.py"),
+      path.join(appResourcesPath, "app.asar.unpacked", "dist", "inference", "python", "worker.py"),
     );
   }
 
-  // Electron production: process.resourcesPath
+  // Electron production: process.resourcesPath (auto-set by Electron)
   if (process.resourcesPath) {
     candidates.push(
-      path.join(process.resourcesPath, "inference", "python", "worker.py"),
+      path.join(process.resourcesPath, "app.asar.unpacked", "dist", "inference", "python", "worker.py"),
     );
   }
 
-  // Development: relative to this source file
-  // src/node/services/inference/backendDetection.ts → resources/inference/python/worker.py
-  const srcDir = path.resolve(__dirname, "..", "..", "..", "..");
+  // Development: relative to compiled JS output
+  const projectRoot = path.resolve(__dirname, "..", "..", "..", "..");
   candidates.push(
-    path.join(srcDir, "resources", "inference", "python", "worker.py"),
+    path.join(projectRoot, "resources", "inference", "python", "worker.py"),
+  );
+  // Also check dist/inference/ (after build-static)
+  candidates.push(
+    path.join(projectRoot, "dist", "inference", "python", "worker.py"),
   );
 
   // Development: relative to cwd

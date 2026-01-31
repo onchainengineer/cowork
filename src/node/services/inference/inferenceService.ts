@@ -11,14 +11,20 @@
  */
 
 import { EventEmitter } from "events";
+import { execSync } from "child_process";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import type { LanguageModelV2 } from "@ai-sdk/provider";
-import { ModelRegistry, denormalizeModelID } from "./modelRegistry";
+import { ModelRegistry } from "./modelRegistry";
 import { HfDownloader } from "./hfDownloader";
 import { PythonWorkerManager } from "./workerManager";
 import { LatticeLanguageModel } from "./latticeLanguageModel";
-import { detectPython, checkPythonDependencies } from "./backendDetection";
+import { detectPython, checkPythonDependencies, findWorkerScript } from "./backendDetection";
 import type { DownloadProgress, ModelInfo } from "./types";
 import { log } from "@/node/services/log";
+
+const VENV_DIR = path.join(os.homedir(), ".lattice", "inference-venv");
 
 export interface InferenceServiceEvents {
   "model-loaded": [modelId: string];
@@ -50,17 +56,39 @@ export class InferenceService extends EventEmitter {
    */
   async initialize(): Promise<void> {
     try {
+      await this.ensurePythonEnv();
       const pythonPath = detectPython();
       const deps = await checkPythonDependencies(pythonPath);
       this.pythonAvailable = deps.available;
       log.info(
         `[inference] initialized: python=${pythonPath}, available=${deps.available}, backend=${deps.backend}`,
       );
-    } catch {
+    } catch (err) {
       this.pythonAvailable = false;
-      log.warn("[inference] Python not found — local inference unavailable");
+      log.warn("[inference] Python setup failed — local inference unavailable");
     }
   }
+
+  private async ensurePythonEnv(): Promise<void> {
+    const home = process.env.HOME ?? os.homedir();
+    const venvDir = path.join(home, ".lattice", "inference-venv");
+    if (fs.existsSync(path.join(venvDir, "bin", "python3"))) return;
+    log.info("[inference] creating venv");
+    let sysPy = "python3";
+    try { sysPy = execSync("which python3", { encoding: "utf-8" }).trim(); }
+    catch { return; }
+    try { execSync(sysPy + " -m venv " + venvDir, { encoding: "utf-8", timeout: 60000 }); }
+    catch { return; }
+    const pip = path.join(venvDir, "bin", "pip");
+    try {
+      if (process.platform === "darwin" && process.arch === "arm64") {
+        execSync(pip + " install mlx mlx-lm", { encoding: "utf-8", timeout: 300000 });
+      } else {
+        execSync(pip + " install llama-cpp-python", { encoding: "utf-8", timeout: 300000 });
+      }
+    } catch { /* non-fatal */ }
+  }
+
 
   /**
    * Whether local inference is available (Python + deps found).
@@ -217,6 +245,78 @@ export class InferenceService extends EventEmitter {
     }
 
     return this.activeModel;
+  }
+
+  // ─── Python Environment ─────────────────────────────────────────────
+
+  /**
+   * Auto-create the inference Python venv and install backend dependencies.
+   * Runs once on first launch. Skips if venv already exists.
+   *
+   * Steps:
+   *   1. Find system python3
+   *   2. Create ~/.lattice/inference-venv if missing
+   *   3. pip install mlx-lm (Apple Silicon) or llama-cpp-python (NVIDIA/CPU)
+   */
+  private async ensurePythonEnv(): Promise<void> {
+    const venvPython = path.join(VENV_DIR, "bin", "python3");
+
+    // Already set up
+    if (fs.existsSync(venvPython)) {
+      log.info("[inference] venv exists at " + VENV_DIR);
+      return;
+    }
+
+    // Find system Python to bootstrap the venv
+    let systemPython = "";
+    for (const name of ["python3", "python"]) {
+      try {
+        systemPython = execSync(`which ${name}`, { encoding: "utf-8", timeout: 5000 }).trim();
+        if (systemPython) break;
+      } catch {
+        // Not found
+      }
+    }
+
+    if (!systemPython) {
+      log.warn("[inference] No system Python found — cannot auto-setup venv");
+      return;
+    }
+
+    log.info(`[inference] creating venv at ${VENV_DIR} using ${systemPython}...`);
+
+    // Create the venv
+    try {
+      fs.mkdirSync(path.dirname(VENV_DIR), { recursive: true });
+      execSync(`"${systemPython}" -m venv "${VENV_DIR}"`, {
+        encoding: "utf-8",
+        timeout: 60_000,
+      });
+    } catch (err) {
+      log.warn(`[inference] failed to create venv: ${err}`);
+      return;
+    }
+
+    // Install backend deps based on platform
+    const pip = path.join(VENV_DIR, "bin", "pip");
+    const deps =
+      process.platform === "darwin" && process.arch === "arm64"
+        ? "mlx mlx-lm"
+        : "llama-cpp-python";
+
+    log.info(`[inference] installing ${deps}...`);
+
+    try {
+      execSync(`"${pip}" install --upgrade pip ${deps}`, {
+        encoding: "utf-8",
+        timeout: 300_000, // 5 min for compilation
+        env: { ...process.env, PIP_DISABLE_PIP_VERSION_CHECK: "1" },
+      });
+      log.info("[inference] Python environment ready");
+    } catch (err) {
+      log.warn(`[inference] failed to install deps: ${err}`);
+      // Venv created but deps failed — checkPythonDependencies will report unavailable
+    }
   }
 
   // ─── Lifecycle ──────────────────────────────────────────────────────

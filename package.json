@@ -256,7 +256,8 @@
     "asarUnpack": [
       "dist/**/*.wasm",
       "dist/**/*.map",
-      "**/node_modules/node-pty/build/**/*"
+      "**/node_modules/node-pty/build/**/*",
+      "dist/inference/**/*"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
