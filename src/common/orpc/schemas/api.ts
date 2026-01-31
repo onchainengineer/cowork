@@ -1163,6 +1163,77 @@ export const inference = {
     input: z.void(),
     output: eventIterator(InferenceStatusSchema),
   },
+
+  // ─── Pool (Phase 2) ──────────────────────────────────────────────────
+  getPoolStatus: {
+    input: z.void(),
+    output: z.object({
+      loadedModels: z.array(
+        z.object({
+          model_id: z.string(),
+          model_path: z.string(),
+          backend: z.string(),
+          alive: z.boolean(),
+          estimated_bytes: z.number(),
+          loaded_at: z.string(),
+          last_used_at: z.string(),
+          use_count: z.number(),
+        }),
+      ),
+      modelsLoaded: z.number(),
+      maxLoadedModels: z.number(),
+      memoryBudgetBytes: z.number(),
+      estimatedVramBytes: z.number(),
+    }),
+  },
+  getMetrics: {
+    input: z.void(),
+    output: z.string(),
+  },
+
+  // ─── Cluster (Phase 3) ───────────────────────────────────────────────
+  getClusterStatus: {
+    input: z.void(),
+    output: z
+      .object({
+        nodes: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            address: z.string(),
+            status: z.string(),
+            loaded_models: z.array(z.string()),
+            active_inferences: z.number(),
+            used_memory_bytes: z.number(),
+            total_memory_bytes: z.number(),
+            gpu_type: z.string(),
+            tokens_per_second_avg: z.number(),
+            last_heartbeat: z.string(),
+          }),
+        ),
+        total_nodes: z.number(),
+        total_models: z.number(),
+      })
+      .nullable(),
+  },
+  getClusterNodes: {
+    input: z.void(),
+    output: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        address: z.string(),
+        status: z.string(),
+        loaded_models: z.array(z.string()),
+        active_inferences: z.number(),
+        used_memory_bytes: z.number(),
+        total_memory_bytes: z.number(),
+        gpu_type: z.string(),
+        tokens_per_second_avg: z.number(),
+        last_heartbeat: z.string(),
+      }),
+    ),
+  },
 };
 
 // Debug endpoints (test-only, not for production use)

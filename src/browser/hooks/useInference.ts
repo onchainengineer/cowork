@@ -25,6 +25,45 @@ interface DownloadProgress {
   totalBytes: number;
 }
 
+interface LoadedModelInfo {
+  model_id: string;
+  model_path: string;
+  backend: string;
+  alive: boolean;
+  estimated_bytes: number;
+  loaded_at: string;
+  last_used_at: string;
+  use_count: number;
+}
+
+interface PoolStatus {
+  loadedModels: LoadedModelInfo[];
+  modelsLoaded: number;
+  maxLoadedModels: number;
+  memoryBudgetBytes: number;
+  estimatedVramBytes: number;
+}
+
+interface ClusterNode {
+  id: string;
+  name: string;
+  address: string;
+  status: string;
+  loaded_models: string[];
+  active_inferences: number;
+  used_memory_bytes: number;
+  total_memory_bytes: number;
+  gpu_type: string;
+  tokens_per_second_avg: number;
+  last_heartbeat: string;
+}
+
+interface ClusterStatus {
+  nodes: ClusterNode[];
+  total_nodes: number;
+  total_models: number;
+}
+
 export function useInference() {
   const { api } = useAPI();
   const [status, setStatus] = useState<InferenceStatus | null>(null);
@@ -32,6 +71,11 @@ export function useInference() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [pulling, setPulling] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [poolStatus, setPoolStatus] = useState<PoolStatus | null>(null);
+  const [clusterStatus, setClusterStatus] = useState<ClusterStatus | null>(null);
+  const [metrics, setMetrics] = useState<string>("");
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [lastSuccess, setLastSuccess] = useState<string | null>(null);
 
   const refreshModels = useCallback(async () => {
     if (!api) return;
@@ -43,12 +87,46 @@ export function useInference() {
     }
   }, [api]);
 
+  const refreshPoolStatus = useCallback(async () => {
+    if (!api) return;
+    try {
+      const pool = await api.inference.getPoolStatus();
+      setPoolStatus(pool);
+    } catch {
+      // Unavailable
+    }
+  }, [api]);
+
+  const refreshClusterStatus = useCallback(async () => {
+    if (!api) return;
+    try {
+      const cluster = await api.inference.getClusterStatus();
+      setClusterStatus(cluster);
+    } catch {
+      // Unavailable
+    }
+  }, [api]);
+
+  const refreshMetrics = useCallback(async () => {
+    if (!api) return;
+    try {
+      const m = await api.inference.getMetrics();
+      setMetrics(m);
+    } catch {
+      // Unavailable
+    }
+  }, [api]);
+
   // Initial fetch + subscriptions
   useEffect(() => {
     if (!api) return;
     const ac = new AbortController();
 
-    void refreshModels().finally(() => setLoading(false));
+    void Promise.all([
+      refreshModels(),
+      refreshPoolStatus(),
+      refreshClusterStatus(),
+    ]).finally(() => setLoading(false));
 
     // Subscribe to status changes (yields initial value)
     void (async () => {
@@ -57,6 +135,8 @@ export function useInference() {
         for await (const s of iter) {
           if (ac.signal.aborted) break;
           setStatus(s);
+          // Refresh pool on status change
+          void refreshPoolStatus();
         }
       } catch {
         // Aborted or unavailable
@@ -77,45 +157,87 @@ export function useInference() {
     })();
 
     return () => ac.abort();
-  }, [api, refreshModels]);
+  }, [api, refreshModels, refreshPoolStatus, refreshClusterStatus]);
+
+  const clearMessages = useCallback(() => {
+    setLastError(null);
+    setLastSuccess(null);
+  }, []);
 
   const pullModel = useCallback(
     async (modelId: string) => {
       if (!api) return;
+      clearMessages();
       setPulling(true);
       setDownloadProgress(null);
       try {
         await api.inference.pullModel({ modelId });
         await refreshModels();
+        setLastSuccess(`Model "${modelId}" pulled successfully`);
+      } catch (e) {
+        setLastError(`Failed to pull model: ${e instanceof Error ? e.message : String(e)}`);
       } finally {
         setPulling(false);
         setDownloadProgress(null);
       }
     },
-    [api, refreshModels],
+    [api, refreshModels, clearMessages],
   );
 
   const deleteModel = useCallback(
     async (modelId: string) => {
       if (!api) return;
-      await api.inference.deleteModel({ modelId });
-      await refreshModels();
+      clearMessages();
+      try {
+        await api.inference.deleteModel({ modelId });
+        await refreshModels();
+        await refreshPoolStatus();
+        setLastSuccess(`Model "${modelId}" deleted`);
+      } catch (e) {
+        setLastError(`Failed to delete model: ${e instanceof Error ? e.message : String(e)}`);
+      }
     },
-    [api, refreshModels],
+    [api, refreshModels, refreshPoolStatus, clearMessages],
   );
 
   const loadModel = useCallback(
     async (modelId: string, backend?: string) => {
       if (!api) return;
-      await api.inference.loadModel({ modelId, backend });
+      clearMessages();
+      try {
+        await api.inference.loadModel({ modelId, backend });
+        await refreshPoolStatus();
+        setLastSuccess(`Model "${modelId}" loaded`);
+      } catch (e) {
+        setLastError(`Failed to load model: ${e instanceof Error ? e.message : String(e)}`);
+      }
     },
-    [api],
+    [api, refreshPoolStatus, clearMessages],
   );
 
   const unloadModel = useCallback(async () => {
     if (!api) return;
-    await api.inference.unloadModel();
-  }, [api]);
+    clearMessages();
+    try {
+      await api.inference.unloadModel();
+      await refreshPoolStatus();
+      setLastSuccess("Model unloaded");
+    } catch (e) {
+      setLastError(`Failed to unload model: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, [api, refreshPoolStatus, clearMessages]);
+
+  const discoverNodes = useCallback(async () => {
+    if (!api) return;
+    clearMessages();
+    try {
+      const nodes = await api.inference.getClusterNodes();
+      await refreshClusterStatus();
+      setLastSuccess(`Discovered ${nodes.length} node${nodes.length !== 1 ? "s" : ""} on LAN`);
+    } catch (e) {
+      setLastError(`LAN discovery failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }, [api, refreshClusterStatus, clearMessages]);
 
   return {
     status,
@@ -123,10 +245,20 @@ export function useInference() {
     loading,
     pulling,
     downloadProgress,
+    poolStatus,
+    clusterStatus,
+    metrics,
+    lastError,
+    lastSuccess,
     pullModel,
     deleteModel,
     loadModel,
     unloadModel,
+    discoverNodes,
+    clearMessages,
     refreshModels,
+    refreshPoolStatus,
+    refreshClusterStatus,
+    refreshMetrics,
   };
 }

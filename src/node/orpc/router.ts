@@ -2074,6 +2074,28 @@ export const router = (authToken?: string) => {
             queue.end();
           }
         }),
+
+      // ─── Pool (Phase 2) ──────────────────────────────────────────────
+      getPoolStatus: t
+        .input(schemas.inference.getPoolStatus.input)
+        .output(schemas.inference.getPoolStatus.output)
+        .handler(async ({ context }) => context.inferenceService.getPoolStatus()),
+
+      getMetrics: t
+        .input(schemas.inference.getMetrics.input)
+        .output(schemas.inference.getMetrics.output)
+        .handler(async ({ context }) => context.inferenceService.getMetrics()),
+
+      // ─── Cluster (Phase 3) ───────────────────────────────────────────
+      getClusterStatus: t
+        .input(schemas.inference.getClusterStatus.input)
+        .output(schemas.inference.getClusterStatus.output)
+        .handler(async ({ context }) => context.inferenceService.getClusterStatus()),
+
+      getClusterNodes: t
+        .input(schemas.inference.getClusterNodes.input)
+        .output(schemas.inference.getClusterNodes.output)
+        .handler(async ({ context }) => context.inferenceService.getClusterNodes()),
     },
   });
 };

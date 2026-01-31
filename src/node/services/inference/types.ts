@@ -91,6 +91,130 @@ export interface DownloadProgress {
   totalBytes: number;
 }
 
+// ─── Go binary (inferred) response types ────────────────────────────────
+
+/** GET /healthz */
+export interface InferredHealthResponse {
+  status: string;
+  active_model: string;
+  worker_alive: boolean;
+  models_loaded: number;
+}
+
+/** GET /inference/status */
+export interface InferredStatusResponse {
+  active_model: ModelInfo | null;
+  loaded_models: LoadedModelInfo[];
+  cached_models: ModelInfo[];
+  worker_alive: boolean;
+  models_loaded: number;
+  python_path: string;
+  model_dir: string;
+  max_concurrency: number;
+  max_loaded_models: number;
+  memory_budget_bytes: number;
+  estimated_vram_bytes: number;
+  cluster?: ClusterState | null;
+}
+
+/** A model currently loaded in the Go worker pool. */
+export interface LoadedModelInfo {
+  model_id: string;
+  model_path: string;
+  backend: string;
+  alive: boolean;
+  estimated_bytes: number;
+  loaded_at: string; // ISO date
+  last_used_at: string; // ISO date
+  use_count: number;
+}
+
+// ─── Cluster types ─────────────────────────────────────────────────────
+
+export interface ClusterNode {
+  id: string;
+  name: string;
+  address: string;
+  joined_at: string;
+  loaded_models: string[];
+  backend: string;
+  max_models: number;
+  total_memory_bytes: number;
+  used_memory_bytes: number;
+  gpu_type: string;
+  active_inferences: number;
+  tokens_per_second_avg: number;
+  last_heartbeat: string;
+  status: string; // "online" | "busy" | "draining" | "offline"
+}
+
+export interface ClusterState {
+  nodes: ClusterNode[];
+  total_models: number;
+  total_nodes: number;
+  updated_at: string;
+}
+
+// ─── OpenAI-compatible types (from Go binary) ──────────────────────────
+
+export interface ChatCompletionRequest {
+  model: string;
+  messages: ChatMessage[];
+  stream?: boolean;
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  stop?: string[];
+}
+
+export interface ChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: ChatCompletionChoice[];
+  usage?: UsageInfo;
+}
+
+export interface ChatCompletionChoice {
+  index: number;
+  message: ChatMessage;
+  finish_reason: string;
+}
+
+export interface ChatCompletionChunk {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: ChatCompletionChunkChoice[];
+  usage?: UsageInfo;
+}
+
+export interface ChatCompletionChunkChoice {
+  index: number;
+  delta: { role?: string; content?: string };
+  finish_reason: string | null;
+}
+
+export interface UsageInfo {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
+export interface ModelObject {
+  id: string;
+  object: string;
+  created: number;
+  owned_by: string;
+}
+
+export interface ModelListResponse {
+  object: string;
+  data: ModelObject[];
+}
+
 // ─── HuggingFace API ────────────────────────────────────────────────────
 
 export interface HFFile {

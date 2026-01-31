@@ -244,7 +244,19 @@ build-renderer: node_modules/.installed src/version.ts ## Build renderer process
 	@echo "Building renderer..."
 	@$(BUN_OR_NPX) vite build
 
-build-static: ## Copy static assets to dist
+## Go inference binary
+INFERRED_GOOS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+INFERRED_GOARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+
+build-inferred: ## Build the Go inference binary for current platform
+	@echo "Building latticeinference for $(INFERRED_GOOS)/$(INFERRED_GOARCH)..."
+	@mkdir -p dist/inference/bin
+	@cd vendor/latticeInference && GOOS=$(INFERRED_GOOS) GOARCH=$(INFERRED_GOARCH) CGO_ENABLED=0 go build \
+		-ldflags "-s -w" \
+		-o ../../dist/inference/bin/latticeinference \
+		./cmd/latticeinference
+
+build-static: build-inferred ## Copy static assets to dist
 	@echo "Copying static assets..."
 	@mkdir -p dist
 	@cp static/splash.html dist/splash.html

@@ -1,30 +1,37 @@
 /**
  * Inference Service — Top-level orchestrator for local on-device inference.
  *
- * Owns the full lifecycle:
- * - Model registry (list, inspect, delete cached models)
- * - HuggingFace downloader (pull models with resume support)
- * - Python worker manager (spawn, health-check, shutdown)
- * - LatticeLanguageModel (Vercel AI SDK bridge)
+ * Manages the `latticeinference` Go binary subprocess which in turn manages:
+ * - Python worker pool (multi-model with LRU eviction)
+ * - Cluster coordination (node discovery, heartbeat, routing)
+ * - Prometheus metrics
+ * - OpenAI-compatible HTTP API
  *
- * Used by AIService to provide `lattice-inference` as a local provider.
+ * The Go binary is the source of truth for model state. This service
+ * spawns it, health-checks it, and proxies requests from ORPC/UI.
+ *
+ * Architecture: Node.js (UI/ORPC) → Go binary (pool/cluster/metrics) → Python workers (inference)
  */
 
 import { EventEmitter } from "events";
-import { execSync } from "child_process";
-import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import type { LanguageModelV2 } from "@ai-sdk/provider";
-import { ModelRegistry } from "./modelRegistry";
+import { InferredProcessManager } from "./inferredProcessManager";
+import { InferredHttpClient } from "./inferredHttpClient";
 import { HfDownloader } from "./hfDownloader";
-import { PythonWorkerManager } from "./workerManager";
 import { LatticeLanguageModel } from "./latticeLanguageModel";
-import { detectPython, checkPythonDependencies } from "./backendDetection";
-import type { DownloadProgress, ModelInfo } from "./types";
+import { getInferredBinaryPath } from "./inferredBinaryPath";
+import { detectPython } from "./backendDetection";
+import type {
+  DownloadProgress,
+  ModelInfo,
+  InferredStatusResponse,
+  LoadedModelInfo,
+  ClusterState,
+  ClusterNode,
+} from "./types";
 import { log } from "@/node/services/log";
-
-const VENV_DIR = path.join(os.homedir(), ".lattice", "inference-venv");
 
 export interface InferenceServiceEvents {
   "model-loaded": [modelId: string];
@@ -34,96 +41,111 @@ export interface InferenceServiceEvents {
 }
 
 export class InferenceService extends EventEmitter {
-  private registry: ModelRegistry;
+  private processManager: InferredProcessManager | null = null;
+  private httpClient: InferredHttpClient | null = null;
   private downloader: HfDownloader;
-  private workerManager: PythonWorkerManager | null = null;
-  private activeModel: LatticeLanguageModel | null = null;
-  private activeModelId: string | null = null;
-  private pythonAvailable: boolean | null = null;
+  private languageModels: Map<string, LatticeLanguageModel> = new Map();
+  private _available = false;
+  private _loadedModelId: string | null = null;
   private rootDir: string;
+  private appResourcesPath?: string;
 
   constructor(rootDir: string, appResourcesPath?: string) {
     super();
     this.rootDir = rootDir;
-    this.registry = new ModelRegistry();
-    this.downloader = new HfDownloader(this.registry.getCacheDir());
-    this.workerManager = new PythonWorkerManager(appResourcesPath);
+    this.appResourcesPath = appResourcesPath;
+    const cacheDir = path.join(os.homedir(), ".lattice", "models");
+    this.downloader = new HfDownloader(cacheDir);
   }
 
   /**
-   * Initialize the inference service.
-   * Checks for Python availability and backend dependencies.
+   * Initialize: spawn the Go binary and wait for it to become healthy.
    */
   async initialize(): Promise<void> {
     try {
-      await this.ensurePythonEnv();
+      const binaryPath = getInferredBinaryPath(this.appResourcesPath);
       const pythonPath = detectPython();
-      const deps = await checkPythonDependencies(pythonPath);
-      this.pythonAvailable = deps.available;
+
+      this.processManager = new InferredProcessManager(binaryPath, {
+        pythonPath,
+        modelDir: path.join(os.homedir(), ".lattice", "models"),
+      });
+
+      // Auto-restart on crash
+      this.processManager.on("crashed", () => {
+        log.warn("[inference] Go binary crashed, will restart on next request");
+        this._available = false;
+      });
+
+      await this.processManager.start();
+      this.httpClient = new InferredHttpClient(this.processManager.baseUrl);
+      this._available = true;
+
       log.info(
-        `[inference] initialized: python=${pythonPath}, available=${deps.available}, backend=${deps.backend}`,
+        `[inference] initialized: binary=${binaryPath}, python=${pythonPath}, port=${this.processManager.port}`,
       );
     } catch (err) {
-      this.pythonAvailable = false;
-      log.warn("[inference] Python setup failed — local inference unavailable");
+      this._available = false;
+      log.warn(`[inference] Go binary not available: ${err}`);
     }
   }
 
   /**
-   * Whether local inference is available (Python + deps found).
+   * Whether the Go inference binary is running and healthy.
    */
   get isAvailable(): boolean {
-    return this.pythonAvailable === true;
+    return this._available && (this.processManager?.alive ?? false);
   }
 
   /**
-   * The currently loaded model ID, or null.
+   * The primary loaded model ID (for backward compat with single-model UI).
+   * With the pool, multiple models can be loaded simultaneously.
    */
   get loadedModelId(): string | null {
-    return this.activeModelId;
+    return this._loadedModelId;
   }
 
-  // ─── Model Registry ─────────────────────────────────────────────────
+  // ─── Model Registry (via Go binary) ──────────────────────────────────
 
   /**
-   * List all cached models.
+   * List all cached models (from Go binary's registry).
    */
   async listModels(): Promise<ModelInfo[]> {
-    return this.registry.listModels();
-  }
-
-  /**
-   * Get info for a specific model.
-   */
-  async getModel(id: string): Promise<ModelInfo | null> {
-    return this.registry.getModel(id);
+    await this.ensureRunning();
+    const status = await this.httpClient!.getStatus();
+    return (status.cached_models ?? []).map(this.normalizeModelInfo);
   }
 
   /**
    * Delete a cached model.
+   * Note: Go binary unloads it from pool automatically if loaded.
    */
   async deleteModel(id: string): Promise<void> {
-    // Unload if this is the active model
-    if (this.activeModelId === id) {
-      await this.unloadModel();
+    await this.ensureRunning();
+    // Unload from pool if loaded
+    const status = await this.httpClient!.getStatus();
+    const isLoaded = status.loaded_models.some((m) => m.model_id === id);
+    if (isLoaded) {
+      await this.httpClient!.unloadModel(id);
     }
-    await this.registry.deleteModel(id);
+    // Delete from disk — delegate to Go binary or do it locally
+    // For now, the Go registry handles this via the model dir
+    // TODO: Add DELETE /inference/models/:id endpoint to Go binary
+    this.languageModels.delete(id);
+
+    if (this._loadedModelId === id) {
+      this._loadedModelId = null;
+      this.emit("model-unloaded");
+    }
   }
 
   // ─── Model Download ─────────────────────────────────────────────────
 
   /**
    * Pull (download) a model from HuggingFace Hub.
-   *
-   * @param modelID - e.g. "mlx-community/Llama-3.2-3B-Instruct-4bit"
-   * @param signal - Optional AbortSignal for cancellation
-   * @returns Path to the downloaded model directory
+   * Uses the Node.js downloader for better progress events.
    */
-  async pullModel(
-    modelID: string,
-    signal?: AbortSignal,
-  ): Promise<string> {
-    // Forward download progress events
+  async pullModel(modelID: string, signal?: AbortSignal): Promise<string> {
     const onProgress = (progress: DownloadProgress) => {
       this.emit("download-progress", progress);
     };
@@ -139,163 +161,146 @@ export class InferenceService extends EventEmitter {
     }
   }
 
-  // ─── Model Loading ──────────────────────────────────────────────────
+  // ─── Model Loading (via Go pool) ────────────────────────────────────
 
   /**
-   * Load a model and start the Python worker.
-   *
-   * @param modelID - HuggingFace model ID or partial name
-   * @param backend - Optional backend override (mlx, llamacpp, etc.)
+   * Load a model into the Go binary's worker pool.
+   * The pool handles LRU eviction and multi-model management.
    */
-  async loadModel(modelID: string, backend?: string): Promise<void> {
-    // If already loaded, skip
-    if (this.activeModelId === modelID && this.workerManager?.alive) {
-      return;
-    }
+  async loadModel(modelID: string, _backend?: string): Promise<void> {
+    await this.ensureRunning();
 
-    // Find the model in the registry
-    let model = await this.registry.getModel(modelID);
+    // Check if model exists locally, pull if not
+    const status = await this.httpClient!.getStatus();
+    const cached = status.cached_models?.find(
+      (m) => m.id === modelID || m.name === modelID,
+    );
 
-    if (!model) {
-      // Try pulling it
+    if (!cached) {
       log.info(`[inference] model ${modelID} not found locally, pulling...`);
       await this.pullModel(modelID);
-      model = await this.registry.getModel(modelID);
     }
 
-    if (!model) {
-      throw new Error(`Model ${modelID} not found and could not be downloaded`);
-    }
+    await this.httpClient!.loadModel(modelID);
+    this._loadedModelId = modelID;
 
-    // Unload any existing model
-    if (this.activeModelId) {
-      await this.unloadModel();
-    }
-
-    // Start the Python worker
-    if (!this.workerManager) {
-      this.workerManager = new PythonWorkerManager();
-    }
-
-    await this.workerManager.start(model.localPath, backend);
-
-    this.activeModelId = modelID;
-    this.activeModel = new LatticeLanguageModel(modelID, this.workerManager);
-
-    log.info(
-      `[inference] model loaded: ${modelID} (backend=${this.workerManager.backend})`,
-    );
+    log.info(`[inference] model loaded: ${modelID}`);
     this.emit("model-loaded", modelID);
   }
 
   /**
-   * Unload the current model and stop the Python worker.
+   * Unload the current model from the Go binary's pool.
    */
   async unloadModel(): Promise<void> {
-    if (this.workerManager?.alive) {
-      await this.workerManager.stop();
+    if (!this.httpClient || !this._loadedModelId) return;
+
+    try {
+      await this.httpClient.unloadModel(this._loadedModelId);
+    } catch {
+      // May already be unloaded
     }
 
-    this.activeModel = null;
-    this.activeModelId = null;
+    this.languageModels.delete(this._loadedModelId);
+    this._loadedModelId = null;
 
     log.info("[inference] model unloaded");
     this.emit("model-unloaded");
   }
 
-  // ─── Language Model ─────────────────────────────────────────────────
+  // ─── Language Model (AI SDK bridge) ─────────────────────────────────
 
   /**
-   * Get the LanguageModelV2 for the currently loaded model.
-   * This is what gets passed to `streamText()` in the AI SDK.
+   * Get the LanguageModelV2 for the given model.
+   * Uses the Go binary's OpenAI-compatible API under the hood.
    */
   getLanguageModel(modelId?: string): LanguageModelV2 {
-    if (!this.activeModel) {
-      throw new Error(
-        "No model loaded. Call loadModel() first.",
-      );
+    const id = modelId ?? this._loadedModelId;
+    if (!id) {
+      throw new Error("No model loaded. Call loadModel() first.");
     }
 
-    // If a specific model is requested, verify it matches
-    if (modelId && this.activeModelId !== modelId) {
-      throw new Error(
-        `Requested model ${modelId} but ${this.activeModelId} is loaded. Call loadModel() first.`,
-      );
+    if (!this.httpClient) {
+      throw new Error("Inference service not initialized.");
     }
 
-    return this.activeModel;
+    // Cache language model instances
+    let lm = this.languageModels.get(id);
+    if (!lm) {
+      lm = new LatticeLanguageModel(id, this.httpClient);
+      this.languageModels.set(id, lm);
+    }
+
+    return lm;
   }
 
-  // ─── Python Environment ─────────────────────────────────────────────
+  // ─── Pool Status (Phase 2) ──────────────────────────────────────────
 
   /**
-   * Auto-create the inference Python venv and install backend dependencies.
-   * Runs once on first launch. Skips if venv already exists.
-   *
-   * Steps:
-   *   1. Find system python3
-   *   2. Create ~/.lattice/inference-venv if missing
-   *   3. pip install mlx-lm (Apple Silicon) or llama-cpp-python (NVIDIA/CPU)
+   * Get the worker pool status from the Go binary.
    */
-  private async ensurePythonEnv(): Promise<void> {
-    const venvPython = path.join(VENV_DIR, "bin", "python3");
+  async getPoolStatus(): Promise<{
+    loadedModels: LoadedModelInfo[];
+    modelsLoaded: number;
+    maxLoadedModels: number;
+    memoryBudgetBytes: number;
+    estimatedVramBytes: number;
+  }> {
+    await this.ensureRunning();
+    const status = await this.httpClient!.getStatus();
+    return {
+      loadedModels: status.loaded_models,
+      modelsLoaded: status.models_loaded,
+      maxLoadedModels: status.max_loaded_models,
+      memoryBudgetBytes: status.memory_budget_bytes,
+      estimatedVramBytes: status.estimated_vram_bytes,
+    };
+  }
 
-    // Already set up
-    if (fs.existsSync(venvPython)) {
-      log.info("[inference] venv exists at " + VENV_DIR);
-      return;
+  // ─── Cluster (Phase 3) ──────────────────────────────────────────────
+
+  async getClusterStatus(): Promise<ClusterState | null> {
+    if (!this.httpClient) return null;
+    return this.httpClient.getClusterStatus();
+  }
+
+  async getClusterNodes(): Promise<ClusterNode[]> {
+    if (!this.httpClient) return [];
+    return this.httpClient.getClusterNodes();
+  }
+
+  // ─── Metrics (Phase 2) ──────────────────────────────────────────────
+
+  async getMetrics(): Promise<string> {
+    if (!this.httpClient) return "";
+    return this.httpClient.getMetrics();
+  }
+
+  // ─── Internal Helpers ───────────────────────────────────────────────
+
+  private async ensureRunning(): Promise<void> {
+    if (!this.processManager) {
+      throw new Error("InferenceService not initialized. Call initialize() first.");
     }
-
-    // Find system Python to bootstrap the venv
-    let systemPython = "";
-    for (const name of ["python3", "python"]) {
-      try {
-        systemPython = execSync(`which ${name}`, { encoding: "utf-8", timeout: 5000 }).trim();
-        if (systemPython) break;
-      } catch {
-        // Not found
-      }
+    if (!this.processManager.alive) {
+      await this.processManager.start();
+      this.httpClient = new InferredHttpClient(this.processManager.baseUrl);
+      this._available = true;
     }
+  }
 
-    if (!systemPython) {
-      log.warn("[inference] No system Python found — cannot auto-setup venv");
-      return;
-    }
-
-    log.info(`[inference] creating venv at ${VENV_DIR} using ${systemPython}...`);
-
-    // Create the venv
-    try {
-      fs.mkdirSync(path.dirname(VENV_DIR), { recursive: true });
-      execSync(`"${systemPython}" -m venv "${VENV_DIR}"`, {
-        encoding: "utf-8",
-        timeout: 60_000,
-      });
-    } catch (err) {
-      log.warn(`[inference] failed to create venv: ${err}`);
-      return;
-    }
-
-    // Install backend deps based on platform
-    const pip = path.join(VENV_DIR, "bin", "pip");
-    const deps =
-      process.platform === "darwin" && process.arch === "arm64"
-        ? "mlx mlx-lm"
-        : "llama-cpp-python";
-
-    log.info(`[inference] installing ${deps}...`);
-
-    try {
-      execSync(`"${pip}" install --upgrade pip ${deps}`, {
-        encoding: "utf-8",
-        timeout: 300_000, // 5 min for compilation
-        env: { ...process.env, PIP_DISABLE_PIP_VERSION_CHECK: "1" },
-      });
-      log.info("[inference] Python environment ready");
-    } catch (err) {
-      log.warn(`[inference] failed to install deps: ${err}`);
-      // Venv created but deps failed — checkPythonDependencies will report unavailable
-    }
+  private normalizeModelInfo(m: ModelInfo): ModelInfo {
+    return {
+      id: m.id ?? m.name,
+      name: m.name ?? m.id,
+      huggingFaceRepo: m.huggingFaceRepo,
+      format: m.format ?? "unknown",
+      sizeBytes: m.sizeBytes ?? 0,
+      parameterCount: m.parameterCount,
+      quantization: m.quantization,
+      localPath: m.localPath ?? "",
+      backend: m.backend,
+      pulledAt: m.pulledAt,
+    };
   }
 
   // ─── Lifecycle ──────────────────────────────────────────────────────
@@ -304,7 +309,14 @@ export class InferenceService extends EventEmitter {
    * Dispose all resources. Called on app shutdown.
    */
   async dispose(): Promise<void> {
-    await this.unloadModel();
+    if (this.processManager) {
+      await this.processManager.stop();
+      this.processManager = null;
+    }
+    this.httpClient = null;
+    this._available = false;
+    this._loadedModelId = null;
+    this.languageModels.clear();
     log.info("[inference] service disposed");
   }
 }

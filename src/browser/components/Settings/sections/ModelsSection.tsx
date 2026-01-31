@@ -1,5 +1,20 @@
-import React, { useCallback, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  Loader2,
+  Play,
+  Plus,
+  Radar,
+  RefreshCw,
+  Square,
+  Timer,
+  Trash2,
+  XCircle,
+  Network,
+} from "lucide-react";
 import { Button } from "@/browser/components/ui/button";
 import {
   Select,
@@ -12,6 +27,7 @@ import { useAPI } from "@/browser/contexts/API";
 import { getSuggestedModels, useModelsFromSettings } from "@/browser/hooks/useModelsFromSettings";
 import { usePersistedState } from "@/browser/hooks/usePersistedState";
 import { useProvidersConfig } from "@/browser/hooks/useProvidersConfig";
+import { useInference } from "@/browser/hooks/useInference";
 import { SearchableModelSelect } from "../components/SearchableModelSelect";
 import { KNOWN_MODELS } from "@/common/constants/knownModels";
 import { PROVIDER_DISPLAY_NAMES, SUPPORTED_PROVIDERS } from "@/common/constants/providers";
@@ -44,6 +60,36 @@ interface EditingState {
   newModelId: string;
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const value = bytes / Math.pow(1024, i);
+  return `${value.toFixed(i > 1 ? 1 : 0)} ${units[i]}`;
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const secs = Math.floor(diff / 1000);
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-background-secondary flex flex-col gap-0.5 rounded-md px-3 py-2">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted">
+        {label}
+      </span>
+      <span className="text-sm font-semibold text-foreground">{value}</span>
+    </div>
+  );
+}
+
 export function ModelsSection() {
   const { api } = useAPI();
   const { config, loading, updateModelsOptimistically } = useProvidersConfig();
@@ -66,7 +112,160 @@ export function ModelsSection() {
   // All models (including hidden) for the settings dropdowns
   const allModels = getSuggestedModels(config);
 
-  // Check if a model already exists (for duplicate prevention)
+  // ── Local inference state ──────────────────────────────────────────────
+  const {
+    status: inferenceStatus,
+    models: localModels,
+    loading: localLoading,
+    pulling,
+    downloadProgress,
+    poolStatus,
+    clusterStatus,
+    metrics,
+    lastError: inferenceError,
+    lastSuccess: inferenceSuccess,
+    pullModel,
+    deleteModel: deleteLocalModel,
+    loadModel,
+    unloadModel,
+    discoverNodes,
+    clearMessages: clearInferenceMessages,
+    refreshPoolStatus,
+    refreshClusterStatus,
+    refreshMetrics,
+  } = useInference();
+
+  const [modelIdInput, setModelIdInput] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [benchmarking, setBenchmarking] = useState(false);
+  const [benchmarkResult, setBenchmarkResult] = useState<{
+    tokensPerSecond: number;
+    timeToFirstToken: number;
+    totalTime: number;
+  } | null>(null);
+
+  // Auto-dismiss success messages after 4 seconds
+  useEffect(() => {
+    if (!inferenceSuccess) return;
+    const timer = setTimeout(() => clearInferenceMessages(), 4000);
+    return () => clearTimeout(timer);
+  }, [inferenceSuccess, clearInferenceMessages]);
+
+  // Auto-refresh metrics when visible
+  useEffect(() => {
+    if (!showMetrics) return;
+    void refreshMetrics();
+    const interval = setInterval(() => void refreshMetrics(), 5000);
+    return () => clearInterval(interval);
+  }, [showMetrics, refreshMetrics]);
+
+  const handleDiscoverNodes = async () => {
+    setDiscovering(true);
+    try {
+      await discoverNodes();
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const handleRunBenchmark = async (modelId: string) => {
+    setBenchmarking(true);
+    setBenchmarkResult(null);
+    try {
+      // Simple benchmark: time a short inference request
+      const start = performance.now();
+      // Use the chat completions endpoint with a short prompt to measure performance
+      // This is a lightweight client-side benchmark that measures round-trip time
+      const resp = await fetch(
+        `http://127.0.0.1:${inferenceStatus?.available ? "8000" : "0"}/v1/chat/completions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: modelId,
+            messages: [{ role: "user", content: "Write a haiku about computing." }],
+            max_tokens: 64,
+            stream: false,
+          }),
+          signal: AbortSignal.timeout(30000),
+        },
+      );
+      const elapsed = performance.now() - start;
+      if (resp.ok) {
+        const data = await resp.json();
+        const tokens = data?.usage?.completion_tokens ?? 0;
+        setBenchmarkResult({
+          tokensPerSecond: tokens > 0 ? tokens / (elapsed / 1000) : 0,
+          timeToFirstToken: elapsed,
+          totalTime: elapsed,
+        });
+      }
+    } catch {
+      // Benchmark failed silently — metrics section shows "no data"
+    } finally {
+      setBenchmarking(false);
+    }
+  };
+
+  // Parse Prometheus text
+  const parsedMetrics = React.useMemo(() => {
+    if (!metrics) return null;
+    const lines = metrics.split("\n");
+    const vals: Record<string, number> = {};
+    for (const line of lines) {
+      if (line.startsWith("#") || !line.trim()) continue;
+      const match = line.match(/^(\S+?)(?:\{.*?\})?\s+([\d.eE+-]+)/);
+      if (match) {
+        vals[match[1]] = parseFloat(match[2]);
+      }
+    }
+    return vals;
+  }, [metrics]);
+
+  const progressPercent =
+    downloadProgress && downloadProgress.totalBytes > 0
+      ? Math.round((downloadProgress.downloadedBytes / downloadProgress.totalBytes) * 100)
+      : 0;
+
+  const handlePullModel = async () => {
+    const id = modelIdInput.trim();
+    if (!id) return;
+    await pullModel(id);
+    setModelIdInput("");
+  };
+
+  const handleLoadModel = async (modelId: string) => {
+    setActionLoading(modelId);
+    try {
+      await loadModel(modelId);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnloadModel = async () => {
+    setActionLoading("__unload__");
+    try {
+      await unloadModel();
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteLocalModel = async (modelId: string) => {
+    setActionLoading(modelId);
+    try {
+      await deleteLocalModel(modelId);
+    } finally {
+      setActionLoading(null);
+      setConfirmDelete(null);
+    }
+  };
+
+  // ── Cloud model management ─────────────────────────────────────────────
   const modelExists = useCallback(
     (provider: string, modelId: string, excludeOriginal?: string): boolean => {
       if (!config) return false;
@@ -78,39 +277,27 @@ export function ModelsSection() {
 
   const handleAddModel = useCallback(() => {
     if (!config || !lastProvider || !newModelId.trim()) return;
-
     const trimmedModelId = newModelId.trim();
-
-    // Check for duplicates
     if (modelExists(lastProvider, trimmedModelId)) {
       setError(`Model "${trimmedModelId}" already exists for this provider`);
       return;
     }
-
     if (!api) return;
     setError(null);
-
-    // Optimistic update - returns new models array for API call
     const updatedModels = updateModelsOptimistically(lastProvider, (models) => [
       ...models,
       trimmedModelId,
     ]);
     setNewModelId("");
-
-    // Save in background
     void api.providers.setModels({ provider: lastProvider, models: updatedModels });
   }, [api, lastProvider, newModelId, config, modelExists, updateModelsOptimistically]);
 
   const handleRemoveModel = useCallback(
     (provider: string, modelId: string) => {
       if (!config || !api) return;
-
-      // Optimistic update - returns new models array for API call
       const updatedModels = updateModelsOptimistically(provider, (models) =>
         models.filter((m) => m !== modelId)
       );
-
-      // Save in background
       void api.providers.setModels({ provider, models: updatedModels });
     },
     [api, config, updateModelsOptimistically]
@@ -128,30 +315,22 @@ export function ModelsSection() {
 
   const handleSaveEdit = useCallback(() => {
     if (!config || !editing || !api) return;
-
     const trimmedModelId = editing.newModelId.trim();
     if (!trimmedModelId) {
       setError("Model ID cannot be empty");
       return;
     }
-
-    // Only validate duplicates if the model ID actually changed
     if (trimmedModelId !== editing.originalModelId) {
       if (modelExists(editing.provider, trimmedModelId)) {
         setError(`Model "${trimmedModelId}" already exists for this provider`);
         return;
       }
     }
-
     setError(null);
-
-    // Optimistic update - returns new models array for API call
     const updatedModels = updateModelsOptimistically(editing.provider, (models) =>
       models.map((m) => (m === editing.originalModelId ? trimmedModelId : m))
     );
     setEditing(null);
-
-    // Save in background
     void api.providers.setModels({ provider: editing.provider, models: updatedModels });
   }, [api, editing, config, modelExists, updateModelsOptimistically]);
 
@@ -190,15 +369,12 @@ export function ModelsSection() {
 
   return (
     <div className="space-y-4">
-      {/* Model Defaults - styled to match table aesthetic */}
+      {/* ── Model Defaults ─────────────────────────────────────────────── */}
       <div className="border-border-medium overflow-hidden rounded-md border">
-        {/* Header row - matches table header */}
         <div className="border-border-medium bg-background-secondary/50 border-b px-2 py-1.5 md:px-3">
           <span className="text-muted text-xs font-medium">Model Defaults</span>
         </div>
-        {/* Content rows - match table row styling */}
         <div className="divide-border-medium divide-y">
-          {/* Default Model row */}
           <div className="flex items-center gap-4 px-2 py-2 md:px-3">
             <div className="w-28 shrink-0 md:w-32">
               <div className="text-muted text-xs">Default Model</div>
@@ -213,7 +389,6 @@ export function ModelsSection() {
               />
             </div>
           </div>
-          {/* Compaction Model row */}
           <div className="flex items-center gap-4 px-2 py-2 md:px-3">
             <div className="w-28 shrink-0 md:w-32">
               <div className="text-muted text-xs">Compaction Model</div>
@@ -231,11 +406,10 @@ export function ModelsSection() {
         </div>
       </div>
 
-      {/* Custom Models */}
+      {/* ── Custom Models ──────────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="text-muted text-xs font-medium tracking-wide uppercase">Custom Models</div>
 
-        {/* Add new model form - styled to match table */}
         <div className="border-border-medium overflow-hidden rounded-md border">
           <div className="border-border-medium bg-background-secondary/50 flex flex-wrap items-center gap-1.5 border-b px-2 py-1.5 md:px-3">
             <Select value={lastProvider} onValueChange={setLastProvider}>
@@ -276,7 +450,6 @@ export function ModelsSection() {
           )}
         </div>
 
-        {/* Table of custom models */}
         {customModels.length > 0 && (
           <div className="border-border-medium overflow-hidden rounded-md border">
             <table className="w-full">
@@ -322,7 +495,577 @@ export function ModelsSection() {
         )}
       </div>
 
-      {/* Built-in Models */}
+      {/* ── Local Models (On-Device Inference) ─────────────────────────── */}
+      <div className="space-y-3">
+        <div className="text-muted text-xs font-medium tracking-wide uppercase">Local Models</div>
+
+        {/* Error/Success Messages */}
+        {inferenceError && (
+          <div className="flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+            <span className="min-w-0 flex-1 text-xs text-red-400">{inferenceError}</span>
+            <button
+              onClick={clearInferenceMessages}
+              className="shrink-0 text-xs text-red-400 hover:text-red-300"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        {inferenceSuccess && !inferenceError && (
+          <div className="flex items-center gap-2 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+            <span className="min-w-0 flex-1 text-xs text-green-400">{inferenceSuccess}</span>
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="border-border-medium overflow-hidden rounded-md border">
+          <div className="border-border-medium bg-background-secondary/50 border-b px-2 py-1.5 md:px-3">
+            <div className="flex items-center gap-2 text-xs">
+              {inferenceStatus?.available ? (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  <span className="text-foreground">
+                    Inference backend ready
+                    {inferenceStatus.loadedModelId && (
+                      <span className="text-muted ml-1">
+                        — active:{" "}
+                        <span className="text-foreground font-medium">
+                          {inferenceStatus.loadedModelId}
+                        </span>
+                      </span>
+                    )}
+                  </span>
+                </>
+              ) : inferenceStatus ? (
+                <>
+                  <XCircle className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-muted">
+                    Inference not available. Install Python 3 +{" "}
+                    <code className="bg-background rounded px-1 text-[10px]">pip install mlx mlx-lm</code>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
+                  <span className="text-muted">Checking availability...</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Pull form */}
+          <div className="flex flex-wrap items-center gap-1.5 px-2 py-1.5 md:px-3">
+            <input
+              type="text"
+              value={modelIdInput}
+              onChange={(e) => setModelIdInput(e.target.value)}
+              placeholder="e.g. mlx-community/Qwen2.5-1.5B-Instruct-4bit"
+              className="bg-background border-border-medium focus:border-accent min-w-0 flex-1 rounded border px-2 py-1 font-mono text-xs focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !pulling) void handlePullModel();
+              }}
+              disabled={pulling}
+            />
+            <Button
+              size="sm"
+              onClick={() => void handlePullModel()}
+              disabled={pulling || !modelIdInput.trim()}
+              className="h-7 shrink-0 gap-1 px-2 text-xs"
+            >
+              {pulling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Pull
+            </Button>
+          </div>
+
+          {/* Download Progress */}
+          {pulling && downloadProgress && (
+            <div className="border-border-medium border-t px-2 py-1.5 md:px-3">
+              <div className="flex items-center justify-between text-[10px] text-muted">
+                <span className="truncate">{downloadProgress.fileName}</span>
+                <span>
+                  {formatBytes(downloadProgress.downloadedBytes)} /{" "}
+                  {formatBytes(downloadProgress.totalBytes)} ({progressPercent}%)
+                </span>
+              </div>
+              <div className="bg-background-secondary mt-1 h-1 w-full overflow-hidden rounded-full">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Cached local models table */}
+        {localLoading ? (
+          <div className="text-muted flex items-center gap-2 py-3 text-xs">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading models...
+          </div>
+        ) : localModels.length > 0 ? (
+          <div className="border-border-medium overflow-hidden rounded-md border">
+            <table className="w-full">
+              <thead>
+                <tr className="border-border-medium bg-background-secondary/50 border-b">
+                  <th className={`${headerCellBase} pl-2 text-left md:pl-3`}>Model</th>
+                  <th className={`${headerCellBase} text-left`}>Format</th>
+                  <th className={`${headerCellBase} text-right`}>Size</th>
+                  <th className={`${headerCellBase} text-left`}>Quant</th>
+                  <th className={`${headerCellBase} w-24 text-right md:pr-3`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {localModels.map((model) => {
+                  const isActive = inferenceStatus?.loadedModelId === model.id;
+                  const isThisLoading = actionLoading === model.id;
+
+                  return (
+                    <tr
+                      key={model.id}
+                      className={`border-border-medium border-b last:border-b-0 ${
+                        isActive ? "bg-green-500/5" : ""
+                      }`}
+                    >
+                      <td className="max-w-[200px] truncate py-1.5 pl-2 md:pl-3">
+                        <span className="text-xs font-medium" title={model.id}>
+                          {model.name}
+                        </span>
+                        {isActive && (
+                          <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-green-500" />
+                        )}
+                      </td>
+                      <td className="py-1.5 pr-2 text-xs uppercase text-muted">{model.format}</td>
+                      <td className="py-1.5 pr-2 text-right text-xs text-muted">
+                        {formatBytes(model.sizeBytes)}
+                      </td>
+                      <td className="py-1.5 pr-2 text-xs text-muted">
+                        {model.quantization ?? "—"}
+                      </td>
+                      <td className="py-1.5 pr-2 text-right md:pr-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => void handleUnloadModel()}
+                              disabled={actionLoading === "__unload__"}
+                              title="Unload model"
+                            >
+                              {actionLoading === "__unload__" ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Square className="h-3 w-3" />
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => void handleLoadModel(model.id)}
+                              disabled={isThisLoading}
+                              title="Load model"
+                            >
+                              {isThisLoading ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Play className="h-3 w-3" />
+                              )}
+                            </Button>
+                          )}
+
+                          {confirmDelete === model.id ? (
+                            <div className="flex items-center gap-0.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1 text-[10px] text-red-500 hover:text-red-600"
+                                onClick={() => void handleDeleteLocalModel(model.id)}
+                                disabled={isThisLoading}
+                              >
+                                Delete
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1 text-[10px]"
+                                onClick={() => setConfirmDelete(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => setConfirmDelete(model.id)}
+                              disabled={isActive}
+                              title={isActive ? "Unload model before deleting" : "Delete model"}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-muted py-2 text-center text-xs">
+            No local models cached. Pull a model from HuggingFace above.
+          </div>
+        )}
+
+        {/* Pool Status */}
+        {poolStatus && poolStatus.modelsLoaded > 0 && (
+          <div className="border-border-medium overflow-hidden rounded-md border">
+            <div className="border-border-medium bg-background-secondary/50 flex items-center justify-between border-b px-2 py-1.5 md:px-3">
+              <span className="text-muted text-xs font-medium">Model Pool</span>
+              <div className="flex items-center gap-2 text-[10px] text-muted">
+                <span>
+                  {poolStatus.modelsLoaded}/{poolStatus.maxLoadedModels} loaded
+                </span>
+                <span>·</span>
+                <span>
+                  {formatBytes(poolStatus.estimatedVramBytes)} /{" "}
+                  {formatBytes(poolStatus.memoryBudgetBytes)} VRAM
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0"
+                  onClick={() => void refreshPoolStatus()}
+                  title="Refresh"
+                >
+                  <RefreshCw className="h-2.5 w-2.5" />
+                </Button>
+              </div>
+            </div>
+            {poolStatus.memoryBudgetBytes > 0 && (
+              <div className="px-2 pt-1.5 md:px-3">
+                <div className="bg-background-secondary h-1 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-blue-500 h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.min(100, Math.round((poolStatus.estimatedVramBytes / poolStatus.memoryBudgetBytes) * 100))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            <table className="w-full">
+              <thead>
+                <tr className="border-border-medium border-b">
+                  <th className={`${headerCellBase} pl-2 text-left md:pl-3`}>Model</th>
+                  <th className={`${headerCellBase} text-left`}>Backend</th>
+                  <th className={`${headerCellBase} text-right`}>Memory</th>
+                  <th className={`${headerCellBase} text-right`}>Uses</th>
+                  <th className={`${headerCellBase} text-right md:pr-3`}>Last Used</th>
+                </tr>
+              </thead>
+              <tbody>
+                {poolStatus.loadedModels.map((m) => (
+                  <tr key={m.model_id} className="border-border-medium border-b last:border-b-0">
+                    <td className="max-w-[160px] truncate py-1.5 pl-2 text-xs md:pl-3">
+                      <span className="font-medium" title={m.model_id}>
+                        {m.model_id.split("/").pop() ?? m.model_id}
+                      </span>
+                      {m.alive && (
+                        <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                      )}
+                    </td>
+                    <td className="py-1.5 pr-2 text-[10px] uppercase text-muted">{m.backend}</td>
+                    <td className="py-1.5 pr-2 text-right text-xs text-muted">
+                      {formatBytes(m.estimated_bytes)}
+                    </td>
+                    <td className="py-1.5 pr-2 text-right text-xs text-muted">{m.use_count}</td>
+                    <td className="py-1.5 pr-2 text-right text-xs text-muted md:pr-3">
+                      {m.last_used_at ? timeAgo(m.last_used_at) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Cluster */}
+        {inferenceStatus?.available && (
+          <div className="border-border-medium overflow-hidden rounded-md border">
+            <div className="border-border-medium bg-background-secondary/50 flex items-center justify-between border-b px-2 py-1.5 md:px-3">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                <Network className="h-3 w-3" />
+                LAN Cluster
+              </span>
+              <div className="flex items-center gap-2 text-[10px] text-muted">
+                {clusterStatus && clusterStatus.total_nodes > 0 && (
+                  <>
+                    <span>
+                      {clusterStatus.total_nodes} node{clusterStatus.total_nodes !== 1 ? "s" : ""}
+                    </span>
+                    <span>·</span>
+                    <span>
+                      {clusterStatus.total_models} model{clusterStatus.total_models !== 1 ? "s" : ""}
+                    </span>
+                  </>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 gap-1 px-1.5 text-[10px]"
+                  onClick={() => void handleDiscoverNodes()}
+                  disabled={discovering}
+                  title="Scan LAN for inference nodes via mDNS"
+                >
+                  {discovering ? (
+                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                  ) : (
+                    <Radar className="h-2.5 w-2.5" />
+                  )}
+                  Discover
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0"
+                  onClick={() => void refreshClusterStatus()}
+                  title="Refresh"
+                >
+                  <RefreshCw className="h-2.5 w-2.5" />
+                </Button>
+              </div>
+            </div>
+            {clusterStatus && clusterStatus.total_nodes > 0 ? (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-border-medium border-b">
+                    <th className={`${headerCellBase} pl-2 text-left md:pl-3`}>Node</th>
+                    <th className={`${headerCellBase} text-left`}>Status</th>
+                    <th className={`${headerCellBase} text-left`}>GPU</th>
+                    <th className={`${headerCellBase} text-right`}>Memory</th>
+                    <th className={`${headerCellBase} text-right`}>Models</th>
+                    <th className={`${headerCellBase} text-right`}>Active</th>
+                    <th className={`${headerCellBase} text-right md:pr-3`}>tok/s</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clusterStatus.nodes.map((node) => {
+                    const memPercent =
+                      node.total_memory_bytes > 0
+                        ? Math.round((node.used_memory_bytes / node.total_memory_bytes) * 100)
+                        : 0;
+                    const isOnline = node.status === "online" || node.status === "active";
+
+                    return (
+                      <tr key={node.id} className="border-border-medium border-b last:border-b-0">
+                        <td className="max-w-[120px] truncate py-1.5 pl-2 text-xs md:pl-3">
+                          <span
+                            className="font-medium"
+                            title={`${node.name} (${node.address})`}
+                          >
+                            {node.name}
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] ${
+                              isOnline ? "text-green-500" : "text-amber-500"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                isOnline ? "bg-green-500" : "bg-amber-500"
+                              }`}
+                            />
+                            {node.status}
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-2 text-[10px] text-muted">
+                          {node.gpu_type || "—"}
+                        </td>
+                        <td className="py-1.5 pr-2 text-right text-xs text-muted">
+                          <span
+                            title={`${formatBytes(node.used_memory_bytes)} / ${formatBytes(node.total_memory_bytes)}`}
+                          >
+                            {memPercent}%
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-2 text-right text-xs text-muted">
+                          {node.loaded_models.length}
+                        </td>
+                        <td className="py-1.5 pr-2 text-right text-xs text-muted">
+                          {node.active_inferences}
+                        </td>
+                        <td className="py-1.5 pr-2 text-right text-xs text-muted md:pr-3">
+                          {node.tokens_per_second_avg > 0
+                            ? `${node.tokens_per_second_avg.toFixed(1)}`
+                            : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-2 py-2 text-center text-[10px] text-muted md:px-3">
+                No nodes discovered yet. Click &ldquo;Discover&rdquo; to scan your LAN via mDNS.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Benchmark */}
+        {inferenceStatus?.available && inferenceStatus.loadedModelId && (
+          <div className="border-border-medium overflow-hidden rounded-md border">
+            <div className="bg-background-secondary/50 flex items-center justify-between px-2 py-1.5 md:px-3">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                <Timer className="h-3 w-3" />
+                Quick Benchmark
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 gap-1 px-1.5 text-[10px]"
+                onClick={() => void handleRunBenchmark(inferenceStatus.loadedModelId!)}
+                disabled={benchmarking}
+              >
+                {benchmarking ? (
+                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                ) : (
+                  <Play className="h-2.5 w-2.5" />
+                )}
+                {benchmarking ? "Running..." : "Run"}
+              </Button>
+            </div>
+            {benchmarkResult && (
+              <div className="border-border-medium grid grid-cols-3 gap-1.5 border-t px-2 py-2 md:px-3">
+                <MetricCard
+                  label="Tokens/sec"
+                  value={benchmarkResult.tokensPerSecond > 0 ? benchmarkResult.tokensPerSecond.toFixed(1) : "—"}
+                />
+                <MetricCard
+                  label="TTFT"
+                  value={`${benchmarkResult.timeToFirstToken.toFixed(0)}ms`}
+                />
+                <MetricCard
+                  label="Total Time"
+                  value={`${(benchmarkResult.totalTime / 1000).toFixed(2)}s`}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Metrics */}
+        {inferenceStatus?.available && (
+          <div className="border-border-medium overflow-hidden rounded-md border">
+            <div className="bg-background-secondary/50 flex items-center justify-between px-2 py-1.5 md:px-3">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                <Activity className="h-3 w-3" />
+                Performance Metrics
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px]"
+                onClick={() => setShowMetrics(!showMetrics)}
+              >
+                {showMetrics ? "Hide" : "Show"}
+              </Button>
+            </div>
+
+            {showMetrics && (
+              <div className="border-border-medium space-y-2 border-t px-2 py-2 md:px-3">
+                {parsedMetrics && Object.keys(parsedMetrics).length > 0 ? (
+                  <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
+                    {parsedMetrics["inference_tokens_per_second"] != null && (
+                      <MetricCard
+                        label="Tokens/sec"
+                        value={parsedMetrics["inference_tokens_per_second"].toFixed(1)}
+                      />
+                    )}
+                    {parsedMetrics["inference_requests_total"] != null && (
+                      <MetricCard
+                        label="Total Requests"
+                        value={Math.round(
+                          parsedMetrics["inference_requests_total"]
+                        ).toString()}
+                      />
+                    )}
+                    {parsedMetrics["inference_active_requests"] != null && (
+                      <MetricCard
+                        label="Active"
+                        value={Math.round(
+                          parsedMetrics["inference_active_requests"]
+                        ).toString()}
+                      />
+                    )}
+                    {parsedMetrics["pool_loaded_models"] != null && (
+                      <MetricCard
+                        label="Loaded Models"
+                        value={Math.round(parsedMetrics["pool_loaded_models"]).toString()}
+                      />
+                    )}
+                    {parsedMetrics["pool_memory_used_bytes"] != null && (
+                      <MetricCard
+                        label="Memory Used"
+                        value={formatBytes(parsedMetrics["pool_memory_used_bytes"])}
+                      />
+                    )}
+                    {parsedMetrics["inference_latency_seconds"] != null && (
+                      <MetricCard
+                        label="Latency"
+                        value={`${(parsedMetrics["inference_latency_seconds"] * 1000).toFixed(0)}ms`}
+                      />
+                    )}
+                    {parsedMetrics["cluster_total_nodes"] != null && (
+                      <MetricCard
+                        label="Cluster Nodes"
+                        value={Math.round(parsedMetrics["cluster_total_nodes"]).toString()}
+                      />
+                    )}
+                    {parsedMetrics["inference_time_to_first_token_seconds"] != null && (
+                      <MetricCard
+                        label="TTFT"
+                        value={`${(parsedMetrics["inference_time_to_first_token_seconds"] * 1000).toFixed(0)}ms`}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-muted py-1 text-center text-[10px]">
+                    No metrics yet. Run an inference to generate metrics.
+                  </div>
+                )}
+
+                {metrics && (
+                  <details className="text-[10px]">
+                    <summary className="cursor-pointer text-muted hover:text-foreground">
+                      Raw Prometheus metrics
+                    </summary>
+                    <pre className="bg-background-secondary mt-1 max-h-36 overflow-auto rounded p-1.5 text-[9px] leading-tight text-muted">
+                      {metrics}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Built-in Models ────────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="text-muted text-xs font-medium tracking-wide uppercase">
           Built-in Models
