@@ -185,6 +185,7 @@ export {
   terminal,
   tokenizer,
   update,
+  inference,
   voice,
   window,
   workspace,

@@ -10,6 +10,7 @@ import {
   Keyboard,
   Layout,
   BrainCircuit,
+  HardDrive,
 } from "lucide-react";
 import { useSettings } from "@/browser/contexts/SettingsContext";
 import { useExperimentValue } from "@/browser/hooks/useExperiments";
@@ -25,6 +26,7 @@ import { ProjectSettingsSection } from "./sections/ProjectSettingsSection";
 import { LayoutsSection } from "./sections/LayoutsSection";
 import { ExperimentsSection } from "./sections/ExperimentsSection";
 import { KeybindsSection } from "./sections/KeybindsSection";
+import { LocalModelsSection } from "./sections/LocalModelsSection";
 import type { SettingsSection } from "./types";
 
 const BASE_SECTIONS: SettingsSection[] = [
@@ -57,6 +59,12 @@ const BASE_SECTIONS: SettingsSection[] = [
     label: "Models",
     icon: <Cpu className="h-4 w-4" />,
     component: ModelsSection,
+  },
+  {
+    id: "local-models",
+    label: "Local Models",
+    icon: <HardDrive className="h-4 w-4" />,
+    component: LocalModelsSection,
   },
   {
     id: "layouts",

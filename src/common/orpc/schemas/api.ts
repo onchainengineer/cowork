@@ -1104,6 +1104,67 @@ export const voice = {
   },
 };
 
+// ─── Inference (Local Models) ──────────────────────────────────────
+
+const ModelInfoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  huggingFaceRepo: z.string().optional(),
+  format: z.enum(["mlx", "gguf", "pytorch", "unknown"]),
+  sizeBytes: z.number(),
+  parameterCount: z.number().optional(),
+  quantization: z.string().optional(),
+  localPath: z.string(),
+  backend: z.string().optional(),
+  pulledAt: z.string().optional(),
+});
+
+const DownloadProgressSchema = z.object({
+  fileName: z.string(),
+  downloadedBytes: z.number(),
+  totalBytes: z.number(),
+});
+
+const InferenceStatusSchema = z.object({
+  available: z.boolean(),
+  loadedModelId: z.string().nullable(),
+});
+
+export const inference = {
+  getStatus: {
+    input: z.void(),
+    output: InferenceStatusSchema,
+  },
+  listModels: {
+    input: z.void(),
+    output: z.array(ModelInfoSchema),
+  },
+  pullModel: {
+    input: z.object({ modelId: z.string() }),
+    output: z.object({ localPath: z.string() }),
+  },
+  deleteModel: {
+    input: z.object({ modelId: z.string() }),
+    output: z.void(),
+  },
+  loadModel: {
+    input: z.object({ modelId: z.string(), backend: z.string().optional() }),
+    output: z.void(),
+  },
+  unloadModel: {
+    input: z.void(),
+    output: z.void(),
+  },
+  onDownloadProgress: {
+    input: z.void(),
+    output: eventIterator(DownloadProgressSchema),
+  },
+  onStatusChanged: {
+    input: z.void(),
+    output: eventIterator(InferenceStatusSchema),
+  },
+};
+
 // Debug endpoints (test-only, not for production use)
 export const debug = {
   /**

@@ -23,6 +23,7 @@ import type { SessionTimingService } from "@/node/services/sessionTimingService"
 import type { SessionUsageService } from "@/node/services/sessionUsageService";
 import type { TaskService } from "@/node/services/taskService";
 import type { LatticeService } from "@/node/services/latticeService";
+import type { InferenceService } from "@/node/services/inference";
 
 export interface ORPCContext {
   config: Config;
@@ -49,5 +50,6 @@ export interface ORPCContext {
   sessionUsageService: SessionUsageService;
   signingService: SigningService;
   latticeService: LatticeService;
+  inferenceService: InferenceService;
   headers?: IncomingHttpHeaders;
 }
