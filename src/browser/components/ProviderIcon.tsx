@@ -8,6 +8,7 @@ import OpenRouterIcon from "@/browser/assets/icons/openrouter.svg?react";
 import OllamaIcon from "@/browser/assets/icons/ollama.svg?react";
 import DeepSeekIcon from "@/browser/assets/icons/deepseek.svg?react";
 import AWSIcon from "@/browser/assets/icons/aws.svg?react";
+import LatticeIcon from "@/browser/assets/icons/lattice.svg?react";
 import {
   PROVIDER_DISPLAY_NAMES,
   type ProviderName,
@@ -28,6 +29,7 @@ const PROVIDER_ICONS: Partial<Record<ProviderName, React.FC>> = {
   openrouter: OpenRouterIcon,
   bedrock: AWSIcon,
   ollama: OllamaIcon,
+  "lattice-inference": LatticeIcon,
 };
 
 /**

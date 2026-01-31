@@ -885,6 +885,24 @@ export class AIService extends EventEmitter {
         return Ok(provider(modelId));
       }
 
+      // Handle Lattice Inference provider (local on-device inference via latticeRuntime)
+      if (providerName === "lattice-inference") {
+        const baseFetch = getProviderFetch(providerConfig);
+
+        // Lazy-load OpenAI-compatible SDK (latticeInference speaks OpenAI protocol)
+        const { createOpenAI } = await PROVIDER_REGISTRY["lattice-inference"]();
+
+        // Default to latticeRuntime's inference API endpoint
+        const baseURL = providerConfig?.baseUrl || "http://localhost:7080/api/v2/inference";
+
+        const provider = createOpenAI({
+          baseURL,
+          apiKey: "lattice-local", // latticeInference doesn't validate API keys
+          fetch: baseFetch,
+        });
+        return Ok(provider(modelId));
+      }
+
       // Handle OpenRouter provider
       if (providerName === "openrouter") {
         // Resolve credentials from config + env (single source of truth)

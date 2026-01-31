@@ -83,6 +83,12 @@ export const PROVIDER_DEFINITIONS = {
     factoryName: "createOllama",
     requiresApiKey: false, // Local service
   },
+  "lattice-inference": {
+    displayName: "Lattice Inference",
+    import: () => import("@ai-sdk/openai"),
+    factoryName: "createOpenAI",
+    requiresApiKey: false, // Local on-device inference via latticeRuntime
+  },
 } as const satisfies Record<string, ProviderDefinition>;
 
 /**
