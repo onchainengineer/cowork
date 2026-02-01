@@ -4,7 +4,8 @@ import { VERSION } from "@/version";
 import { SettingsButton } from "./SettingsButton";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import type { UpdateStatus } from "@/common/orpc/types";
-import { Download, Loader2, RefreshCw } from "lucide-react";
+import type { LatticeWhoami } from "@/common/orpc/schemas/lattice";
+import { Download, Loader2, RefreshCw, User } from "lucide-react";
 
 import { useAPI } from "@/browser/contexts/API";
 import {
@@ -67,6 +68,7 @@ export function TitleBar() {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ type: "idle" });
   const [isCheckingOnHover, setIsCheckingOnHover] = useState(false);
   const lastHoverCheckTime = useRef<number>(0);
+  const [latticeUser, setLatticeUser] = useState<LatticeWhoami | null>(null);
 
   useEffect(() => {
     // Skip update checks in browser mode - app updates only apply to Electron
@@ -104,6 +106,27 @@ export function TitleBar() {
     return () => {
       controller.abort();
       clearInterval(checkInterval);
+    };
+  }, [api]);
+
+  // Fetch Lattice user identity
+  useEffect(() => {
+    if (!api) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const whoami = await api.lattice.whoami(undefined);
+        if (!cancelled) {
+          setLatticeUser(whoami);
+        }
+      } catch {
+        // Ignore - Lattice may not be available
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
   }, [api]);
 
@@ -266,13 +289,27 @@ export function TitleBar() {
           </TooltipContent>
         </Tooltip>
       </div>
-      {isDesktop ? (
-        <div className="titlebar-no-drag">
-          <SettingsButton />
-        </div>
-      ) : (
+      <div className={cn("flex items-center gap-3", isDesktop && "titlebar-no-drag")}>
+        {latticeUser?.state === "authenticated" && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="bg-accent/10 text-accent flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium">
+                <User className="size-3" />
+                <span className="max-w-[140px] truncate">{latticeUser.username}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="text-xs">
+                <div>
+                  Signed in as <strong>{latticeUser.username}</strong>
+                </div>
+                <div className="text-muted-foreground mt-0.5">{latticeUser.deploymentUrl}</div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
         <SettingsButton />
-      )}
+      </div>
     </div>
   );
 }

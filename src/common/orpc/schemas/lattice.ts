@@ -85,6 +85,21 @@ export const LatticeWorkspaceSchema = z.object({
 
 export type LatticeWorkspace = z.infer<typeof LatticeWorkspaceSchema>;
 
+// Lattice whoami - authentication identity check
+export const LatticeWhoamiSchema = z.discriminatedUnion("state", [
+  z.object({
+    state: z.literal("authenticated"),
+    username: z.string(),
+    deploymentUrl: z.string(),
+  }),
+  z.object({
+    state: z.literal("unauthenticated"),
+    reason: z.string(),
+  }),
+]);
+
+export type LatticeWhoami = z.infer<typeof LatticeWhoamiSchema>;
+
 // API schemas for lattice namespace
 export const lattice = {
   getInfo: {
@@ -105,5 +120,11 @@ export const lattice = {
   listWorkspaces: {
     input: z.void(),
     output: z.array(LatticeWorkspaceSchema),
+  },
+  whoami: {
+    input: z.object({
+      refresh: z.boolean().optional().meta({ description: "Clear cache and re-check" }),
+    }).optional(),
+    output: LatticeWhoamiSchema,
   },
 };

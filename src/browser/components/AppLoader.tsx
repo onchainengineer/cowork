@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import App from "../App";
 import { AuthTokenModal } from "./AuthTokenModal";
+import { LatticeAuthModal } from "./LatticeAuthModal";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { LoadingScreen } from "./LoadingScreen";
 import { useWorkspaceStoreRaw, workspaceStore } from "../stores/WorkspaceStore";
@@ -65,6 +66,11 @@ function AppLoaderInner() {
   // Track whether stores have been synced
   const [storesSynced, setStoresSynced] = useState(false);
 
+  // Lattice auth state
+  const [latticeAuthChecked, setLatticeAuthChecked] = useState(false);
+  const [latticeAuthRequired, setLatticeAuthRequired] = useState(false);
+  const [latticeAuthReason, setLatticeAuthReason] = useState("");
+
   // Sync stores when metadata finishes loading
   useEffect(() => {
     if (api) {
@@ -96,9 +102,71 @@ function AppLoaderInner() {
     api,
   ]);
 
+  // Check Lattice CLI auth on startup
+  useEffect(() => {
+    if (!api || latticeAuthChecked) return;
+
+    (async () => {
+      try {
+        // First check if Lattice CLI is even available
+        const info = await api.lattice.getInfo();
+        if (info.state !== "available") {
+          // CLI not installed or outdated - skip auth check, don't block non-Lattice users
+          setLatticeAuthChecked(true);
+          return;
+        }
+
+        // CLI is available, check if user is authenticated
+        const whoami = await api.lattice.whoami(undefined);
+        if (whoami.state === "authenticated") {
+          setLatticeAuthChecked(true);
+        } else {
+          // CLI exists but user not authenticated
+          setLatticeAuthReason(whoami.reason);
+          setLatticeAuthRequired(true);
+          setLatticeAuthChecked(true);
+        }
+      } catch {
+        // If check fails, don't block the app
+        setLatticeAuthChecked(true);
+      }
+    })();
+  }, [api, latticeAuthChecked]);
+
+  const handleLatticeRetry = useCallback(async (): Promise<boolean> => {
+    if (!api) return false;
+    try {
+      // Clear server-side cache so it re-runs `lattice whoami`
+      const whoami = await api.lattice.whoami({ refresh: true });
+      if (whoami.state === "authenticated") {
+        setLatticeAuthRequired(false);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, [api]);
+
+  const handleLatticeSkip = useCallback(() => {
+    setLatticeAuthRequired(false);
+  }, []);
+
   // If we're in browser mode and auth is required, show the token prompt before any data loads.
   if (apiState.status === "auth_required") {
     return <AuthTokenModal isOpen={true} onSubmit={apiState.authenticate} error={apiState.error} />;
+  }
+
+  // Show Lattice auth modal if CLI is available but user is not authenticated
+  if (latticeAuthRequired) {
+    return (
+      <LatticeAuthModal
+        isOpen={true}
+        reason={latticeAuthReason}
+        onRetry={handleLatticeRetry}
+        onSkip={handleLatticeSkip}
+      />
+    );
   }
 
   // Show loading screen until both projects and workspaces are loaded and stores synced

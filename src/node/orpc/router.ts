@@ -1040,6 +1040,15 @@ export const router = (authToken?: string) => {
         .handler(async ({ context }) => {
           return context.latticeService.listWorkspaces();
         }),
+      whoami: t
+        .input(schemas.lattice.whoami.input)
+        .output(schemas.lattice.whoami.output)
+        .handler(async ({ context, input }) => {
+          if (input?.refresh) {
+            context.latticeService.clearWhoamiCache();
+          }
+          return context.latticeService.getWhoamiInfo();
+        }),
     },
     workspace: {
       list: t

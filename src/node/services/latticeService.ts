@@ -13,10 +13,11 @@ import {
   type LatticePreset,
   type LatticeWorkspace,
   type LatticeWorkspaceStatus,
+  type LatticeWhoami,
 } from "@/common/orpc/schemas/lattice";
 
 // Re-export types for consumers that import from this module
-export type { LatticeInfo, LatticeTemplate, LatticePreset, LatticeWorkspace, LatticeWorkspaceStatus };
+export type { LatticeInfo, LatticeTemplate, LatticePreset, LatticeWorkspace, LatticeWorkspaceStatus, LatticeWhoami };
 
 /** Discriminated union for workspace status check results */
 export type WorkspaceStatusResult =
@@ -269,6 +270,7 @@ function interpretLatticeResult(result: LatticeCommandResult): InterpretedLattic
 
 export class LatticeService {
   private cachedInfo: LatticeInfo | null = null;
+  private cachedWhoami: LatticeWhoami | null = null;
 
   /**
    * Get Lattice CLI info. Caches result for the session.
@@ -1040,6 +1042,72 @@ export class LatticeService {
     log.debug("Deleting Lattice workspace", { name });
     using proc = execAsync(`lattice delete ${shescape.quote(name)} --yes`);
     await proc.result;
+  }
+
+  /**
+   * Get Lattice authentication identity via `lattice whoami`.
+   * Parses output like: "Lattice is running at http://..., You're authenticated as admin !"
+   * Returns authenticated state with username + URL, or unauthenticated with reason.
+   * Caches result for the session. Call clearWhoamiCache() to force re-check.
+   */
+  async getWhoamiInfo(): Promise<LatticeWhoami> {
+    if (this.cachedWhoami) {
+      return this.cachedWhoami;
+    }
+
+    try {
+      using proc = execAsync("lattice whoami");
+      const { stdout } = await proc.result;
+
+      // Parse URL from output: "Lattice is running at http://127.0.0.1:7080, You're authenticated..."
+      const urlMatch = stdout.match(/running at (https?:\/\/[^\s,]+)/i);
+      const deploymentUrl = urlMatch?.[1] ?? "";
+
+      // Parse username: "You're authenticated as <username> !"
+      const userMatch = stdout.match(/authenticated as (\S+)/i);
+      if (userMatch?.[1]) {
+        this.cachedWhoami = {
+          state: "authenticated",
+          username: userMatch[1].replace(/\s*!$/, ""),
+          deploymentUrl,
+        };
+      } else {
+        this.cachedWhoami = {
+          state: "unauthenticated",
+          reason: "Could not parse user identity from lattice whoami",
+        };
+      }
+
+      return this.cachedWhoami;
+    } catch (error) {
+      log.debug("Lattice whoami failed", { error });
+
+      // Classify the error
+      const errorMessage =
+        error instanceof Error ? error.message.split("\n")[0].slice(0, 200).trim() : "Unknown error";
+
+      const isNotInstalled =
+        error instanceof Error &&
+        ((error as NodeJS.ErrnoException).code === "ENOENT" ||
+          errorMessage.toLowerCase().includes("command not found") ||
+          errorMessage.toLowerCase().includes("enoent"));
+
+      this.cachedWhoami = {
+        state: "unauthenticated",
+        reason: isNotInstalled
+          ? "Lattice CLI is not installed"
+          : `Not authenticated: ${errorMessage}`,
+      };
+
+      return this.cachedWhoami;
+    }
+  }
+
+  /**
+   * Clear cached whoami info. Used when user re-authenticates.
+   */
+  clearWhoamiCache(): void {
+    this.cachedWhoami = null;
   }
 
   /**
