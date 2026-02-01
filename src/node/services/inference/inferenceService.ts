@@ -191,19 +191,22 @@ export class InferenceService extends EventEmitter {
   /**
    * Unload the current model from the Go binary's pool.
    */
-  async unloadModel(): Promise<void> {
-    if (!this.httpClient || !this._loadedModelId) return;
+  async unloadModel(modelId?: string): Promise<void> {
+    const target = modelId ?? this._loadedModelId;
+    if (!this.httpClient || !target) return;
 
     try {
-      await this.httpClient.unloadModel(this._loadedModelId);
+      await this.httpClient.unloadModel(target);
     } catch {
       // May already be unloaded
     }
 
-    this.languageModels.delete(this._loadedModelId);
-    this._loadedModelId = null;
+    this.languageModels.delete(target);
+    if (this._loadedModelId === target) {
+      this._loadedModelId = null;
+    }
 
-    log.info("[inference] model unloaded");
+    log.info("[inference] model unloaded: %s", target);
     this.emit("model-unloaded");
   }
 

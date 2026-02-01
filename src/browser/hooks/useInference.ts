@@ -90,6 +90,22 @@ interface TransportStatus {
   router_transports: Record<string, string>;
 }
 
+interface SystemInfo {
+  hostname: string;
+  username: string;
+  platform: string;
+  arch: string;
+  osType: string;
+  osRelease: string;
+  cpuModel: string;
+  cpuCores: number;
+  totalMemoryBytes: number;
+  freeMemoryBytes: number;
+  uptime: number;
+  nodeVersion: string;
+  pid: number;
+}
+
 export function useInference() {
   const { api } = useAPI();
   const [status, setStatus] = useState<InferenceStatus | null>(null);
@@ -101,6 +117,7 @@ export function useInference() {
   const [clusterStatus, setClusterStatus] = useState<ClusterStatus | null>(null);
   const [metrics, setMetrics] = useState<string>("");
   const [transportStatus, setTransportStatus] = useState<TransportStatus | null>(null);
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastSuccess, setLastSuccess] = useState<string | null>(null);
 
@@ -154,6 +171,16 @@ export function useInference() {
     }
   }, [api]);
 
+  const refreshSystemInfo = useCallback(async () => {
+    if (!api) return;
+    try {
+      const info = await api.inference.getSystemInfo();
+      setSystemInfo(info);
+    } catch {
+      // Unavailable
+    }
+  }, [api]);
+
   // Initial fetch + subscriptions
   useEffect(() => {
     if (!api) return;
@@ -164,6 +191,7 @@ export function useInference() {
       refreshPoolStatus(),
       refreshClusterStatus(),
       refreshTransportStatus(),
+      refreshSystemInfo(),
     ]).finally(() => setLoading(false));
 
     // Subscribe to status changes (yields initial value)
@@ -195,7 +223,7 @@ export function useInference() {
     })();
 
     return () => ac.abort();
-  }, [api, refreshModels, refreshPoolStatus, refreshClusterStatus, refreshTransportStatus]);
+  }, [api, refreshModels, refreshPoolStatus, refreshClusterStatus, refreshTransportStatus, refreshSystemInfo]);
 
   const clearMessages = useCallback(() => {
     setLastError(null);
@@ -253,13 +281,13 @@ export function useInference() {
     [api, refreshPoolStatus, clearMessages],
   );
 
-  const unloadModel = useCallback(async () => {
+  const unloadModel = useCallback(async (modelId?: string) => {
     if (!api) return;
     clearMessages();
     try {
-      await api.inference.unloadModel();
+      await api.inference.unloadModel({ modelId });
       await refreshPoolStatus();
-      setLastSuccess("Model unloaded");
+      setLastSuccess(modelId ? `Model "${modelId}" unloaded` : "Model unloaded");
     } catch (e) {
       setLastError(`Failed to unload model: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -295,6 +323,7 @@ export function useInference() {
     clusterStatus,
     metrics,
     transportStatus,
+    systemInfo,
     lastError,
     lastSuccess,
     pullModel,
@@ -309,5 +338,6 @@ export function useInference() {
     refreshClusterStatus,
     refreshMetrics,
     refreshTransportStatus,
+    refreshSystemInfo,
   };
 }

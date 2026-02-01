@@ -22,9 +22,11 @@ export {
 } from "./registry";
 
 export {
+  ClusterTabLabel,
   CostsTabLabel,
   ExplorerTabLabel,
   FileTabLabel,
+  ModelsTabLabel,
   ReviewTabLabel,
   StatsTabLabel,
   TerminalTabLabel,

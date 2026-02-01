@@ -69,9 +69,11 @@ import {
   type TerminalSessionCreateOptions,
 } from "@/browser/utils/terminal";
 import {
+  ClusterTabLabel,
   CostsTabLabel,
   ExplorerTabLabel,
   FileTabLabel,
+  ModelsTabLabel,
   ReviewTabLabel,
   StatsTabLabel,
   TerminalTabLabel,
@@ -79,6 +81,8 @@ import {
   type ReviewStats,
 } from "./RightSidebar/tabs";
 import { FileViewerTab } from "./RightSidebar/FileViewer";
+import { ClusterTab } from "./RightSidebar/ClusterTab";
+import { ModelsTab } from "./RightSidebar/ModelsTab";
 import { ExplorerTab } from "./RightSidebar/ExplorerTab";
 import {
   DndContext,
@@ -345,6 +349,10 @@ const RightSidebarTabsetNode: React.FC<RightSidebarTabsetNodeProps> = (props) =>
       label = <ReviewTabLabel reviewStats={props.reviewStats} />;
     } else if (tab === "explorer") {
       label = <ExplorerTabLabel />;
+    } else if (tab === "cluster") {
+      label = <ClusterTabLabel />;
+    } else if (tab === "models") {
+      label = <ModelsTabLabel />;
     } else if (tab === "stats") {
       label = <StatsTabLabel sessionDuration={props.sessionDuration} />;
     } else if (isTerminal) {
@@ -527,6 +535,28 @@ const RightSidebarTabsetNode: React.FC<RightSidebarTabsetNodeProps> = (props) =>
           </div>
         )}
 
+        {props.node.activeTab === "cluster" && (
+          <div
+            role="tabpanel"
+            id={`${tabsetBaseId}-panel-cluster`}
+            aria-labelledby={`${tabsetBaseId}-tab-cluster`}
+            className="h-full"
+          >
+            <ClusterTab workspaceId={props.workspaceId} />
+          </div>
+        )}
+
+        {props.node.activeTab === "models" && (
+          <div
+            role="tabpanel"
+            id={`${tabsetBaseId}-panel-models`}
+            aria-labelledby={`${tabsetBaseId}-tab-models`}
+            className="h-full"
+          >
+            <ModelsTab workspaceId={props.workspaceId} />
+          </div>
+        )}
+
         {/* Render file viewer tabs */}
         {props.node.tabs.filter(isFileTab).map((fileTab) => {
           const filePath = getFilePath(fileTab);
@@ -607,8 +637,8 @@ const RightSidebarComponent: React.FC<RightSidebarProps> = ({
 
   // Read last-used focused tab for better defaults when initializing a new layout.
   const initialActiveTab = React.useMemo<TabType>(() => {
-    const raw = readPersistedState<string>(RIGHT_SIDEBAR_TAB_KEY, "costs");
-    return isTabType(raw) ? raw : "costs";
+    const raw = readPersistedState<string>(RIGHT_SIDEBAR_TAB_KEY, "cluster");
+    return isTabType(raw) ? raw : "cluster";
   }, []);
 
   const defaultLayout = React.useMemo(

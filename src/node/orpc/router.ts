@@ -2033,8 +2033,8 @@ export const router = (authToken?: string) => {
       unloadModel: t
         .input(schemas.inference.unloadModel.input)
         .output(schemas.inference.unloadModel.output)
-        .handler(async ({ context }) => {
-          await context.inferenceService.unloadModel();
+        .handler(async ({ context, input }) => {
+          await context.inferenceService.unloadModel(input.modelId);
         }),
 
       onDownloadProgress: t
@@ -2101,12 +2101,67 @@ export const router = (authToken?: string) => {
       getRdmaStatus: t
         .input(schemas.inference.getRdmaStatus.input)
         .output(schemas.inference.getRdmaStatus.output)
-        .handler(async ({ context }) => context.inferenceService.getRdmaStatus()),
+        .handler(async ({ context }) => {
+          const raw = await context.inferenceService.getRdmaStatus();
+          if (!raw) return null;
+          return {
+            available: raw.available ?? false,
+            mode: raw.mode ?? "",
+            device: raw.device ?? "",
+            backend: raw.backend ?? "tcp",
+            bandwidth_gbps: raw.bandwidth_gbps ?? 0,
+            latency_us: raw.latency_us ?? 0,
+            max_message_size: raw.max_message_size ?? 0,
+            error: raw.error,
+          };
+        }),
 
       getTransportStatus: t
         .input(schemas.inference.getTransportStatus.input)
         .output(schemas.inference.getTransportStatus.output)
-        .handler(async ({ context }) => context.inferenceService.getTransportStatus()),
+        .handler(async ({ context }) => {
+          const raw = await context.inferenceService.getTransportStatus();
+          if (!raw) return null;
+          // Normalize: Go binary may return undefined/null for optional fields
+          return {
+            rdma: {
+              available: raw.rdma?.available ?? false,
+              mode: raw.rdma?.mode ?? "",
+              device: raw.rdma?.device ?? "",
+              backend: raw.rdma?.backend ?? "tcp",
+              bandwidth_gbps: raw.rdma?.bandwidth_gbps ?? 0,
+              latency_us: raw.rdma?.latency_us ?? 0,
+              max_message_size: raw.rdma?.max_message_size ?? 0,
+              error: raw.rdma?.error,
+            },
+            peer_transports: Array.isArray(raw.peer_transports) ? raw.peer_transports : [],
+            router_transports: raw.router_transports ?? {},
+          };
+        }),
+
+      // ─── System Info ──────────────────────────────────────────────────
+      getSystemInfo: t
+        .input(schemas.inference.getSystemInfo.input)
+        .output(schemas.inference.getSystemInfo.output)
+        .handler(async () => {
+          const os = await import("node:os");
+          const cpus = os.cpus();
+          return {
+            hostname: os.hostname(),
+            username: os.userInfo().username,
+            platform: os.platform(),
+            arch: os.arch(),
+            osType: os.type(),
+            osRelease: os.release(),
+            cpuModel: cpus[0]?.model ?? "Unknown",
+            cpuCores: cpus.length,
+            totalMemoryBytes: os.totalmem(),
+            freeMemoryBytes: os.freemem(),
+            uptime: os.uptime(),
+            nodeVersion: process.version,
+            pid: process.pid,
+          };
+        }),
 
       // ─── Benchmark (Sprint 2) ─────────────────────────────────────────
       runBenchmark: t

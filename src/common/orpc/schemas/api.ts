@@ -1152,7 +1152,7 @@ export const inference = {
     output: z.void(),
   },
   unloadModel: {
-    input: z.void(),
+    input: z.object({ modelId: z.string().optional() }),
     output: z.void(),
   },
   onDownloadProgress: {
@@ -1278,6 +1278,26 @@ export const inference = {
         router_transports: z.record(z.string(), z.string()),
       })
       .nullable(),
+  },
+
+  // ─── System Info ─────────────────────────────────────────────────────
+  getSystemInfo: {
+    input: z.void(),
+    output: z.object({
+      hostname: z.string(),
+      username: z.string(),
+      platform: z.string(),
+      arch: z.string(),
+      osType: z.string(),
+      osRelease: z.string(),
+      cpuModel: z.string(),
+      cpuCores: z.number(),
+      totalMemoryBytes: z.number(),
+      freeMemoryBytes: z.number(),
+      uptime: z.number(),
+      nodeVersion: z.string(),
+      pid: z.number(),
+    }),
   },
 
   // ─── Benchmark (Sprint 2) ────────────────────────────────────────────

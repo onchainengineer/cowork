@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { ExternalLink, FolderTree, Terminal as TerminalIcon, X } from "lucide-react";
+import { ExternalLink, FolderTree, HardDrive, Network, Terminal as TerminalIcon, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { FileIcon } from "../../FileIcon";
 import { formatTabDuration, type ReviewStats } from "./registry";
@@ -61,6 +61,22 @@ export const StatsTabLabel: React.FC<StatsTabLabelProps> = ({ sessionDuration })
       <span className="text-muted text-[10px]">{formatTabDuration(sessionDuration)}</span>
     )}
   </>
+);
+
+/** Cluster tab label with network icon */
+export const ClusterTabLabel: React.FC = () => (
+  <span className="inline-flex items-center gap-1">
+    <Network className="h-3 w-3 shrink-0" />
+    Cluster
+  </span>
+);
+
+/** Models tab label with hard drive icon */
+export const ModelsTabLabel: React.FC = () => (
+  <span className="inline-flex items-center gap-1">
+    <HardDrive className="h-3 w-3 shrink-0" />
+    Models
+  </span>
 );
 
 /** Explorer tab label with folder tree icon */
