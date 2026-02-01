@@ -56,19 +56,19 @@ import { setGlobalLatticeService } from "@/node/runtime/runtimeFactory";
 import { InferenceService } from "@/node/services/inference";
 
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
-const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Hi, I'm Unix.
+const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Hi, I'm Lattice Workbench.
 
-This is your built-in **Chat with Unix** workspace — a safe place to ask questions about Unix itself.
+This is your built-in **Chat with Lattice** workspace — a safe place to ask questions about Lattice Workbench itself.
 
 I can help you:
 - Configure global agent behavior by editing **~/.unix/AGENTS.md** (I'll show a diff and ask before writing).
-- Pick models/providers and explain Unix modes + tool policies.
+- Pick models/providers and explain Lattice modes + tool policies.
 - Troubleshoot common setup issues (keys, runtimes, workspaces, etc.).
 
 Try asking:
 - "What does AGENTS.md do?"
 - "Help me write global instructions for code reviews"
-- "How do I set up an OpenAI / Anthropic key in Unix?"
+- "How do I set up an OpenAI / Anthropic key in Lattice Workbench?"
 `;
 
 /**
@@ -253,12 +253,12 @@ export class ServiceContainer {
       log.warn("[ServiceContainer] Inference service init failed (non-fatal)", { error: err });
     });
 
-    // Ensure the built-in Chat with Unix system workspace exists.
+    // Ensure the built-in Chat with Lattice system workspace exists.
     // Defensive: startup-time initialization must never crash the app.
     try {
       await this.ensureUnixChatWorkspace();
     } catch (error) {
-      log.warn("[ServiceContainer] Failed to ensure Chat with Unix workspace", { error });
+      log.warn("[ServiceContainer] Failed to ensure Chat with Lattice workspace", { error });
     }
   }
 

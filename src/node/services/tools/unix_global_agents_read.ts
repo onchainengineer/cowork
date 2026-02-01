@@ -42,7 +42,7 @@ export const createUnixGlobalAgentsReadTool: ToolFactory = (config: ToolConfigur
         if (config.workspaceId !== UNIX_HELP_CHAT_WORKSPACE_ID) {
           return {
             success: false,
-            error: "unix_global_agents_read is only available in the Chat with Unix system workspace",
+            error: "unix_global_agents_read is only available in the Chat with Lattice system workspace",
           };
         }
 

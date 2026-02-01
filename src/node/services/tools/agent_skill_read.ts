@@ -40,7 +40,7 @@ export const createAgentSkillReadTool: ToolFactory = (config: ToolConfiguration)
       }
 
       try {
-        // Chat with Unix intentionally has no generic filesystem access. Restrict skill reads to
+        // Chat with Lattice intentionally has no generic filesystem access. Restrict skill reads to
         // built-in skills (bundled in the app) so users can access help like `unix-docs` without
         // granting access to project/global skills on disk.
         if (config.workspaceId === UNIX_HELP_CHAT_WORKSPACE_ID) {
@@ -48,7 +48,7 @@ export const createAgentSkillReadTool: ToolFactory = (config: ToolConfiguration)
           if (!builtIn) {
             return {
               success: false,
-              error: `Only built-in skills are available in Chat with Unix (requested: ${parsedName.data}).`,
+              error: `Only built-in skills are available in Chat with Lattice (requested: ${parsedName.data}).`,
             };
           }
 

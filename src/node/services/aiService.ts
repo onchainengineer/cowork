@@ -1413,7 +1413,7 @@ export class AIService extends EventEmitter {
         disableTaskToolsForDepth: shouldDisableTaskToolsForDepth,
       });
 
-      // The Chat with Unix system workspace must remain sandboxed regardless of caller-supplied
+      // The Chat with Lattice system workspace must remain sandboxed regardless of caller-supplied
       // toolPolicy (defense-in-depth).
       const systemWorkspaceToolPolicy: ToolPolicy | undefined =
         workspaceId === UNIX_HELP_CHAT_WORKSPACE_ID

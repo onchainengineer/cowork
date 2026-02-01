@@ -619,9 +619,9 @@ export class WorkspaceService extends EventEmitter {
     runtimeConfig?: RuntimeConfig,
     sectionId?: string
   ): Promise<Result<{ metadata: FrontendWorkspaceMetadata }>> {
-    // Chat with Unix is a built-in system workspace; it cannot host additional workspaces.
+    // Chat with Lattice is a built-in system workspace; it cannot host additional workspaces.
     if (projectPath === getUnixHelpChatProjectPath(this.config.rootDir)) {
-      return Err("Cannot create workspaces in the Chat with Unix system project");
+      return Err("Cannot create workspaces in the Chat with Lattice system project");
     }
 
     // Validate workspace name
@@ -813,7 +813,7 @@ export class WorkspaceService extends EventEmitter {
 
   async remove(workspaceId: string, force = false): Promise<Result<void>> {
     if (workspaceId === UNIX_HELP_CHAT_WORKSPACE_ID) {
-      return Err("Cannot remove the Chat with Unix system workspace");
+      return Err("Cannot remove the Chat with Lattice system workspace");
     }
 
     // Idempotent: if already removing, return success to prevent race conditions
@@ -1237,7 +1237,7 @@ export class WorkspaceService extends EventEmitter {
    */
   async archive(workspaceId: string): Promise<Result<void>> {
     if (workspaceId === UNIX_HELP_CHAT_WORKSPACE_ID) {
-      return Err("Cannot archive the Chat with Unix system workspace");
+      return Err("Cannot archive the Chat with Lattice system workspace");
     }
 
     try {
@@ -1297,7 +1297,7 @@ export class WorkspaceService extends EventEmitter {
    */
   async unarchive(workspaceId: string): Promise<Result<void>> {
     if (workspaceId === UNIX_HELP_CHAT_WORKSPACE_ID) {
-      return Err("Cannot unarchive the Chat with Unix system workspace");
+      return Err("Cannot unarchive the Chat with Lattice system workspace");
     }
 
     try {
@@ -1544,7 +1544,7 @@ export class WorkspaceService extends EventEmitter {
   ): Promise<Result<{ metadata: FrontendWorkspaceMetadata; projectPath: string }>> {
     try {
       if (sourceWorkspaceId === UNIX_HELP_CHAT_WORKSPACE_ID) {
-        return Err("Cannot fork the Chat with Unix system workspace");
+        return Err("Cannot fork the Chat with Lattice system workspace");
       }
 
       const validation = validateWorkspaceName(newName);

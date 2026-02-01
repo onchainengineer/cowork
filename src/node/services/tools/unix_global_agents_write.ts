@@ -55,7 +55,7 @@ export const createUnixGlobalAgentsWriteTool: ToolFactory = (config: ToolConfigu
           return {
             success: false,
             error:
-              "unix_global_agents_write is only available in the Chat with Unix system workspace",
+              "unix_global_agents_write is only available in the Chat with Lattice system workspace",
           };
         }
 

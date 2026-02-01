@@ -60,7 +60,7 @@ export type { WorkspaceSelection } from "./WorkspaceListItem";
 // which forces React to unmount/remount the subtree. That led to hover flicker and high CPU.
 
 /**
- * Compact button for opening Chat with Unix, showing an unread dot when there are
+ * Compact button for opening Chat with Lattice, showing an unread dot when there are
  * new messages since the user last viewed the workspace.
  */
 const UnixChatHelpButton: React.FC<{
@@ -76,7 +76,7 @@ const UnixChatHelpButton: React.FC<{
         <button
           onClick={onClick}
           className="text-muted hover:text-primary relative flex shrink-0 cursor-pointer items-center border-none bg-transparent p-0 transition-colors"
-          aria-label="Open Chat with Unix"
+          aria-label="Open Chat with Lattice"
         >
           <CircleHelp className="h-3.5 w-3.5" />
           {isUnread && (
@@ -87,7 +87,7 @@ const UnixChatHelpButton: React.FC<{
           )}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="bottom">Chat with Unix</TooltipContent>
+      <TooltipContent side="bottom">Chat with Lattice</TooltipContent>
     </Tooltip>
   );
 };
@@ -513,7 +513,7 @@ const ProjectSidebarInner: React.FC<ProjectSidebarProps> = ({
     [projectPathsSignature, projectOrder]
   );
 
-  // Hide the built-in Chat with Unix system project from the normal projects list.
+  // Hide the built-in Chat with Lattice system project from the normal projects list.
   // We still render the unix-chat workspace as a dedicated pinned row above projects.
   const unixChatMetadata = workspaceMetadata.get(UNIX_HELP_CHAT_WORKSPACE_ID);
   const unixChatProjectPath = unixChatMetadata?.projectPath ?? null;
@@ -575,7 +575,7 @@ const ProjectSidebarInner: React.FC<ProjectSidebarProps> = ({
                   <button
                     onClick={handleOpenUnixChat}
                     className="shrink-0 cursor-pointer border-none bg-transparent p-0"
-                    aria-label="Open Chat with Unix"
+                    aria-label="Open Chat with Lattice"
                   >
                     <UnixLogo className="h-6 w-6" aria-hidden="true" />
                   </button>

@@ -899,7 +899,7 @@ function AppInner() {
                   }}
                 >
                   <h2 style={{ fontSize: "clamp(24px, 5vw, 36px)", letterSpacing: "-1px" }}>
-                    {currentWorkspaceId ? "Opening workspace…" : "Welcome to Unix"}
+                    {currentWorkspaceId ? "Opening workspace…" : "Welcome to Lattice Workbench"}
                   </h2>
                   <p>
                     {currentWorkspaceId

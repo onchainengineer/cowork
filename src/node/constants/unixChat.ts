@@ -1,7 +1,7 @@
 import * as path from "path";
 
 /**
- * Returns the on-disk projectPath for the built-in Chat with Unix system workspace.
+ * Returns the on-disk projectPath for the built-in Chat with Lattice system workspace.
  *
  * Note: This must be computed from the active unix home dir (Config.rootDir) so
  * tests and dev installs (UNIX_ROOT) behave consistently.
