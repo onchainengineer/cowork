@@ -56,7 +56,7 @@ import { setGlobalLatticeService } from "@/node/runtime/runtimeFactory";
 import { InferenceService } from "@/node/services/inference";
 
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
-const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Hi, I'm Lattice Workbench.
+const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Welcome to Lattice Workbench — a system of AI agents for software development.
 
 This is your built-in **Chat with Lattice** workspace — a safe place to ask questions about Lattice Workbench itself.
 

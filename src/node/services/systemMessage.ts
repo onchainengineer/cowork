@@ -45,7 +45,7 @@ function buildTaggedSection(
 // follow instructions.
 const PRELUDE = ` 
 <prelude>
-You are a coding agent called LATTICE WORKBENCH.
+You are part of LATTICE WORKBENCH, a system of AI agents for software development.
   
 <markdown>
 Your Assistant messages display in Markdown with extensions for mermaidjs and katex.

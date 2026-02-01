@@ -116,7 +116,7 @@ const createDebugLlmRequestSnapshot = (workspaceId: string): DebugLlmRequestSnap
   agentId: "exec",
   maxOutputTokens: 2048,
   systemMessage:
-    "You are Unix, a focused coding agent. Follow the user’s instructions and keep answers short.",
+    "You are part of LATTICE WORKBENCH, a system of AI agents for software development. Follow the user's instructions and keep answers short.",
   messages: [
     {
       role: "user",
