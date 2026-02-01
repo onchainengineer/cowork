@@ -290,6 +290,8 @@ export interface MCPServerManagerOptions {
   inlineServers?: Record<string, string>;
   /** If true, ignore config file servers and use only inline servers */
   ignoreConfigFile?: boolean;
+  /** Bundled MCP servers that ship with Lattice. Lowest priority — overridden by config and inline. */
+  bundledServers?: Record<string, MCPServerInfo>;
 }
 
 export class MCPServerManager {
@@ -298,6 +300,7 @@ export class MCPServerManager {
   private readonly idleCheckInterval: ReturnType<typeof setInterval>;
   private inlineServers: Record<string, string> = {};
   private ignoreConfigFile = false;
+  private bundledServers: Record<string, MCPServerInfo> = {};
 
   constructor(
     private readonly configService: MCPConfigService,
@@ -310,6 +313,9 @@ export class MCPServerManager {
     }
     if (options?.ignoreConfigFile) {
       this.ignoreConfigFile = options.ignoreConfigFile;
+    }
+    if (options?.bundledServers) {
+      this.bundledServers = options.bundledServers;
     }
   }
 
@@ -397,7 +403,8 @@ export class MCPServerManager {
     for (const [name, command] of Object.entries(this.inlineServers)) {
       inlineAsInfo[name] = { transport: "stdio", command, disabled: false };
     }
-    return { ...configServers, ...inlineAsInfo };
+    // Priority: bundled (lowest) → config file → inline (highest)
+    return { ...this.bundledServers, ...configServers, ...inlineAsInfo };
   }
 
   /**

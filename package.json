@@ -8,6 +8,9 @@
     "lattice-app": "dist/cli/index.js"
   },
   "license": "MIT",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@vscode/ripgrep", "cpu-features", "electron"]
+  },
   "private": true,
   "scripts": {
     "dev": "make dev",
@@ -75,6 +78,7 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-visually-hidden": "^1.2.4",
+    "@vscode/ripgrep": "^1.17.0",
     "@xterm/addon-serialize": "^0.14.0",
     "@xterm/headless": "^6.0.0",
     "ai": "^5.0.106",
@@ -90,6 +94,7 @@
     "electron-updater": "^6.6.2",
     "electron-window-state": "^5.0.3",
     "express": "^5.1.0",
+    "fast-glob": "^3.3.3",
     "fix-path": "5.0.0",
     "ghostty-web": "^0.3.0-next.13.g3dd4aef",
     "ignore": "^7.0.5",

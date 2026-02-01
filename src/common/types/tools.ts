@@ -26,6 +26,9 @@ import type {
   TaskTerminateToolResultSchema,
   TOOL_DEFINITIONS,
   WebFetchToolResultSchema,
+  GlobToolResultSchema,
+  GrepToolResultSchema,
+  NotebookEditToolResultSchema,
 } from "@/common/utils/tools/toolDefinitions";
 
 // Bash Tool Types
@@ -384,3 +387,15 @@ export interface WithHookOutput {
  * Use this when you need to represent a result that may have hook output attached.
  */
 export type MayHaveHookOutput<T> = T & WithHookOutput;
+
+// Glob Tool Types
+export type GlobToolArgs = z.infer<typeof TOOL_DEFINITIONS.glob.schema>;
+export type GlobToolResult = z.infer<typeof GlobToolResultSchema>;
+
+// Grep Tool Types
+export type GrepToolArgs = z.infer<typeof TOOL_DEFINITIONS.grep.schema>;
+export type GrepToolResult = z.infer<typeof GrepToolResultSchema>;
+
+// NotebookEdit Tool Types
+export type NotebookEditToolArgs = z.infer<typeof TOOL_DEFINITIONS.notebook_edit.schema>;
+export type NotebookEditToolResult = z.infer<typeof NotebookEditToolResultSchema>;

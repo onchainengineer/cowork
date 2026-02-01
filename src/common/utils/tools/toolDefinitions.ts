@@ -886,6 +886,90 @@ export const TOOL_DEFINITIONS = {
       code: z.string().min(1).describe("JavaScript code to execute in the PTC sandbox"),
     }),
   },
+  // #region GLOB_DOCS
+  glob: {
+    description:
+      "Fast file pattern matching tool that works with any codebase size. " +
+      "Supports glob patterns like '**/*.js' or 'src/**/*.ts'. " +
+      "Returns matching file paths sorted by modification time (most recent first). " +
+      "Use this when you need to find files by name patterns.",
+    schema: z.object({
+      pattern: z
+        .string()
+        .min(1)
+        .describe("The glob pattern to match files against (e.g., '**/*.ts', 'src/**/*.tsx')"),
+      path: z
+        .string()
+        .optional()
+        .describe(
+          "Directory to search in. Defaults to workspace root. Must be within the workspace."
+        ),
+    }),
+  },
+  // #endregion GLOB_DOCS
+  // #region GREP_DOCS
+  grep: {
+    description:
+      "Search file contents using regular expressions (powered by ripgrep). " +
+      "Supports full regex syntax. " +
+      "Filter files with the glob parameter. " +
+      "Output modes: 'content' shows matching lines with context, " +
+      "'files_with_matches' shows only file paths (default), " +
+      "'count' shows match counts per file.",
+    schema: z.object({
+      pattern: z.string().min(1).describe("Regular expression pattern to search for in file contents"),
+      path: z
+        .string()
+        .optional()
+        .describe("File or directory to search in. Defaults to workspace root."),
+      glob: z
+        .string()
+        .optional()
+        .describe("Glob pattern to filter files (e.g., '*.js', '**/*.tsx')"),
+      output_mode: z
+        .enum(["content", "files_with_matches", "count"])
+        .default("files_with_matches")
+        .describe("Output format: content (matching lines), files_with_matches (file paths), count (match counts)"),
+      context: z
+        .number()
+        .int()
+        .min(0)
+        .max(10)
+        .optional()
+        .describe("Number of context lines around each match (for content mode)"),
+      case_insensitive: z.boolean().optional().describe("Case insensitive search"),
+      max_results: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Maximum number of results to return (default: 200)"),
+    }),
+  },
+  // #endregion GREP_DOCS
+  // #region NOTEBOOK_EDIT_DOCS
+  notebook_edit: {
+    description:
+      "Edit Jupyter notebook (.ipynb) cells. " +
+      "Supports inserting new cells, replacing existing cell content, and deleting cells. " +
+      "Cell indices are 0-based.",
+    schema: z.object({
+      file_path: z.string().describe("Path to the .ipynb notebook file"),
+      operation: z
+        .enum(["insert", "replace", "delete"])
+        .describe("Edit operation: insert a new cell, replace cell content, or delete a cell"),
+      cell_index: z.number().int().min(0).describe("0-based cell index for the operation"),
+      cell_type: z
+        .enum(["code", "markdown", "raw"])
+        .optional()
+        .describe("Cell type (required for insert, optional for replace)"),
+      source: z
+        .string()
+        .optional()
+        .describe("Cell source content (required for insert and replace)"),
+    }),
+  },
+  // #endregion NOTEBOOK_EDIT_DOCS
   // #region NOTIFY_DOCS
   notify: {
     description:
@@ -1161,6 +1245,47 @@ export const WebFetchToolResultSchema = z.union([
   }),
 ]);
 
+// -- Glob result --
+export const GlobToolResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    files: z.array(z.string()),
+    count: z.number(),
+    truncated: z.boolean().optional(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string(),
+  }),
+]);
+
+// -- Grep result --
+export const GrepToolResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    output: z.string(),
+    match_count: z.number(),
+    truncated: z.boolean().optional(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string(),
+  }),
+]);
+
+// -- NotebookEdit result --
+export const NotebookEditToolResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    message: z.string(),
+    total_cells: z.number(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string(),
+  }),
+]);
+
 /**
  * Names of tools that are bridgeable to PTC sandbox.
  * If adding a new tool here, you must also add its result schema below.
@@ -1176,6 +1301,9 @@ export type BridgeableToolName =
   | "file_edit_insert"
   | "file_edit_replace_string"
   | "web_fetch"
+  | "glob"
+  | "grep"
+  | "notebook_edit"
   | "task"
   | "task_await"
   | "task_list"
@@ -1198,6 +1326,9 @@ export const RESULT_SCHEMAS: Record<BridgeableToolName, z.ZodType> = {
   file_edit_insert: FileEditInsertToolResultSchema,
   file_edit_replace_string: FileEditReplaceStringToolResultSchema,
   web_fetch: WebFetchToolResultSchema,
+  glob: GlobToolResultSchema,
+  grep: GrepToolResultSchema,
+  notebook_edit: NotebookEditToolResultSchema,
   task: TaskToolResultSchema,
   task_await: TaskAwaitToolResultSchema,
   task_list: TaskListToolResultSchema,
@@ -1262,6 +1393,9 @@ export function getAvailableTools(
     "status_set",
     "notify",
     "web_fetch",
+    "glob",
+    "grep",
+    "notebook_edit",
   ];
 
   // Add provider-specific tools

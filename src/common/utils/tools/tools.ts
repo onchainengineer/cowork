@@ -24,6 +24,9 @@ import { createUnixGlobalAgentsReadTool } from "@/node/services/tools/unix_globa
 import { createUnixGlobalAgentsWriteTool } from "@/node/services/tools/unix_global_agents_write";
 import { createAgentReportTool } from "@/node/services/tools/agent_report";
 import { createSystem1KeepRangesTool } from "@/node/services/tools/system1_keep_ranges";
+import { createGlobTool } from "@/node/services/tools/glob";
+import { createGrepTool } from "@/node/services/tools/grep";
+import { createNotebookEditTool } from "@/node/services/tools/notebook_edit";
 import { wrapWithInitWait } from "@/node/services/tools/wrapWithInitWait";
 import { withHooks, type HookConfig } from "@/node/services/tools/withHooks";
 import { log } from "@/node/services/log";
@@ -295,6 +298,13 @@ export async function getToolsForModel(
     bash_background_terminate: wrap(createBashBackgroundTerminateTool(config)),
 
     web_fetch: wrap(createWebFetchTool(config)),
+
+    // File search & content search (same as Claude Code: fast-glob + ripgrep)
+    glob: wrap(createGlobTool(config)),
+    grep: wrap(createGrepTool(config)),
+
+    // Jupyter notebook editing (JSON parse/mutate/write)
+    notebook_edit: wrap(createNotebookEditTool(config)),
   };
 
   // Non-runtime tools execute immediately (no init wait needed)

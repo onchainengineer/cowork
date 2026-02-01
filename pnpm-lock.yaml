@@ -116,6 +116,9 @@ importers:
       '@radix-ui/react-visually-hidden':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@vscode/ripgrep':
+        specifier: ^1.17.0
+        version: 1.17.0
       '@xterm/addon-serialize':
         specifier: ^0.14.0
         version: 0.14.0
@@ -125,6 +128,9 @@ importers:
       ai:
         specifier: ^5.0.106
         version: 5.0.123(zod@4.3.6)
+      ai-sdk-provider-github:
+        specifier: 0.1.0
+        version: 0.1.0(zod@4.3.6)
       ai-tokenizer:
         specifier: ^1.0.4
         version: 1.0.6(ai@5.0.123(zod@4.3.6))
@@ -158,6 +164,9 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.2.1
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
       fix-path:
         specifier: 5.0.0
         version: 5.0.0
@@ -622,6 +631,10 @@ packages:
 
   '@ai-sdk/provider@2.0.1':
     resolution: {integrity: sha512-KCUwswvsC5VsW2PWFqF8eJgSCu5Ysj7m1TxiHTVA6g7k360bk0RNQENT8KTMAYEs+8fWPD3Uu4dEmzGHc+jGng==}
+    engines: {node: '>=18'}
+
+  '@ai-sdk/provider@2.1.0-beta.5':
+    resolution: {integrity: sha512-gu/aV+8iTb0IjHmFO6eDuevp4E0fbtXqSj0RcKPttgedAbWY3uMe+vVgfe/j3bfbQfN7FjGkFDLS0xIirga7pA==}
     engines: {node: '>=18'}
 
   '@ai-sdk/xai@2.0.55':
@@ -2469,6 +2482,9 @@ packages:
   '@opentelemetry/semantic-conventions@1.39.0':
     resolution: {integrity: sha512-R5R9tb2AXs2IRLNKLBJDynhkfmx7mX0vi8NkhZb3gUkPWHn6HXk5J8iQ/dql0U3ApfWym4kXXmBDRGO+oeOfjg==}
     engines: {node: '>=14'}
+
+  '@opeoginni/github-copilot-openai-compatible@0.1.22':
+    resolution: {integrity: sha512-+Cn9porrICLBmYtkxNqsAFJS4oIR0rNiCMHscUd4pLa1mJLJjvRKHCQDPAaPvpX6ZoXZuZXoAUsD43e6HA09Nw==}
 
   '@orpc/client@1.13.4':
     resolution: {integrity: sha512-s13GPMeoooJc5Th2EaYT5HMFtWG8S03DUVytYfJv8pIhP87RYKl94w52A36denH6r/B4LaAgBeC9nTAOslK+Og==}
@@ -4392,6 +4408,9 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
+  '@vscode/ripgrep@1.17.0':
+    resolution: {integrity: sha512-mBRKm+ASPkUcw4o9aAgfbusIu6H4Sdhw09bjeP1YOBFTJEZAnrnk6WZwzv8NEjgC82f7ILvhmb1WIElSugea6g==}
+
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
@@ -4438,6 +4457,9 @@ packages:
   aggregate-error@3.1.0:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
+
+  ai-sdk-provider-github@0.1.0:
+    resolution: {integrity: sha512-PfjOxYXvSGUiW5cGFN54QneOTTNrzSlZIqPqNC+98PyaZ7lE9ynlvLRmSGOuAiGR2FRmJWmaj1YZ+qJF+BPm7A==}
 
   ai-tokenizer@1.0.6:
     resolution: {integrity: sha512-GaakQFxen0pRH/HIA4v68ZM40llCH27HUYUSBLK+gVuZ57e53pYJe1xFvSTj4sJJjbWU92m1X6NjPWyeWkFDow==}
@@ -9602,6 +9624,10 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
+  '@ai-sdk/provider@2.1.0-beta.5':
+    dependencies:
+      json-schema: 0.4.0
+
   '@ai-sdk/xai@2.0.55(zod@4.3.6)':
     dependencies:
       '@ai-sdk/openai-compatible': 1.0.31(zod@4.3.6)
@@ -11861,6 +11887,15 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.39.0': {}
 
+  '@opeoginni/github-copilot-openai-compatible@0.1.22(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/openai': 2.0.89(zod@4.3.6)
+      '@ai-sdk/openai-compatible': 1.0.31(zod@4.3.6)
+      '@ai-sdk/provider': 2.1.0-beta.5
+      '@ai-sdk/provider-utils': 3.0.20(zod@4.3.6)
+    transitivePeerDependencies:
+      - zod
+
   '@orpc/client@1.13.4(@opentelemetry/api@1.9.0)':
     dependencies:
       '@orpc/shared': 1.13.4(@opentelemetry/api@1.9.0)
@@ -14005,6 +14040,14 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
+  '@vscode/ripgrep@1.17.0':
+    dependencies:
+      https-proxy-agent: 7.0.6
+      proxy-from-env: 1.1.0
+      yauzl: 2.10.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@xmldom/xmldom@0.8.11': {}
 
   '@xterm/addon-serialize@0.14.0': {}
@@ -14042,6 +14085,14 @@ snapshots:
     dependencies:
       clean-stack: 2.2.0
       indent-string: 4.0.0
+
+  ai-sdk-provider-github@0.1.0(zod@4.3.6):
+    dependencies:
+      '@ai-sdk/provider-utils': 3.0.20(zod@4.3.6)
+      '@opeoginni/github-copilot-openai-compatible': 0.1.22(zod@4.3.6)
+      ai: 5.0.123(zod@4.3.6)
+    transitivePeerDependencies:
+      - zod
 
   ai-tokenizer@1.0.6(ai@5.0.123(zod@4.3.6)):
     optionalDependencies:

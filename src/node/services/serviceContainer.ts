@@ -125,7 +125,18 @@ export class ServiceContainer {
     this.backgroundProcessManager = new BackgroundProcessManager(
       path.join(os.tmpdir(), "unix-bashes")
     );
-    this.mcpServerManager = new MCPServerManager(this.mcpConfigService);
+    this.mcpServerManager = new MCPServerManager(this.mcpConfigService, {
+      bundledServers: {
+        // Playwright browser automation — available to all agents by default.
+        // Users can disable per-project in .lattice/mcp.jsonc:
+        //   { "servers": { "playwright": { "disabled": true } } }
+        playwright: {
+          transport: "stdio" as const,
+          command: "npx @anthropic/mcp-playwright",
+          disabled: false,
+        },
+      },
+    });
     this.sessionUsageService = new SessionUsageService(config, this.historyService);
     this.aiService = new AIService(
       config,
