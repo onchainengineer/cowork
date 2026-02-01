@@ -544,7 +544,7 @@ function createWindow() {
       contextIsolation: true,
       preload: path.join(__dirname, "../preload.js"),
     },
-    title: "DEV OS",
+    title: "LATTICE WORKBENCH",
     // Hide menu bar on Linux by default (like VS Code)
     // User can press Alt to toggle it
     autoHideMenuBar: process.platform === "linux",

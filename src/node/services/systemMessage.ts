@@ -45,7 +45,7 @@ function buildTaggedSection(
 // follow instructions.
 const PRELUDE = ` 
 <prelude>
-You are a coding agent called DEV OS.
+You are a coding agent called LATTICE WORKBENCH.
   
 <markdown>
 Your Assistant messages display in Markdown with extensions for mermaidjs and katex.

@@ -67,7 +67,7 @@ export const RosettaBanner: React.FC = () => {
       <div className="flex items-center gap-2">
         <AlertTriangle className="text-warning size-4 shrink-0" />
         <span>
-          DEV OS is running under Rosetta. For better performance, download the native Apple
+          LATTICE WORKBENCH is running under Rosetta. For better performance, download the native Apple
           Silicon version.
         </span>
       </div>

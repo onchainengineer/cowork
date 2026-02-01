@@ -1,7 +1,7 @@
 {
   "name": "lattice",
   "version": "0.14.1",
-  "description": "Lattice - parallel agentic workspace",
+  "description": "Lattice - runtime enforcement and identity infrastructure for autonomous ai agents",
   "author": "Lattice",
   "main": "dist/cli/index.js",
   "bin": {

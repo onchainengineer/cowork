@@ -127,4 +127,4 @@ Use this skill when the user asks how unix works (workspaces, runtimes, agents, 
 
 ## About
 
-DEV OS - parallel agentic workspace for internal use.
+LATTICE WORKBENCH - runtime enforcement and identity infrastructure for autonomous ai agents for internal use.

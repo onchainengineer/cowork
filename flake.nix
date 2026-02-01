@@ -1,5 +1,5 @@
 {
-  description = "DEV OS - parallel agentic workspace";
+  description = "LATTICE WORKBENCH - runtime enforcement and identity infrastructure for autonomous ai agents";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -127,7 +127,7 @@
           '';
 
           meta = with pkgs.lib; {
-            description = "DEV OS - parallel agentic workspace";
+            description = "LATTICE WORKBENCH - runtime enforcement and identity infrastructure for autonomous ai agents";
             homepage = "";
             license = licenses.agpl3Only;
             platforms = platforms.linux ++ platforms.darwin;

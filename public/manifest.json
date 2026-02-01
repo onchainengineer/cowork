@@ -1,7 +1,7 @@
 {
   "name": "Lattice",
   "short_name": "Lattice",
-  "description": "Parallel agentic workspace",
+  "description": "Runtime enforcement and identity infrastructure for autonomous AI agents",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e1e1e",

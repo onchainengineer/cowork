@@ -1,14 +1,14 @@
 <div align="center">
 
-<img src="docs/img/logo.webp" alt="DEV OS logo" width="15%" />
+<img src="docs/img/logo.webp" alt="LATTICE WORKBENCH logo" width="15%" />
 
-# DEV OS
+# LATTICE WORKBENCH
 
 </div>
 
-A parallel agentic workspace for internal enterprise use.
+A runtime enforcement and identity infrastructure for autonomous ai agents for internal enterprise use.
 
-![DEV OS product screenshot](docs/img/product-hero.webp)
+![LATTICE WORKBENCH product screenshot](docs/img/product-hero.webp)
 
 ## Features
 
@@ -23,7 +23,7 @@ A parallel agentic workspace for internal enterprise use.
 - Supporting UI and keybinds for efficiently managing a suite of agents
 - Rich markdown outputs (mermaid diagrams, LaTeX, etc.)
 
-DEV OS has a custom agent loop with features like Plan/Exec mode, vim inputs, `/compact`, opportunistic compaction, and mode prompts.
+LATTICE WORKBENCH has a custom agent loop with features like Plan/Exec mode, vim inputs, `/compact`, opportunistic compaction, and mode prompts.
 
 ## Screenshots
 

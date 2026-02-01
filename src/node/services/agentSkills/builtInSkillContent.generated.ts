@@ -228,7 +228,7 @@ export const BUILTIN_SKILL_FILES: Record<string, Record<string, string>> = {
       "",
       "## About",
       "",
-      "DEV OS - parallel agentic workspace for internal use.",
+      "LATTICE WORKBENCH - runtime enforcement and identity infrastructure for autonomous ai agents for internal use.",
       "",
     ].join("\n"),
   },

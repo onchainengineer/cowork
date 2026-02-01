@@ -1865,7 +1865,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         try {
           const port = await lmProxy.start();
           vscode.window.showInformationMessage(
-            `DEV OS LM Proxy started on http://127.0.0.1:${port}`
+            `LATTICE WORKBENCH LM Proxy started on http://127.0.0.1:${port}`
           );
         } catch (err) {
           vscode.window.showErrorMessage(`Failed to start LM Proxy: ${formatError(err)}`);

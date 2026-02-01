@@ -2,7 +2,7 @@
  * Copilot LM Proxy Server
  *
  * Exposes an OpenAI-compatible HTTP endpoint that bridges requests to the
- * VS Code Language Model API (vscode.lm). This allows the DEV OS backend
+ * VS Code Language Model API (vscode.lm). This allows the LATTICE WORKBENCH backend
  * to use GitHub Copilot's models through the VS Code extension without
  * direct access to api.githubcopilot.com.
  *
@@ -137,7 +137,7 @@ export class CopilotLmProxy {
   ) {
     this.port = port ?? DEFAULT_PORT;
     this.outputChannel =
-      outputChannel ?? vscode.window.createOutputChannel("DEV OS LM Proxy", { log: true });
+      outputChannel ?? vscode.window.createOutputChannel("LATTICE WORKBENCH LM Proxy", { log: true });
   }
 
   /** Start the proxy server */
