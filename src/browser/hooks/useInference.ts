@@ -64,6 +64,32 @@ interface ClusterStatus {
   total_models: number;
 }
 
+interface RDMAConfig {
+  available: boolean;
+  mode: string;
+  device: string;
+  backend: string;
+  bandwidth_gbps: number;
+  latency_us: number;
+  max_message_size: number;
+  error?: string;
+}
+
+interface TransportStat {
+  peer_id: string;
+  peer_name: string;
+  transport: string;
+  bandwidth_gbps: number;
+  latency_us: number;
+  connected: boolean;
+}
+
+interface TransportStatus {
+  rdma: RDMAConfig;
+  peer_transports: TransportStat[];
+  router_transports: Record<string, string>;
+}
+
 export function useInference() {
   const { api } = useAPI();
   const [status, setStatus] = useState<InferenceStatus | null>(null);
@@ -74,6 +100,7 @@ export function useInference() {
   const [poolStatus, setPoolStatus] = useState<PoolStatus | null>(null);
   const [clusterStatus, setClusterStatus] = useState<ClusterStatus | null>(null);
   const [metrics, setMetrics] = useState<string>("");
+  const [transportStatus, setTransportStatus] = useState<TransportStatus | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastSuccess, setLastSuccess] = useState<string | null>(null);
 
@@ -117,6 +144,16 @@ export function useInference() {
     }
   }, [api]);
 
+  const refreshTransportStatus = useCallback(async () => {
+    if (!api) return;
+    try {
+      const ts = await api.inference.getTransportStatus();
+      setTransportStatus(ts);
+    } catch {
+      // Unavailable
+    }
+  }, [api]);
+
   // Initial fetch + subscriptions
   useEffect(() => {
     if (!api) return;
@@ -126,6 +163,7 @@ export function useInference() {
       refreshModels(),
       refreshPoolStatus(),
       refreshClusterStatus(),
+      refreshTransportStatus(),
     ]).finally(() => setLoading(false));
 
     // Subscribe to status changes (yields initial value)
@@ -157,7 +195,7 @@ export function useInference() {
     })();
 
     return () => ac.abort();
-  }, [api, refreshModels, refreshPoolStatus, refreshClusterStatus]);
+  }, [api, refreshModels, refreshPoolStatus, refreshClusterStatus, refreshTransportStatus]);
 
   const clearMessages = useCallback(() => {
     setLastError(null);
@@ -256,6 +294,7 @@ export function useInference() {
     poolStatus,
     clusterStatus,
     metrics,
+    transportStatus,
     lastError,
     lastSuccess,
     pullModel,
@@ -269,5 +308,6 @@ export function useInference() {
     refreshPoolStatus,
     refreshClusterStatus,
     refreshMetrics,
+    refreshTransportStatus,
   };
 }

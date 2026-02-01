@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.debug = exports.voice = exports.menu = exports.general = exports.features = exports.update = exports.splashScreens = exports.uiLayouts = exports.config = exports.server = exports.ApiServerStatusSchema = exports.terminal = exports.window = exports.nameGeneration = exports.agentSkills = exports.agents = exports.tasks = exports.workspace = exports.LatticeWorkspaceStatusSchema = exports.LatticeWorkspaceSchema = exports.LatticeWorkspaceConfigSchema = exports.LatticeTemplateSchema = exports.LatticePresetSchema = exports.LatticeInfoSchema = exports.lattice = exports.projects = exports.providers = exports.ProvidersConfigMapSchema = exports.ProviderConfigInfoSchema = exports.AWSCredentialStatusSchema = exports.tokenizer = exports.BackgroundProcessInfoSchema = exports.signing = exports.TelemetryEventSchema = exports.telemetry = exports.experiments = exports.ExperimentValueSchema = void 0;
+exports.debug = exports.inference = exports.voice = exports.menu = exports.general = exports.features = exports.update = exports.splashScreens = exports.uiLayouts = exports.config = exports.server = exports.ApiServerStatusSchema = exports.terminal = exports.window = exports.nameGeneration = exports.agentSkills = exports.agents = exports.tasks = exports.workspace = exports.LatticeWorkspaceStatusSchema = exports.LatticeWorkspaceSchema = exports.LatticeWorkspaceConfigSchema = exports.LatticeTemplateSchema = exports.LatticePresetSchema = exports.LatticeInfoSchema = exports.lattice = exports.projects = exports.providers = exports.ProvidersConfigMapSchema = exports.ProviderConfigInfoSchema = exports.AWSCredentialStatusSchema = exports.tokenizer = exports.BackgroundProcessInfoSchema = exports.signing = exports.TelemetryEventSchema = exports.telemetry = exports.experiments = exports.ExperimentValueSchema = void 0;
 const server_1 = require("@orpc/server");
 const mode_1 = require("../../types/mode");
 const zod_1 = require("zod");
@@ -1016,6 +1016,179 @@ exports.voice = {
     transcribe: {
         input: zod_1.z.object({ audioBase64: zod_1.z.string() }),
         output: (0, result_1.ResultSchema)(zod_1.z.string(), zod_1.z.string()),
+    },
+};
+// ─── Inference (Local Models) ──────────────────────────────────────
+const ModelInfoSchema = zod_1.z.object({
+    id: zod_1.z.string(),
+    name: zod_1.z.string(),
+    huggingFaceRepo: zod_1.z.string().optional(),
+    format: zod_1.z.enum(["mlx", "gguf", "pytorch", "unknown"]),
+    sizeBytes: zod_1.z.number(),
+    parameterCount: zod_1.z.number().optional(),
+    quantization: zod_1.z.string().optional(),
+    localPath: zod_1.z.string(),
+    backend: zod_1.z.string().optional(),
+    pulledAt: zod_1.z.string().optional(),
+});
+const DownloadProgressSchema = zod_1.z.object({
+    fileName: zod_1.z.string(),
+    downloadedBytes: zod_1.z.number(),
+    totalBytes: zod_1.z.number(),
+});
+const InferenceStatusSchema = zod_1.z.object({
+    available: zod_1.z.boolean(),
+    loadedModelId: zod_1.z.string().nullable(),
+});
+exports.inference = {
+    getStatus: {
+        input: zod_1.z.void(),
+        output: InferenceStatusSchema,
+    },
+    listModels: {
+        input: zod_1.z.void(),
+        output: zod_1.z.array(ModelInfoSchema),
+    },
+    pullModel: {
+        input: zod_1.z.object({ modelId: zod_1.z.string() }),
+        output: zod_1.z.object({ localPath: zod_1.z.string() }),
+    },
+    deleteModel: {
+        input: zod_1.z.object({ modelId: zod_1.z.string() }),
+        output: zod_1.z.void(),
+    },
+    loadModel: {
+        input: zod_1.z.object({ modelId: zod_1.z.string(), backend: zod_1.z.string().optional() }),
+        output: zod_1.z.void(),
+    },
+    unloadModel: {
+        input: zod_1.z.void(),
+        output: zod_1.z.void(),
+    },
+    onDownloadProgress: {
+        input: zod_1.z.void(),
+        output: (0, server_1.eventIterator)(DownloadProgressSchema),
+    },
+    onStatusChanged: {
+        input: zod_1.z.void(),
+        output: (0, server_1.eventIterator)(InferenceStatusSchema),
+    },
+    // ─── Pool (Phase 2) ──────────────────────────────────────────────────
+    getPoolStatus: {
+        input: zod_1.z.void(),
+        output: zod_1.z.object({
+            loadedModels: zod_1.z.array(zod_1.z.object({
+                model_id: zod_1.z.string(),
+                model_path: zod_1.z.string(),
+                backend: zod_1.z.string(),
+                alive: zod_1.z.boolean(),
+                estimated_bytes: zod_1.z.number(),
+                loaded_at: zod_1.z.string(),
+                last_used_at: zod_1.z.string(),
+                use_count: zod_1.z.number(),
+            })),
+            modelsLoaded: zod_1.z.number(),
+            maxLoadedModels: zod_1.z.number(),
+            memoryBudgetBytes: zod_1.z.number(),
+            estimatedVramBytes: zod_1.z.number(),
+        }),
+    },
+    getMetrics: {
+        input: zod_1.z.void(),
+        output: zod_1.z.string(),
+    },
+    // ─── Cluster (Phase 3) ───────────────────────────────────────────────
+    getClusterStatus: {
+        input: zod_1.z.void(),
+        output: zod_1.z
+            .object({
+            nodes: zod_1.z.array(zod_1.z.object({
+                id: zod_1.z.string(),
+                name: zod_1.z.string(),
+                address: zod_1.z.string(),
+                status: zod_1.z.string(),
+                loaded_models: zod_1.z.array(zod_1.z.string()),
+                active_inferences: zod_1.z.number(),
+                used_memory_bytes: zod_1.z.number(),
+                total_memory_bytes: zod_1.z.number(),
+                gpu_type: zod_1.z.string(),
+                tokens_per_second_avg: zod_1.z.number(),
+                last_heartbeat: zod_1.z.string(),
+            })),
+            total_nodes: zod_1.z.number(),
+            total_models: zod_1.z.number(),
+        })
+            .nullable(),
+    },
+    getClusterNodes: {
+        input: zod_1.z.void(),
+        output: zod_1.z.array(zod_1.z.object({
+            id: zod_1.z.string(),
+            name: zod_1.z.string(),
+            address: zod_1.z.string(),
+            status: zod_1.z.string(),
+            loaded_models: zod_1.z.array(zod_1.z.string()),
+            active_inferences: zod_1.z.number(),
+            used_memory_bytes: zod_1.z.number(),
+            total_memory_bytes: zod_1.z.number(),
+            gpu_type: zod_1.z.string(),
+            tokens_per_second_avg: zod_1.z.number(),
+            last_heartbeat: zod_1.z.string(),
+        })),
+    },
+    // ─── RDMA / Transport (Phase 4+6) ───────────────────────────────────
+    getRdmaStatus: {
+        input: zod_1.z.void(),
+        output: zod_1.z
+            .object({
+            available: zod_1.z.boolean(),
+            mode: zod_1.z.string(),
+            device: zod_1.z.string(),
+            backend: zod_1.z.string(),
+            bandwidth_gbps: zod_1.z.number(),
+            latency_us: zod_1.z.number(),
+            max_message_size: zod_1.z.number(),
+            error: zod_1.z.string().optional(),
+        })
+            .nullable(),
+    },
+    getTransportStatus: {
+        input: zod_1.z.void(),
+        output: zod_1.z
+            .object({
+            rdma: zod_1.z.object({
+                available: zod_1.z.boolean(),
+                mode: zod_1.z.string(),
+                device: zod_1.z.string(),
+                backend: zod_1.z.string(),
+                bandwidth_gbps: zod_1.z.number(),
+                latency_us: zod_1.z.number(),
+                max_message_size: zod_1.z.number(),
+                error: zod_1.z.string().optional(),
+            }),
+            peer_transports: zod_1.z.array(zod_1.z.object({
+                peer_id: zod_1.z.string(),
+                peer_name: zod_1.z.string(),
+                transport: zod_1.z.string(),
+                bandwidth_gbps: zod_1.z.number(),
+                latency_us: zod_1.z.number(),
+                connected: zod_1.z.boolean(),
+            })),
+            router_transports: zod_1.z.record(zod_1.z.string(), zod_1.z.string()),
+        })
+            .nullable(),
+    },
+    // ─── Benchmark (Sprint 2) ────────────────────────────────────────────
+    runBenchmark: {
+        input: zod_1.z.object({ modelId: zod_1.z.string().optional() }),
+        output: zod_1.z.object({
+            model: zod_1.z.string(),
+            completion_tokens: zod_1.z.number(),
+            total_time_ms: zod_1.z.number(),
+            time_to_first_token_ms: zod_1.z.number(),
+            tokens_per_second: zod_1.z.number(),
+            peak_memory_bytes: zod_1.z.number(),
+        }),
     },
 };
 // Debug endpoints (test-only, not for production use)

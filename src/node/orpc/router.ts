@@ -2097,6 +2097,17 @@ export const router = (authToken?: string) => {
         .output(schemas.inference.getClusterNodes.output)
         .handler(async ({ context }) => context.inferenceService.getClusterNodes()),
 
+      // ─── RDMA / Transport (Phase 4+6) ──────────────────────────────────
+      getRdmaStatus: t
+        .input(schemas.inference.getRdmaStatus.input)
+        .output(schemas.inference.getRdmaStatus.output)
+        .handler(async ({ context }) => context.inferenceService.getRdmaStatus()),
+
+      getTransportStatus: t
+        .input(schemas.inference.getTransportStatus.input)
+        .output(schemas.inference.getTransportStatus.output)
+        .handler(async ({ context }) => context.inferenceService.getTransportStatus()),
+
       // ─── Benchmark (Sprint 2) ─────────────────────────────────────────
       runBenchmark: t
         .input(schemas.inference.runBenchmark.input)

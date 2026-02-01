@@ -1,4 +1,4 @@
-import{createRequire}from'module';globalThis.require=createRequire(import.meta.url);
+import{createRequire}frommodule;globalThis.require=createRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -30978,6 +30978,180 @@ var voice = {
     output: ResultSchema(z23.string(), z23.string())
   }
 };
+var ModelInfoSchema = z23.object({
+  id: z23.string(),
+  name: z23.string(),
+  huggingFaceRepo: z23.string().optional(),
+  format: z23.enum(["mlx", "gguf", "pytorch", "unknown"]),
+  sizeBytes: z23.number(),
+  parameterCount: z23.number().optional(),
+  quantization: z23.string().optional(),
+  localPath: z23.string(),
+  backend: z23.string().optional(),
+  pulledAt: z23.string().optional()
+});
+var DownloadProgressSchema = z23.object({
+  fileName: z23.string(),
+  downloadedBytes: z23.number(),
+  totalBytes: z23.number()
+});
+var InferenceStatusSchema = z23.object({
+  available: z23.boolean(),
+  loadedModelId: z23.string().nullable()
+});
+var inference = {
+  getStatus: {
+    input: z23.void(),
+    output: InferenceStatusSchema
+  },
+  listModels: {
+    input: z23.void(),
+    output: z23.array(ModelInfoSchema)
+  },
+  pullModel: {
+    input: z23.object({ modelId: z23.string() }),
+    output: z23.object({ localPath: z23.string() })
+  },
+  deleteModel: {
+    input: z23.object({ modelId: z23.string() }),
+    output: z23.void()
+  },
+  loadModel: {
+    input: z23.object({ modelId: z23.string(), backend: z23.string().optional() }),
+    output: z23.void()
+  },
+  unloadModel: {
+    input: z23.void(),
+    output: z23.void()
+  },
+  onDownloadProgress: {
+    input: z23.void(),
+    output: eventIterator(DownloadProgressSchema)
+  },
+  onStatusChanged: {
+    input: z23.void(),
+    output: eventIterator(InferenceStatusSchema)
+  },
+  // ─── Pool (Phase 2) ──────────────────────────────────────────────────
+  getPoolStatus: {
+    input: z23.void(),
+    output: z23.object({
+      loadedModels: z23.array(
+        z23.object({
+          model_id: z23.string(),
+          model_path: z23.string(),
+          backend: z23.string(),
+          alive: z23.boolean(),
+          estimated_bytes: z23.number(),
+          loaded_at: z23.string(),
+          last_used_at: z23.string(),
+          use_count: z23.number()
+        })
+      ),
+      modelsLoaded: z23.number(),
+      maxLoadedModels: z23.number(),
+      memoryBudgetBytes: z23.number(),
+      estimatedVramBytes: z23.number()
+    })
+  },
+  getMetrics: {
+    input: z23.void(),
+    output: z23.string()
+  },
+  // ─── Cluster (Phase 3) ───────────────────────────────────────────────
+  getClusterStatus: {
+    input: z23.void(),
+    output: z23.object({
+      nodes: z23.array(
+        z23.object({
+          id: z23.string(),
+          name: z23.string(),
+          address: z23.string(),
+          status: z23.string(),
+          loaded_models: z23.array(z23.string()),
+          active_inferences: z23.number(),
+          used_memory_bytes: z23.number(),
+          total_memory_bytes: z23.number(),
+          gpu_type: z23.string(),
+          tokens_per_second_avg: z23.number(),
+          last_heartbeat: z23.string()
+        })
+      ),
+      total_nodes: z23.number(),
+      total_models: z23.number()
+    }).nullable()
+  },
+  getClusterNodes: {
+    input: z23.void(),
+    output: z23.array(
+      z23.object({
+        id: z23.string(),
+        name: z23.string(),
+        address: z23.string(),
+        status: z23.string(),
+        loaded_models: z23.array(z23.string()),
+        active_inferences: z23.number(),
+        used_memory_bytes: z23.number(),
+        total_memory_bytes: z23.number(),
+        gpu_type: z23.string(),
+        tokens_per_second_avg: z23.number(),
+        last_heartbeat: z23.string()
+      })
+    )
+  },
+  // ─── RDMA / Transport (Phase 4+6) ───────────────────────────────────
+  getRdmaStatus: {
+    input: z23.void(),
+    output: z23.object({
+      available: z23.boolean(),
+      mode: z23.string(),
+      device: z23.string(),
+      backend: z23.string(),
+      bandwidth_gbps: z23.number(),
+      latency_us: z23.number(),
+      max_message_size: z23.number(),
+      error: z23.string().optional()
+    }).nullable()
+  },
+  getTransportStatus: {
+    input: z23.void(),
+    output: z23.object({
+      rdma: z23.object({
+        available: z23.boolean(),
+        mode: z23.string(),
+        device: z23.string(),
+        backend: z23.string(),
+        bandwidth_gbps: z23.number(),
+        latency_us: z23.number(),
+        max_message_size: z23.number(),
+        error: z23.string().optional()
+      }),
+      peer_transports: z23.array(
+        z23.object({
+          peer_id: z23.string(),
+          peer_name: z23.string(),
+          transport: z23.string(),
+          bandwidth_gbps: z23.number(),
+          latency_us: z23.number(),
+          connected: z23.boolean()
+        })
+      ),
+      router_transports: z23.record(z23.string(), z23.string())
+    }).nullable()
+  },
+  // ─── Benchmark (Sprint 2) ────────────────────────────────────────────
+  runBenchmark: {
+    input: z23.object({ modelId: z23.string().optional() }),
+    output: z23.object({
+      model: z23.string(),
+      completion_tokens: z23.number(),
+      total_time_ms: z23.number(),
+      time_to_first_token_ms: z23.number(),
+      tokens_per_second: z23.number(),
+      peak_memory_bytes: z23.number()
+    })
+  }
+};
 var debug = {
   /**
    * Trigger an artificial stream error for testing recovery.
@@ -40439,6 +40613,39 @@ function roundToBase2(value2) {
 }
 
 // src/common/utils/asyncEventIterator.ts
+async function* asyncEventIterator(subscribe, unsubscribe, options) {
+  const queue = [];
+  let resolveNext = null;
+  let ended = false;
+  const handler = (value2) => {
+    if (ended) return;
+    if (resolveNext) {
+      const resolve3 = resolveNext;
+      resolveNext = null;
+      resolve3(value2);
+    } else {
+      queue.push(value2);
+    }
+  };
+  subscribe(handler);
+  try {
+    if (options?.initialValue !== void 0) {
+      yield options.initialValue;
+    }
+    while (!ended) {
+      if (queue.length > 0) {
+        yield queue.shift();
+      } else {
+        yield await new Promise((resolve3) => {
+          resolveNext = resolve3;
+        });
+      }
+    }
+  } finally {
+    ended = true;
+    unsubscribe(handler);
+  }
+}
 function createAsyncEventQueue() {
   const queue = [];
   let resolveNext = null;
@@ -42758,6 +42965,69 @@ var router = (authToken) => {
         context.signingService.clearIdentityCache();
         return { success: true };
       })
+    },
+    // ─── Inference (Local Models) ──────────────────────────────────────
+    inference: {
+      getStatus: t.input(inference.getStatus.input).output(inference.getStatus.output).handler(async ({ context }) => ({
+        available: context.inferenceService.isAvailable,
+        loadedModelId: context.inferenceService.loadedModelId
+      })),
+      listModels: t.input(inference.listModels.input).output(inference.listModels.output).handler(async ({ context }) => context.inferenceService.listModels()),
+      pullModel: t.input(inference.pullModel.input).output(inference.pullModel.output).handler(async ({ context, input }) => {
+        const localPath = await context.inferenceService.pullModel(input.modelId);
+        return { localPath };
+      }),
+      deleteModel: t.input(inference.deleteModel.input).output(inference.deleteModel.output).handler(async ({ context, input }) => {
+        await context.inferenceService.deleteModel(input.modelId);
+      }),
+      loadModel: t.input(inference.loadModel.input).output(inference.loadModel.output).handler(async ({ context, input }) => {
+        await context.inferenceService.loadModel(input.modelId, input.backend);
+      }),
+      unloadModel: t.input(inference.unloadModel.input).output(inference.unloadModel.output).handler(async ({ context }) => {
+        await context.inferenceService.unloadModel();
+      }),
+      onDownloadProgress: t.input(inference.onDownloadProgress.input).output(inference.onDownloadProgress.output).handler(async function* ({ context }) {
+        yield* asyncEventIterator(
+          (handler) => {
+            context.inferenceService.on("download-progress", handler);
+          },
+          (handler) => {
+            context.inferenceService.off("download-progress", handler);
+          }
+        );
+      }),
+      onStatusChanged: t.input(inference.onStatusChanged.input).output(inference.onStatusChanged.output).handler(async function* ({ context }) {
+        const getStatus = () => ({
+          available: context.inferenceService.isAvailable,
+          loadedModelId: context.inferenceService.loadedModelId
+        });
+        yield getStatus();
+        const queue = createAsyncEventQueue();
+        const onLoaded = () => queue.push(getStatus());
+        const onUnloaded = () => queue.push(getStatus());
+        context.inferenceService.on("model-loaded", onLoaded);
+        context.inferenceService.on("model-unloaded", onUnloaded);
+        try {
+          yield* queue.iterate();
+        } finally {
+          context.inferenceService.off("model-loaded", onLoaded);
+          context.inferenceService.off("model-unloaded", onUnloaded);
+          queue.end();
+        }
+      }),
+      // ─── Pool (Phase 2) ──────────────────────────────────────────────
+      getPoolStatus: t.input(inference.getPoolStatus.input).output(inference.getPoolStatus.output).handler(async ({ context }) => context.inferenceService.getPoolStatus()),
+      getMetrics: t.input(inference.getMetrics.input).output(inference.getMetrics.output).handler(async ({ context }) => context.inferenceService.getMetrics()),
+      // ─── Cluster (Phase 3) ───────────────────────────────────────────
+      getClusterStatus: t.input(inference.getClusterStatus.input).output(inference.getClusterStatus.output).handler(async ({ context }) => context.inferenceService.getClusterStatus()),
+      getClusterNodes: t.input(inference.getClusterNodes.input).output(inference.getClusterNodes.output).handler(async ({ context }) => context.inferenceService.getClusterNodes()),
+      // ─── RDMA / Transport (Phase 4+6) ──────────────────────────────────
+      getRdmaStatus: t.input(inference.getRdmaStatus.input).output(inference.getRdmaStatus.output).handler(async ({ context }) => context.inferenceService.getRdmaStatus()),
+      getTransportStatus: t.input(inference.getTransportStatus.input).output(inference.getTransportStatus.output).handler(async ({ context }) => context.inferenceService.getTransportStatus()),
+      // ─── Benchmark (Sprint 2) ─────────────────────────────────────────
+      runBenchmark: t.input(inference.runBenchmark.input).output(inference.runBenchmark.output).handler(
+        async ({ context, input }) => context.inferenceService.runBenchmark(input.modelId)
+      )
     }
   });
 };

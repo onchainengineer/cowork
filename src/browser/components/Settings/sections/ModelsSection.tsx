@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  Cable,
   CheckCircle2,
   ClipboardCopy,
   ClipboardCheck,
   Download,
   Loader2,
+  Monitor,
   Play,
   Plus,
   Radar,
@@ -14,7 +16,9 @@ import {
   Square,
   Timer,
   Trash2,
+  Wifi,
   XCircle,
+  Zap,
   Network,
 } from "lucide-react";
 import { Button } from "@/browser/components/ui/button";
@@ -81,10 +85,11 @@ function timeAgo(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="bg-background-secondary flex flex-col gap-0.5 rounded-md px-3 py-2">
-      <span className="text-[10px] font-medium uppercase tracking-wider text-muted">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted flex items-center gap-1">
+        {icon}
         {label}
       </span>
       <span className="text-sm font-semibold text-foreground">{value}</span>
@@ -124,6 +129,7 @@ export function ModelsSection() {
     poolStatus,
     clusterStatus,
     metrics,
+    transportStatus,
     lastError: inferenceError,
     lastSuccess: inferenceSuccess,
     pullModel,
@@ -136,12 +142,14 @@ export function ModelsSection() {
     refreshPoolStatus,
     refreshClusterStatus,
     refreshMetrics,
+    refreshTransportStatus,
   } = useInference();
 
   const [modelIdInput, setModelIdInput] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showMetrics, setShowMetrics] = useState(false);
+  const [showTransport, setShowTransport] = useState(false);
   const [discovering, setDiscovering] = useState(false);
   const [benchmarking, setBenchmarking] = useState(false);
   const [metricsCopied, setMetricsCopied] = useState(false);
@@ -165,6 +173,14 @@ export function ModelsSection() {
     const interval = setInterval(() => void refreshMetrics(), 5000);
     return () => clearInterval(interval);
   }, [showMetrics, refreshMetrics]);
+
+  // Auto-refresh transport status when visible
+  useEffect(() => {
+    if (!showTransport) return;
+    void refreshTransportStatus();
+    const interval = setInterval(() => void refreshTransportStatus(), 5000);
+    return () => clearInterval(interval);
+  }, [showTransport, refreshTransportStatus]);
 
   const handleDiscoverNodes = async () => {
     setDiscovering(true);
@@ -1069,6 +1085,197 @@ export function ModelsSection() {
           </div>
         )}
       </div>
+
+      {/* ── Transport & RDMA ─────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-muted flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
+            <Cable className="h-3.5 w-3.5" />
+            Transport & RDMA
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setShowTransport(!showTransport)}
+          >
+            {showTransport ? "Hide" : "Show"}
+          </Button>
+        </div>
+
+        {showTransport && (
+          <div className="border-border-medium space-y-3 rounded-md border p-3">
+            {transportStatus ? (
+              <>
+                {/* RDMA Status Cards */}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <MetricCard
+                    label="Mode"
+                    value={transportStatus.rdma.mode || "none"}
+                    icon={<Zap className="h-3 w-3" />}
+                  />
+                  <MetricCard
+                    label="Backend"
+                    value={transportStatus.rdma.backend || "tcp"}
+                    icon={<Cable className="h-3 w-3" />}
+                  />
+                  <MetricCard
+                    label="Bandwidth"
+                    value={transportStatus.rdma.bandwidth_gbps > 0
+                      ? `${transportStatus.rdma.bandwidth_gbps} Gbps`
+                      : "N/A"
+                    }
+                    icon={<Activity className="h-3 w-3" />}
+                  />
+                  <MetricCard
+                    label="RDMA"
+                    value={transportStatus.rdma.available ? "Available" : "Unavailable"}
+                    icon={transportStatus.rdma.available
+                      ? <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      : <XCircle className="h-3 w-3 text-muted" />
+                    }
+                  />
+                </div>
+
+                {/* RDMA status message */}
+                {transportStatus.rdma.available ? (
+                  <div className="flex items-center gap-1.5 text-[10px] text-green-500">
+                    <Zap className="h-3 w-3" />
+                    {transportStatus.rdma.mode === "rdma-verbs"
+                      ? "True zero-copy RDMA active — ~80-120 Gbps tensor transfer"
+                      : "TCP-RDMA fallback active — ~40-80 Gbps optimized transfer"}
+                  </div>
+                ) : (
+                  <div className="text-muted text-[10px]">
+                    {transportStatus.rdma.error || "RDMA not available on this system. Using TCP transport."}
+                  </div>
+                )}
+
+                {/* Device info */}
+                {transportStatus.rdma.device && (
+                  <div className="text-muted text-[10px]">
+                    <span className="font-medium">Device:</span> {transportStatus.rdma.device}
+                    {transportStatus.rdma.max_message_size > 0 && (
+                      <span className="ml-2">
+                        <span className="font-medium">Max msg:</span>{" "}
+                        {(transportStatus.rdma.max_message_size / 1024 / 1024).toFixed(0)} MB
+                      </span>
+                    )}
+                    {transportStatus.rdma.latency_us > 0 && (
+                      <span className="ml-2">
+                        <span className="font-medium">Latency:</span> {transportStatus.rdma.latency_us} μs
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Peer Transports Table */}
+                {transportStatus.peer_transports.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="text-muted text-[10px] font-medium">Peer Topology</div>
+                    <div className="border-border-medium overflow-hidden rounded border">
+                      <table className="w-full text-[10px]">
+                        <thead>
+                          <tr className="border-border-medium bg-background-secondary/50 border-b">
+                            <th className={`${headerCellBase} pl-2 text-left`}>Peer</th>
+                            <th className={`${headerCellBase} text-left`}>Transport</th>
+                            <th className={`${headerCellBase} text-right`}>Bandwidth</th>
+                            <th className={`${headerCellBase} text-right`}>Latency</th>
+                            <th className={`${headerCellBase} pr-2 text-right`}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transportStatus.peer_transports.map((peer) => (
+                            <tr key={peer.peer_id} className="border-border-medium border-b last:border-b-0">
+                              <td className="py-1 pl-2 font-mono">{peer.peer_name || peer.peer_id.slice(0, 8)}</td>
+                              <td className="py-1">
+                                <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 text-[9px] font-medium ${
+                                  peer.transport === "rdma-verbs"
+                                    ? "bg-green-500/10 text-green-500"
+                                    : peer.transport === "tcp-rdma-fallback"
+                                      ? "bg-yellow-500/10 text-yellow-500"
+                                      : "bg-background-secondary text-muted"
+                                }`}>
+                                  {peer.transport === "rdma-verbs" && <Zap className="h-2.5 w-2.5" />}
+                                  {peer.transport === "tcp-rdma-fallback" && <Cable className="h-2.5 w-2.5" />}
+                                  {peer.transport === "tcp" && <Wifi className="h-2.5 w-2.5" />}
+                                  {peer.transport}
+                                </span>
+                              </td>
+                              <td className="py-1 text-right font-mono">{peer.bandwidth_gbps > 0 ? `${peer.bandwidth_gbps} Gbps` : "—"}</td>
+                              <td className="py-1 text-right font-mono">{peer.latency_us > 0 ? `${peer.latency_us} μs` : "—"}</td>
+                              <td className="py-1 pr-2 text-right">
+                                <span className={`inline-block h-1.5 w-1.5 rounded-full ${peer.connected ? "bg-green-500" : "bg-red-500"}`} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-muted py-2 text-center text-[10px]">
+                Transport information unavailable. Go inference binary may not be running.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Device Hardware ────────────────────────────────────────────── */}
+      {poolStatus && (
+        <div className="space-y-3">
+          <div className="text-muted flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase">
+            <Monitor className="h-3.5 w-3.5" />
+            Device Hardware
+          </div>
+          <div className="border-border-medium rounded-md border p-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <MetricCard label="Platform" value={navigator.platform || "Unknown"} />
+              <MetricCard label="CPU Cores" value={String(navigator.hardwareConcurrency || "?")} />
+              <MetricCard
+                label="Memory Budget"
+                value={poolStatus.memoryBudgetBytes > 0
+                  ? `${(poolStatus.memoryBudgetBytes / 1024 / 1024 / 1024).toFixed(1)} GB`
+                  : "Unlimited"
+                }
+              />
+              <MetricCard
+                label="Est. VRAM Used"
+                value={poolStatus.estimatedVramBytes > 0
+                  ? `${(poolStatus.estimatedVramBytes / 1024 / 1024 / 1024).toFixed(1)} GB`
+                  : "0 GB"
+                }
+              />
+            </div>
+            {/* Memory usage bar */}
+            {poolStatus.memoryBudgetBytes > 0 && (
+              <div className="mt-2 space-y-0.5">
+                <div className="flex justify-between text-[10px] text-muted">
+                  <span>Memory Usage</span>
+                  <span>{((poolStatus.estimatedVramBytes / poolStatus.memoryBudgetBytes) * 100).toFixed(0)}%</span>
+                </div>
+                <div className="bg-background-secondary h-1.5 overflow-hidden rounded-full">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      poolStatus.estimatedVramBytes / poolStatus.memoryBudgetBytes > 0.9
+                        ? "bg-red-500"
+                        : poolStatus.estimatedVramBytes / poolStatus.memoryBudgetBytes > 0.7
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                    }`}
+                    style={{
+                      width: `${Math.min(100, (poolStatus.estimatedVramBytes / poolStatus.memoryBudgetBytes) * 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Built-in Models ────────────────────────────────────────────── */}
       <div className="space-y-3">

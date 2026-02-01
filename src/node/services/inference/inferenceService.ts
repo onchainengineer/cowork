@@ -275,6 +275,18 @@ export class InferenceService extends EventEmitter {
     return this.httpClient.getMetrics();
   }
 
+  // ─── RDMA / Transport (Phase 4+6) ──────────────────────────────────
+
+  async getRdmaStatus() {
+    if (!this.httpClient) return null;
+    return this.httpClient.getRdmaStatus();
+  }
+
+  async getTransportStatus() {
+    if (!this.httpClient) return null;
+    return this.httpClient.getTransportStatus();
+  }
+
   // ─── Benchmark ─────────────────────────────────────────────────────
 
   async runBenchmark(modelId?: string): Promise<{

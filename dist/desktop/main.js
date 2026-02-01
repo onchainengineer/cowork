@@ -357,6 +357,7 @@ async function loadServices() {
         sessionUsageService: services.sessionUsageService,
         signingService: services.signingService,
         latticeService: services.latticeService,
+        inferenceService: services.inferenceService,
     };
     electron_1.ipcMain.handle("unix:get-is-rosetta", async () => {
         if (process.platform !== "darwin") {

@@ -133,6 +133,7 @@ const mockWindow = {
         sessionUsageService: serviceContainer.sessionUsageService,
         signingService: serviceContainer.signingService,
         latticeService: serviceContainer.latticeService,
+        inferenceService: serviceContainer.inferenceService,
     };
     const mdnsAdvertiser = new mdnsAdvertiserService_1.MdnsAdvertiserService();
     const server = await (0, server_1.createOrpcServer)({

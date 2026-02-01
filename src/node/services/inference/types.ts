@@ -225,3 +225,39 @@ export interface HFFile {
 export interface HFRepoInfo {
   siblings: HFFile[];
 }
+
+// ─── RDMA / Transport (from Go binary) ────────────────────────────────
+
+export interface RDMAConfig {
+  available: boolean;
+  mode: string; // "rdma-verbs" | "tcp-rdma-fallback" | "none"
+  device: string;
+  backend: string;
+  bandwidth_gbps: number;
+  latency_us: number;
+  max_message_size: number;
+  error?: string;
+}
+
+export interface TransportStat {
+  peer_id: string;
+  peer_name: string;
+  transport: string; // "rdma-verbs" | "tcp-rdma-fallback" | "tcp"
+  bandwidth_gbps: number;
+  latency_us: number;
+  connected: boolean;
+}
+
+export interface RDMATransportStats {
+  bytes_sent: number;
+  bytes_received: number;
+  messages_sent: number;
+  messages_received: number;
+  errors: number;
+}
+
+export interface TransportStatus {
+  rdma: RDMAConfig;
+  peer_transports: TransportStat[];
+  router_transports: Record<string, string>;
+}

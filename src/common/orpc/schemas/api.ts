@@ -1235,6 +1235,51 @@ export const inference = {
     ),
   },
 
+  // ─── RDMA / Transport (Phase 4+6) ───────────────────────────────────
+  getRdmaStatus: {
+    input: z.void(),
+    output: z
+      .object({
+        available: z.boolean(),
+        mode: z.string(),
+        device: z.string(),
+        backend: z.string(),
+        bandwidth_gbps: z.number(),
+        latency_us: z.number(),
+        max_message_size: z.number(),
+        error: z.string().optional(),
+      })
+      .nullable(),
+  },
+  getTransportStatus: {
+    input: z.void(),
+    output: z
+      .object({
+        rdma: z.object({
+          available: z.boolean(),
+          mode: z.string(),
+          device: z.string(),
+          backend: z.string(),
+          bandwidth_gbps: z.number(),
+          latency_us: z.number(),
+          max_message_size: z.number(),
+          error: z.string().optional(),
+        }),
+        peer_transports: z.array(
+          z.object({
+            peer_id: z.string(),
+            peer_name: z.string(),
+            transport: z.string(),
+            bandwidth_gbps: z.number(),
+            latency_us: z.number(),
+            connected: z.boolean(),
+          }),
+        ),
+        router_transports: z.record(z.string(), z.string()),
+      })
+      .nullable(),
+  },
+
   // ─── Benchmark (Sprint 2) ────────────────────────────────────────────
   runBenchmark: {
     input: z.object({ modelId: z.string().optional() }),

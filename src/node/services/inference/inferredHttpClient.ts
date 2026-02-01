@@ -7,6 +7,8 @@ import type {
   ModelListResponse,
   ClusterState,
   ClusterNode,
+  RDMAConfig,
+  TransportStatus,
 } from "./types";
 
 /**
@@ -201,6 +203,32 @@ export class InferredHttpClient {
       return resp.text();
     } catch {
       return "";
+    }
+  }
+
+  // ─── RDMA / Transport ───────────────────────────────────────────────
+
+  async getRdmaStatus(): Promise<RDMAConfig | null> {
+    try {
+      const resp = await fetch(`${this.baseUrl}/inference/rdma`, {
+        headers: this.headers(),
+      });
+      if (!resp.ok) return null;
+      return resp.json() as Promise<RDMAConfig>;
+    } catch {
+      return null;
+    }
+  }
+
+  async getTransportStatus(): Promise<TransportStatus | null> {
+    try {
+      const resp = await fetch(`${this.baseUrl}/inference/transport`, {
+        headers: this.headers(),
+      });
+      if (!resp.ok) return null;
+      return resp.json() as Promise<TransportStatus>;
+    } catch {
+      return null;
     }
   }
 

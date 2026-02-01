@@ -1464,6 +1464,20 @@ export class StreamManager extends EventEmitter {
                 // Error parts are structured errors from the AI SDK
                 const errorPart = part as { error: unknown };
 
+                // AI SDK content assembler emits non-fatal "text part <id> not found" and
+                // "reasoning part <id> not found" errors when its internal bookkeeping is
+                // out of sync (e.g., tee'd stream branches, custom LanguageModelV2 providers).
+                // These are benign — text deltas are still captured by our text-delta handler.
+                // Skip them instead of killing the stream.
+                const errorStr = typeof errorPart.error === "string" ? errorPart.error : "";
+                if (/^(text|reasoning) part .+ not found$/.test(errorStr)) {
+                  const workspaceLog = this.getWorkspaceLogger(workspaceId, streamInfo);
+                  workspaceLog.debug(
+                    `Ignoring non-fatal AI SDK content assembler error: ${errorStr}`
+                  );
+                  break;
+                }
+
                 // Try to extract error message from various possible structures
                 let errorMessage: string | undefined;
 

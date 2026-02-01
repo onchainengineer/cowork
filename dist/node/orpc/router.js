@@ -1725,6 +1725,107 @@ const router = (authToken) => {
                 return { success: true };
             }),
         },
+        // ─── Inference (Local Models) ──────────────────────────────────────
+        inference: {
+            getStatus: t
+                .input(schemas.inference.getStatus.input)
+                .output(schemas.inference.getStatus.output)
+                .handler(async ({ context }) => ({
+                available: context.inferenceService.isAvailable,
+                loadedModelId: context.inferenceService.loadedModelId,
+            })),
+            listModels: t
+                .input(schemas.inference.listModels.input)
+                .output(schemas.inference.listModels.output)
+                .handler(async ({ context }) => context.inferenceService.listModels()),
+            pullModel: t
+                .input(schemas.inference.pullModel.input)
+                .output(schemas.inference.pullModel.output)
+                .handler(async ({ context, input }) => {
+                const localPath = await context.inferenceService.pullModel(input.modelId);
+                return { localPath };
+            }),
+            deleteModel: t
+                .input(schemas.inference.deleteModel.input)
+                .output(schemas.inference.deleteModel.output)
+                .handler(async ({ context, input }) => {
+                await context.inferenceService.deleteModel(input.modelId);
+            }),
+            loadModel: t
+                .input(schemas.inference.loadModel.input)
+                .output(schemas.inference.loadModel.output)
+                .handler(async ({ context, input }) => {
+                await context.inferenceService.loadModel(input.modelId, input.backend);
+            }),
+            unloadModel: t
+                .input(schemas.inference.unloadModel.input)
+                .output(schemas.inference.unloadModel.output)
+                .handler(async ({ context }) => {
+                await context.inferenceService.unloadModel();
+            }),
+            onDownloadProgress: t
+                .input(schemas.inference.onDownloadProgress.input)
+                .output(schemas.inference.onDownloadProgress.output)
+                .handler(async function* ({ context }) {
+                yield* (0, asyncEventIterator_1.asyncEventIterator)((handler) => { context.inferenceService.on("download-progress", handler); }, (handler) => { context.inferenceService.off("download-progress", handler); });
+            }),
+            onStatusChanged: t
+                .input(schemas.inference.onStatusChanged.input)
+                .output(schemas.inference.onStatusChanged.output)
+                .handler(async function* ({ context }) {
+                const getStatus = () => ({
+                    available: context.inferenceService.isAvailable,
+                    loadedModelId: context.inferenceService.loadedModelId,
+                });
+                // Yield initial state
+                yield getStatus();
+                const queue = (0, asyncEventIterator_1.createAsyncEventQueue)();
+                const onLoaded = () => queue.push(getStatus());
+                const onUnloaded = () => queue.push(getStatus());
+                context.inferenceService.on("model-loaded", onLoaded);
+                context.inferenceService.on("model-unloaded", onUnloaded);
+                try {
+                    yield* queue.iterate();
+                }
+                finally {
+                    context.inferenceService.off("model-loaded", onLoaded);
+                    context.inferenceService.off("model-unloaded", onUnloaded);
+                    queue.end();
+                }
+            }),
+            // ─── Pool (Phase 2) ──────────────────────────────────────────────
+            getPoolStatus: t
+                .input(schemas.inference.getPoolStatus.input)
+                .output(schemas.inference.getPoolStatus.output)
+                .handler(async ({ context }) => context.inferenceService.getPoolStatus()),
+            getMetrics: t
+                .input(schemas.inference.getMetrics.input)
+                .output(schemas.inference.getMetrics.output)
+                .handler(async ({ context }) => context.inferenceService.getMetrics()),
+            // ─── Cluster (Phase 3) ───────────────────────────────────────────
+            getClusterStatus: t
+                .input(schemas.inference.getClusterStatus.input)
+                .output(schemas.inference.getClusterStatus.output)
+                .handler(async ({ context }) => context.inferenceService.getClusterStatus()),
+            getClusterNodes: t
+                .input(schemas.inference.getClusterNodes.input)
+                .output(schemas.inference.getClusterNodes.output)
+                .handler(async ({ context }) => context.inferenceService.getClusterNodes()),
+            // ─── RDMA / Transport (Phase 4+6) ──────────────────────────────────
+            getRdmaStatus: t
+                .input(schemas.inference.getRdmaStatus.input)
+                .output(schemas.inference.getRdmaStatus.output)
+                .handler(async ({ context }) => context.inferenceService.getRdmaStatus()),
+            getTransportStatus: t
+                .input(schemas.inference.getTransportStatus.input)
+                .output(schemas.inference.getTransportStatus.output)
+                .handler(async ({ context }) => context.inferenceService.getTransportStatus()),
+            // ─── Benchmark (Sprint 2) ─────────────────────────────────────────
+            runBenchmark: t
+                .input(schemas.inference.runBenchmark.input)
+                .output(schemas.inference.runBenchmark.output)
+                .handler(async ({ context, input }) => context.inferenceService.runBenchmark(input.modelId)),
+        },
     });
 };
 exports.router = router;
