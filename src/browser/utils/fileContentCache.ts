@@ -33,7 +33,7 @@ function base64ToUtf8(base64: string): string {
 
 export interface CachedFileContent {
   /** File type */
-  type: "text" | "image";
+  type: "text" | "image" | "pdf";
   /** Content stored as base64 */
   base64: string;
   /** MIME type for images */
@@ -90,7 +90,7 @@ export function setCachedFileContent(
 
   const entry: CachedFileContent = {
     type: data.type,
-    base64: data.type === "image" ? data.base64 : utf8ToBase64(data.content),
+    base64: data.type === "image" ? data.base64 : data.type === "pdf" ? data.base64 : utf8ToBase64(data.content),
     mimeType: data.type === "image" ? data.mimeType : undefined,
     size: data.size,
     cachedAt: Date.now(),
@@ -145,6 +145,14 @@ export function cacheToResult(cached: CachedFileContent): FileContentsResult {
       type: "image",
       base64: cached.base64,
       mimeType: cached.mimeType ?? "application/octet-stream",
+      size: cached.size,
+    };
+  }
+
+  if (cached.type === "pdf") {
+    return {
+      type: "pdf",
+      base64: cached.base64,
       size: cached.size,
     };
   }

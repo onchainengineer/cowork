@@ -10,6 +10,7 @@ import { workspaceStore } from "@/browser/stores/WorkspaceStore";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { TextFileViewer } from "./TextFileViewer";
 import { ImageFileViewer } from "./ImageFileViewer";
+import { PdfFileViewer } from "./PdfFileViewer";
 import {
   validateRelativePath,
   buildReadFileScript,
@@ -257,6 +258,16 @@ export const FileViewerTab: React.FC<FileViewerTabProps> = (props) => {
       <ImageFileViewer
         base64={data.base64}
         mimeType={data.mimeType}
+        size={data.size}
+        filePath={props.relativePath}
+      />
+    );
+  }
+
+  if (data.type === "pdf") {
+    return (
+      <PdfFileViewer
+        base64={data.base64}
         size={data.size}
         filePath={props.relativePath}
       />

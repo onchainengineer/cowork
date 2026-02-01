@@ -1,6 +1,6 @@
 import React from "react";
-import { FileIcon } from "@/browser/components/FileIcon";
 import { parsePatch } from "diff";
+import { ClickableFilePath } from "./shared/ClickableFilePath";
 import type {
   FileEditInsertToolArgs,
   FileEditInsertToolResult,
@@ -148,10 +148,7 @@ export const FileEditToolCall: React.FC<FileEditToolCallProps> = ({
         >
           <ExpandIcon expanded={expanded}>▶</ExpandIcon>
           <ToolIcon toolName={toolName} />
-          <div className="text-text flex max-w-96 min-w-0 items-center gap-1.5">
-            <FileIcon filePath={filePath} className="text-[15px] leading-none" />
-            <span className="font-monospace truncate">{filePath}</span>
-          </div>
+          <ClickableFilePath filePath={filePath ?? ""} className="text-text" />
         </div>
         {!(result && result.success && diff) && (
           <StatusIndicator status={status}>{getStatusDisplay(status)}</StatusIndicator>

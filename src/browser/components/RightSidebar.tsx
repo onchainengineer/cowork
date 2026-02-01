@@ -173,6 +173,8 @@ interface RightSidebarProps {
   addTerminalRef?: React.MutableRefObject<
     ((options?: TerminalSessionCreateOptions) => void) | null
   >;
+  /** Ref callback to expose openFile function to parent (for FileOpenerContext) */
+  openFileRef?: React.MutableRefObject<((relativePath: string) => void) | null>;
 }
 
 /**
@@ -614,6 +616,7 @@ const RightSidebarComponent: React.FC<RightSidebarProps> = ({
   onReviewNote,
   isCreating = false,
   addTerminalRef,
+  openFileRef,
 }) => {
   // Trigger for focusing Review panel (preserves hunk selection)
   const [focusTrigger, _setFocusTrigger] = React.useState(0);
@@ -1090,6 +1093,18 @@ const RightSidebarComponent: React.FC<RightSidebarProps> = ({
     },
     [layout.root, setLayout]
   );
+
+  // Expose handleOpenFile to parent via ref (for FileOpenerContext)
+  React.useEffect(() => {
+    if (openFileRef) {
+      openFileRef.current = handleOpenFile;
+    }
+    return () => {
+      if (openFileRef) {
+        openFileRef.current = null;
+      }
+    };
+  }, [openFileRef, handleOpenFile]);
 
   // Handler to close a file tab
   const handleCloseFile = React.useCallback(

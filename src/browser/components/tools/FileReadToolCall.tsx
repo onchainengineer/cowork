@@ -1,6 +1,6 @@
 import React from "react";
-import { FileIcon } from "@/browser/components/FileIcon";
 import type { FileReadToolArgs, FileReadToolResult } from "@/common/types/tools";
+import { ClickableFilePath } from "./shared/ClickableFilePath";
 import {
   ToolContainer,
   ToolHeader,
@@ -82,10 +82,7 @@ export const FileReadToolCall: React.FC<FileReadToolCallProps> = ({
       <ToolHeader onClick={toggleExpanded}>
         <ExpandIcon expanded={expanded}>▶</ExpandIcon>
         <ToolIcon toolName="file_read" />
-        <div className="text-text flex max-w-96 min-w-0 items-center gap-1.5">
-          <FileIcon filePath={filePath} className="text-[15px] leading-none" />
-          <span className="font-monospace truncate">{filePath}</span>
-        </div>
+        <ClickableFilePath filePath={filePath} className="text-text" />
         {result && result.success && parsedContent && (
           <span className="text-secondary ml-2 text-[10px] whitespace-nowrap">
             <span className="hidden @sm:inline">read </span>

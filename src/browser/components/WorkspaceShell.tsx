@@ -13,6 +13,7 @@ import { useReviews } from "@/browser/hooks/useReviews";
 import type { ReviewNoteData } from "@/common/types/review";
 import { ConnectionStatusToast } from "./ConnectionStatusToast";
 import { ChatPane } from "./ChatPane";
+import { FileOpenerProvider } from "@/browser/contexts/FileOpenerContext";
 
 interface WorkspaceShellProps {
   workspaceId: string;
@@ -62,6 +63,11 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = (props) => {
 
   const { width: sidebarWidth, isResizing, startResize } = sidebar;
   const addTerminalRef = useRef<((options?: TerminalSessionCreateOptions) => void) | null>(null);
+  const openFileRef = useRef<((relativePath: string) => void) | null>(null);
+
+  const handleOpenFile = useCallback((relativePath: string) => {
+    openFileRef.current?.(relativePath);
+  }, []);
   const openTerminalPopout = useOpenTerminal();
   const handleOpenTerminal = useCallback(
     (options?: TerminalSessionCreateOptions) => {
@@ -103,45 +109,48 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = (props) => {
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-1 flex-row bg-dark text-light overflow-x-auto overflow-y-hidden [@media(max-width:768px)]:flex-col",
-        props.className
-      )}
-      style={{ containerType: "inline-size" }}
-    >
-      <ChatPane
-        workspaceId={props.workspaceId}
-        workspaceState={workspaceState}
-        projectPath={props.projectPath}
-        projectName={props.projectName}
-        workspaceName={props.workspaceName}
-        namedWorkspacePath={props.namedWorkspacePath}
-        leftSidebarCollapsed={props.leftSidebarCollapsed}
-        onToggleLeftSidebarCollapsed={props.onToggleLeftSidebarCollapsed}
-        runtimeConfig={props.runtimeConfig}
-        status={props.status}
-        onOpenTerminal={handleOpenTerminal}
-      />
+    <FileOpenerProvider openFile={handleOpenFile}>
+      <div
+        className={cn(
+          "flex flex-1 flex-row bg-dark text-light overflow-x-auto overflow-y-hidden [@media(max-width:768px)]:flex-col",
+          props.className
+        )}
+        style={{ containerType: "inline-size" }}
+      >
+        <ChatPane
+          workspaceId={props.workspaceId}
+          workspaceState={workspaceState}
+          projectPath={props.projectPath}
+          projectName={props.projectName}
+          workspaceName={props.workspaceName}
+          namedWorkspacePath={props.namedWorkspacePath}
+          leftSidebarCollapsed={props.leftSidebarCollapsed}
+          onToggleLeftSidebarCollapsed={props.onToggleLeftSidebarCollapsed}
+          runtimeConfig={props.runtimeConfig}
+          status={props.status}
+          onOpenTerminal={handleOpenTerminal}
+        />
 
-      <RightSidebar
-        key={props.workspaceId}
-        workspaceId={props.workspaceId}
-        workspacePath={props.namedWorkspacePath}
-        projectPath={props.projectPath}
-        width={sidebarWidth}
-        onStartResize={startResize}
-        isResizing={isResizing}
-        onReviewNote={handleReviewNote}
-        isCreating={props.status === "creating"}
-        addTerminalRef={addTerminalRef}
-      />
+        <RightSidebar
+          key={props.workspaceId}
+          workspaceId={props.workspaceId}
+          workspacePath={props.namedWorkspacePath}
+          projectPath={props.projectPath}
+          width={sidebarWidth}
+          onStartResize={startResize}
+          isResizing={isResizing}
+          onReviewNote={handleReviewNote}
+          isCreating={props.status === "creating"}
+          addTerminalRef={addTerminalRef}
+          openFileRef={openFileRef}
+        />
 
-      <PopoverError
-        error={backgroundBashError.error}
-        prefix="Failed to terminate:"
-        onDismiss={backgroundBashError.clearError}
-      />
-    </div>
+        <PopoverError
+          error={backgroundBashError.error}
+          prefix="Failed to terminate:"
+          onDismiss={backgroundBashError.clearError}
+        />
+      </div>
+    </FileOpenerProvider>
   );
 };
