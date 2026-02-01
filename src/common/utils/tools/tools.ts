@@ -9,6 +9,7 @@ import { createBashBackgroundTerminateTool } from "@/node/services/tools/bash_ba
 import { createFileEditReplaceStringTool } from "@/node/services/tools/file_edit_replace_string";
 // DISABLED: import { createFileEditReplaceLinesTool } from "@/node/services/tools/file_edit_replace_lines";
 import { createFileEditInsertTool } from "@/node/services/tools/file_edit_insert";
+import { createFileWriteTool } from "@/node/services/tools/file_write";
 import { createAskUserQuestionTool } from "@/node/services/tools/ask_user_question";
 import { createProposePlanTool } from "@/node/services/tools/propose_plan";
 import { createTodoWriteTool, createTodoReadTool } from "@/node/services/tools/todo";
@@ -276,6 +277,7 @@ export async function getToolsForModel(
     file_read: wrap(createFileReadTool(config)),
     agent_skill_read: wrap(createAgentSkillReadTool(config)),
     agent_skill_read_file: wrap(createAgentSkillReadFileTool(config)),
+    file_write: wrap(createFileWriteTool(config)),
     file_edit_replace_string: wrap(createFileEditReplaceStringTool(config)),
     file_edit_insert: wrap(createFileEditInsertTool(config)),
     // DISABLED: file_edit_replace_lines - causes models (particularly GPT-5-Codex)

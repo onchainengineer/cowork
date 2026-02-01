@@ -570,6 +570,18 @@ export const TOOL_DEFINITIONS = {
       .strict(),
   },
 
+  file_write: {
+    description:
+      "Write content to a file, creating it if it doesn't exist or overwriting if it does. " +
+      "Use this for creating new files or completely replacing file contents. " +
+      "For partial edits, prefer file_edit_replace_string or file_edit_insert instead.",
+    schema: z.object({
+      file_path: z
+        .string()
+        .describe("Path to the file to write (absolute or relative to the current workspace)"),
+      content: z.string().describe("The full content to write to the file"),
+    }),
+  },
   file_edit_replace_string: {
     description:
       "⚠️ CRITICAL: Always check tool results - edits WILL fail if old_string is not found or unique. Do not proceed with dependent operations (commits, pushes, builds) until confirming success.\n\n" +
@@ -1186,6 +1198,26 @@ export const AgentSkillReadToolResultSchema = z.union([
 export const AgentSkillReadFileToolResultSchema = FileReadToolResultSchema;
 
 /**
+ * File write tool result - diff or error.
+ */
+export const FileWriteToolResultSchema = z.union([
+  z
+    .object({
+      success: z.literal(true),
+      diff: z.string(),
+      created: z.boolean(),
+      warning: z.string().optional(),
+    })
+    .extend(ToolOutputUiOnlyFieldSchema),
+  z
+    .object({
+      success: z.literal(false),
+      error: z.string(),
+    })
+    .extend(ToolOutputUiOnlyFieldSchema),
+]);
+
+/**
  * File edit insert tool result - diff or error.
  */
 export const FileEditInsertToolResultSchema = z.union([
@@ -1296,6 +1328,7 @@ export type BridgeableToolName =
   | "bash_background_list"
   | "bash_background_terminate"
   | "file_read"
+  | "file_write"
   | "agent_skill_read"
   | "agent_skill_read_file"
   | "file_edit_insert"
@@ -1321,6 +1354,7 @@ export const RESULT_SCHEMAS: Record<BridgeableToolName, z.ZodType> = {
   bash_background_list: BashBackgroundListResultSchema,
   bash_background_terminate: BashBackgroundTerminateResultSchema,
   file_read: FileReadToolResultSchema,
+  file_write: FileWriteToolResultSchema,
   agent_skill_read: AgentSkillReadToolResultSchema,
   agent_skill_read_file: AgentSkillReadFileToolResultSchema,
   file_edit_insert: FileEditInsertToolResultSchema,
@@ -1374,6 +1408,7 @@ export function getAvailableTools(
       ? ["unix_global_agents_read", "unix_global_agents_write"]
       : []),
     "file_read",
+    "file_write",
     "agent_skill_read",
     "agent_skill_read_file",
     "file_edit_replace_string",

@@ -20,6 +20,7 @@ import type {
   UnixGlobalAgentsReadToolResultSchema,
   UnixGlobalAgentsWriteToolResultSchema,
   FileReadToolResultSchema,
+  FileWriteToolResultSchema,
   TaskToolResultSchema,
   TaskAwaitToolResultSchema,
   TaskListToolResultSchema,
@@ -387,6 +388,10 @@ export interface WithHookOutput {
  * Use this when you need to represent a result that may have hook output attached.
  */
 export type MayHaveHookOutput<T> = T & WithHookOutput;
+
+// File Write Tool Types
+export type FileWriteToolArgs = z.infer<typeof TOOL_DEFINITIONS.file_write.schema>;
+export type FileWriteToolResult = z.infer<typeof FileWriteToolResultSchema>;
 
 // Glob Tool Types
 export type GlobToolArgs = z.infer<typeof TOOL_DEFINITIONS.glob.schema>;
