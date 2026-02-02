@@ -64,6 +64,17 @@ async function main(): Promise<void> {
     authToken,
   });
 
+  // Validate auth token against workbench API (if token provided)
+  if (authToken) {
+    console.error(`[lattice-workbench-mcp] Validating auth token against workbench...`);
+    const isValid = await client.ping();
+    if (!isValid) {
+      console.error(`[lattice-workbench-mcp] WARNING: Workbench not reachable — token validation deferred to first request`);
+    } else {
+      console.error(`[lattice-workbench-mcp] Auth token validated successfully`);
+    }
+  }
+
   // Register all tools
   registerWorkspaceTools(server, client);
   registerProjectTools(server, client);

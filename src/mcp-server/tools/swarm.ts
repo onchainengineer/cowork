@@ -1225,4 +1225,312 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       };
     }
   );
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // HEALTH CHECK & HEARTBEAT
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  server.tool(
+    "swarm_health_check",
+    "Run a health check on all working agents — verify their workspaces are still alive and responsive. Marks stale agents as failed.",
+    {
+      staleThresholdMs: z.number().optional().describe("Mark agents stale after this many ms of inactivity (default: 300000 = 5min)"),
+    },
+    async ({ staleThresholdMs }) => {
+      const threshold = staleThresholdMs ?? 300_000;
+      const agents = Array.from(swarm.agents.values()).filter(
+        (a) => a.status === "working" || a.status === "idle"
+      );
+
+      if (agents.length === 0) {
+        return { content: [{ type: "text" as const, text: "No active agents to check." }] };
+      }
+
+      const results: Array<{ agentId: string; role: string; status: string; detail: string }> = [];
+
+      const checks = agents.map(async (agent) => {
+        try {
+          // Try to ping the workspace by getting its info
+          const info = await client.getWorkspaceInfo(agent.workspaceId);
+          const alive = info !== null && info !== undefined;
+
+          if (!alive) {
+            agent.status = "failed";
+            saveState();
+            return { agentId: agent.id, role: agent.role, status: "DEAD", detail: "Workspace not found" };
+          }
+
+          // Check staleness
+          const inactiveMs = Date.now() - agent.lastActiveAt;
+          if (agent.status === "working" && inactiveMs > threshold) {
+            // Agent has been "working" but no activity for too long
+            agent.status = "idle";
+            agent.currentTaskId = undefined;
+
+            // Mark the current task as timeout
+            if (agent.currentTaskId) {
+              const task = swarm.tasks.get(agent.currentTaskId);
+              if (task && task.status === "running") {
+                task.status = "timeout";
+                task.completedAt = Date.now();
+                task.error = `Agent stale — no activity for ${Math.round(inactiveMs / 1000)}s`;
+              }
+            }
+            saveState();
+            return { agentId: agent.id, role: agent.role, status: "STALE", detail: `Inactive ${Math.round(inactiveMs / 1000)}s → reset to idle` };
+          }
+
+          return { agentId: agent.id, role: agent.role, status: "OK", detail: `Active ${Math.round(inactiveMs / 1000)}s ago` };
+        } catch (error) {
+          agent.status = "failed";
+          saveState();
+          return { agentId: agent.id, role: agent.role, status: "ERROR", detail: error instanceof Error ? error.message : String(error) };
+        }
+      });
+
+      const settled = await Promise.all(checks);
+      results.push(...settled);
+
+      const healthy = results.filter((r) => r.status === "OK");
+      const unhealthy = results.filter((r) => r.status !== "OK");
+
+      const lines: string[] = [];
+      lines.push(`HEALTH CHECK: ${healthy.length}/${results.length} healthy\n`);
+
+      for (const r of results) {
+        const icon = r.status === "OK" ? "[OK]" : r.status === "STALE" ? "[STALE]" : "[DEAD]";
+        lines.push(`${icon} ${r.agentId} [${r.role}] — ${r.detail}`);
+      }
+
+      return {
+        content: [{ type: "text" as const, text: lines.join("\n") }],
+        isError: unhealthy.length > 0 && healthy.length === 0,
+      };
+    }
+  );
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TASK RETRY / DEAD-LETTER QUEUE
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  server.tool(
+    "swarm_retry_task",
+    "Retry a failed/timed-out task — re-dispatches to the same or a different agent. Failed tasks are moved to a dead-letter queue after max retries.",
+    {
+      taskId: z.string().describe("Task ID to retry"),
+      targetAgentId: z.string().optional().describe("Retry on a different agent (default: same agent)"),
+      maxRetries: z.number().optional().describe("Max retry attempts before dead-letter (default: 3)"),
+    },
+    async ({ taskId, targetAgentId, maxRetries }) => {
+      const task = swarm.tasks.get(taskId);
+      if (!task) return { content: [{ type: "text" as const, text: `Task ${taskId} not found` }], isError: true };
+
+      if (task.status === "running" || task.status === "dispatched") {
+        return { content: [{ type: "text" as const, text: `Task ${taskId} is still running — interrupt first or wait for completion` }], isError: true };
+      }
+
+      // Track retries via metadata
+      const retryKey = `retry:${taskId}`;
+      const retryCountStr = swarm.sharedMemory.get(retryKey) ?? "0";
+      const retryCount = parseInt(retryCountStr, 10);
+      const maxR = maxRetries ?? 3;
+
+      if (retryCount >= maxR) {
+        // Dead-letter: mark in shared memory for inspection
+        swarm.sharedMemory.set(`dead-letter:${taskId}`, JSON.stringify({
+          task: task.task,
+          role: task.role,
+          error: task.error,
+          retries: retryCount,
+          failedAt: task.completedAt,
+        }));
+        saveState();
+        return {
+          content: [{
+            type: "text" as const,
+            text: `Task ${taskId} exceeded max retries (${maxR}). Moved to dead-letter queue.\nInspect with: swarm_memory_get key="dead-letter:${taskId}"`,
+          }],
+          isError: true,
+        };
+      }
+
+      // Determine target agent
+      const agentId = targetAgentId ?? task.agentId;
+      const agent = swarm.agents.get(agentId);
+      if (!agent) return { content: [{ type: "text" as const, text: `Agent ${agentId} not found` }], isError: true };
+      if (agent.status === "working") return { content: [{ type: "text" as const, text: `Agent ${agentId} is busy` }], isError: true };
+
+      // Create a new task (clone of failed one)
+      const newTaskId = genTaskId();
+      let baselineCount = 0;
+      try {
+        const replay = (await client.getFullReplay(agent.workspaceId)) as unknown[];
+        baselineCount = replay.length;
+      } catch {}
+
+      let taskMessage = `[RETRY ${retryCount + 1}/${maxR}] ${task.task}`;
+      if (task.error) {
+        taskMessage += `\n\n[Previous attempt failed: ${task.error}]`;
+      }
+      if (swarm.sharedMemory.size > 0) {
+        const memCtx = Array.from(swarm.sharedMemory.entries())
+          .filter(([k]) => !k.startsWith("retry:") && !k.startsWith("dead-letter:"))
+          .map(([k, v]) => `[${k}]: ${v}`)
+          .join("\n");
+        if (memCtx) taskMessage = `[SHARED CONTEXT]\n${memCtx}\n\n${taskMessage}`;
+      }
+
+      const sendResult = await client.sendMessage(agent.workspaceId, taskMessage);
+
+      const newTask: SwarmTask = {
+        id: newTaskId,
+        agentId,
+        workspaceId: agent.workspaceId,
+        role: agent.role,
+        task: task.task,
+        stage: task.stage,
+        status: sendResult.success ? "running" : "failed",
+        priority: task.priority,
+        dispatchedAt: Date.now(),
+        error: sendResult.success ? undefined : sendResult.error,
+        baselineMessageCount: baselineCount,
+      };
+      swarm.tasks.set(newTaskId, newTask);
+
+      if (sendResult.success) {
+        agent.status = "working";
+        agent.currentTaskId = newTaskId;
+        agent.lastActiveAt = Date.now();
+        pollTaskCompletion(client, newTaskId).catch(() => {});
+      }
+
+      // Track retry count
+      swarm.sharedMemory.set(retryKey, String(retryCount + 1));
+      saveState();
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Retry ${retryCount + 1}/${maxR} for task ${taskId}\nNew task: ${newTaskId}\nAgent: ${agentId} [${agent.role}]\nStatus: ${newTask.status}`,
+        }],
+        isError: !sendResult.success,
+      };
+    }
+  );
+
+  server.tool(
+    "swarm_dead_letters",
+    "List all tasks in the dead-letter queue (failed after max retries).",
+    {},
+    async () => {
+      const deadLetters: Array<{ key: string; data: unknown }> = [];
+
+      for (const [key, value] of swarm.sharedMemory) {
+        if (key.startsWith("dead-letter:")) {
+          try {
+            deadLetters.push({ key, data: JSON.parse(value) });
+          } catch {
+            deadLetters.push({ key, data: value });
+          }
+        }
+      }
+
+      if (deadLetters.length === 0) {
+        return { content: [{ type: "text" as const, text: "Dead-letter queue is empty." }] };
+      }
+
+      const lines: string[] = [];
+      lines.push(`DEAD-LETTER QUEUE (${deadLetters.length})\n`);
+
+      for (const dl of deadLetters) {
+        const taskId = dl.key.replace("dead-letter:", "");
+        const data = dl.data as Record<string, unknown>;
+        lines.push(`[DEAD] ${taskId}`);
+        lines.push(`   Role: ${data.role ?? "?"} | Retries: ${data.retries ?? "?"}`);
+        lines.push(`   Error: ${data.error ?? "unknown"}`);
+        lines.push(`   Task: ${String(data.task ?? "").slice(0, 100)}`);
+        lines.push("");
+      }
+
+      return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+    }
+  );
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // SWARM METRICS / DASHBOARD RESOURCE
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  server.tool(
+    "swarm_metrics",
+    "Get structured swarm metrics — throughput, latency, error rate, efficiency. For programmatic consumption.",
+    {},
+    async () => {
+      const tasks = Array.from(swarm.tasks.values());
+      const agents = Array.from(swarm.agents.values());
+      const stages = Array.from(swarm.stages.values());
+
+      const completed = tasks.filter((t) => t.status === "completed");
+      const failed = tasks.filter((t) => t.status === "failed" || t.status === "timeout");
+      const running = tasks.filter((t) => t.status === "running");
+
+      const durations = completed
+        .filter((t) => t.completedAt)
+        .map((t) => t.completedAt! - t.dispatchedAt);
+
+      const avgDurationMs = durations.length > 0
+        ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+        : 0;
+      const maxDurationMs = durations.length > 0 ? Math.max(...durations) : 0;
+      const minDurationMs = durations.length > 0 ? Math.min(...durations) : 0;
+
+      const uptime = Date.now() - swarm.startedAt;
+      const throughputPerMin = uptime > 0 ? +(completed.length / (uptime / 60_000)).toFixed(2) : 0;
+      const errorRate = tasks.length > 0 ? +((failed.length / tasks.length) * 100).toFixed(1) : 0;
+
+      const criticalPath = calculateCriticalPath();
+      const resources = getSystemResources();
+
+      const metrics = {
+        uptime: `${Math.round(uptime / 1000)}s`,
+        agents: {
+          total: agents.length,
+          working: agents.filter((a) => a.status === "working").length,
+          idle: agents.filter((a) => a.status === "idle").length,
+          retired: agents.filter((a) => a.status === "retired").length,
+          failed: agents.filter((a) => a.status === "failed").length,
+        },
+        tasks: {
+          total: tasks.length,
+          running: running.length,
+          completed: completed.length,
+          failed: failed.length,
+          throughputPerMin,
+          errorRate: `${errorRate}%`,
+        },
+        latency: {
+          avgMs: avgDurationMs,
+          maxMs: maxDurationMs,
+          minMs: minDurationMs,
+        },
+        stages: {
+          total: stages.length,
+          completed: stages.filter((s) => s.status === "completed").length,
+          running: stages.filter((s) => s.status === "running").length,
+        },
+        criticalPath: {
+          totalMs: criticalPath.totalMs,
+          parallelEfficiency: criticalPath.parallelEfficiency,
+        },
+        resources: {
+          cpus: resources.cpus,
+          freeMemGB: resources.freeMemGB,
+          estimatedCapacity: resources.estimatedCapacity,
+        },
+      };
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(metrics, null, 2) }],
+      };
+    }
+  );
 }

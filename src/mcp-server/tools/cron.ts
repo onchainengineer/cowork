@@ -24,6 +24,14 @@ import type { WorkbenchClient } from "../client.js";
 
 // ── Types ────────────────────────────────────────────────────────────
 
+interface CronHistoryEntry {
+  runAt: number;
+  durationMs: number;
+  success: boolean;
+  resultPreview?: string;
+  error?: string;
+}
+
 interface CronJobData {
   id: string;
   name: string;
@@ -38,6 +46,8 @@ interface CronJobData {
   lastError?: string;
   runCount: number;
   nextRunAt: number;
+  missedRuns: number; // count of runs missed while server was down
+  history: CronHistoryEntry[]; // last N execution records
 }
 
 interface CronJob extends CronJobData {
@@ -78,6 +88,8 @@ function saveJobs(): void {
       lastError: job.lastError,
       runCount: job.runCount,
       nextRunAt: job.nextRunAt,
+      missedRuns: job.missedRuns ?? 0,
+      history: job.history ?? [],
     }));
     fs.writeFileSync(JOBS_FILE, JSON.stringify({ counter: cronState.counter, jobs: serialized }, null, 2));
   } catch {
@@ -92,8 +104,27 @@ function loadJobs(): void {
     const data = JSON.parse(raw) as { counter: number; jobs: CronJobData[] };
     cronState.counter = data.counter;
     for (const jobData of data.jobs) {
-      // Recalculate nextRunAt if it's in the past
-      if (jobData.nextRunAt < Date.now()) {
+      // Ensure new fields have defaults
+      jobData.missedRuns = jobData.missedRuns ?? 0;
+      jobData.history = jobData.history ?? [];
+
+      // Detect missed runs while server was down
+      if (jobData.enabled && jobData.nextRunAt < Date.now()) {
+        const missedMs = Date.now() - jobData.nextRunAt;
+        const missedCount = Math.floor(missedMs / jobData.intervalMs);
+        if (missedCount > 0) {
+          jobData.missedRuns += missedCount;
+          jobData.history.push({
+            runAt: jobData.nextRunAt,
+            durationMs: 0,
+            success: false,
+            error: `Missed ${missedCount} run(s) while server was down`,
+          });
+          // Keep history bounded to last 50 entries
+          if (jobData.history.length > 50) {
+            jobData.history = jobData.history.slice(-50);
+          }
+        }
         jobData.nextRunAt = Date.now() + jobData.intervalMs;
       }
       cronState.jobs.set(jobData.id, { ...jobData });
@@ -170,6 +201,25 @@ function formatDuration(ms: number): string {
   return `${(ms / 86_400_000).toFixed(1)}d`;
 }
 
+// ── History tracking ─────────────────────────────────────────────────
+
+const MAX_HISTORY = 50;
+
+function addHistory(job: CronJob, runAt: number, success: boolean, result?: string, error?: string): void {
+  if (!job.history) job.history = [];
+  job.history.push({
+    runAt,
+    durationMs: Date.now() - runAt,
+    success,
+    resultPreview: result ? result.slice(0, 200) : undefined,
+    error,
+  });
+  // Keep bounded
+  if (job.history.length > MAX_HISTORY) {
+    job.history = job.history.slice(-MAX_HISTORY);
+  }
+}
+
 // ── Job execution ────────────────────────────────────────────────────
 
 function scheduleNextRun(client: WorkbenchClient, job: CronJob): void {
@@ -186,7 +236,8 @@ function scheduleNextRun(client: WorkbenchClient, job: CronJob): void {
   job.timerId = setTimeout(async () => {
     if (!job.enabled) return;
 
-    job.lastRunAt = Date.now();
+    const runStartedAt = Date.now();
+    job.lastRunAt = runStartedAt;
     job.runCount++;
 
     try {
@@ -196,20 +247,24 @@ function scheduleNextRun(client: WorkbenchClient, job: CronJob): void {
       if (!sendResult.success) {
         job.lastError = sendResult.error ?? "Send failed";
         job.lastResult = undefined;
+        addHistory(job, runStartedAt, false, undefined, job.lastError);
       } else {
         // Poll for response (shorter timeout for cron — 3 min)
         try {
           const response = await client.pollForResponse(job.workspaceId, 0, 180_000);
           job.lastResult = response;
           job.lastError = undefined;
+          addHistory(job, runStartedAt, true, response);
         } catch (pollErr) {
           job.lastResult = undefined;
           job.lastError = `Poll failed: ${pollErr instanceof Error ? pollErr.message : String(pollErr)}`;
+          addHistory(job, runStartedAt, false, undefined, job.lastError);
         }
       }
     } catch (error) {
       job.lastError = error instanceof Error ? error.message : String(error);
       job.lastResult = undefined;
+      addHistory(job, runStartedAt, false, undefined, job.lastError);
     }
 
     // Schedule next run
@@ -278,6 +333,8 @@ Examples:
           createdAt: now,
           runCount: 0,
           nextRunAt: startImmediately ? now + 1000 : now + intervalMs,
+          missedRuns: 0,
+          history: [],
         };
 
         cronState.jobs.set(id, job);
@@ -331,6 +388,9 @@ Examples:
           if (job.lastError) {
             lines.push(`   Last error: ${job.lastError}`);
           }
+        }
+        if (job.missedRuns > 0) {
+          lines.push(`   ⚠ Missed runs: ${job.missedRuns}`);
         }
         lines.push("");
       }
@@ -465,6 +525,84 @@ Examples:
       return {
         content: [{ type: "text" as const, text: `Job ${jobId} updated:\n  ${changes.join("\n  ")}` }],
       };
+    }
+  );
+
+  // ── Execution history ─────────────────────────────────────────────
+
+  server.tool(
+    "cron_history",
+    "Get execution history for a cron job — shows last N runs with timestamps, duration, success/failure, and result previews.",
+    {
+      jobId: z.string().describe("Cron job ID"),
+      limit: z.number().optional().describe("Max entries to return (default: 20)"),
+    },
+    async ({ jobId, limit }) => {
+      const job = cronState.jobs.get(jobId);
+      if (!job) return { content: [{ type: "text" as const, text: `Job ${jobId} not found` }], isError: true };
+
+      const history = job.history ?? [];
+      const maxEntries = limit ?? 20;
+      const entries = history.slice(-maxEntries);
+
+      if (entries.length === 0) {
+        return { content: [{ type: "text" as const, text: `No execution history for job "${job.name}" (${jobId}).` }] };
+      }
+
+      const lines: string[] = [];
+      lines.push(`EXECUTION HISTORY: "${job.name}" (${jobId})`);
+      lines.push(`Total runs: ${job.runCount} | Missed: ${job.missedRuns ?? 0} | Showing last ${entries.length}\n`);
+
+      const successCount = entries.filter((e) => e.success).length;
+      const failCount = entries.length - successCount;
+      lines.push(`Success: ${successCount} | Failed: ${failCount} | Rate: ${entries.length > 0 ? Math.round((successCount / entries.length) * 100) : 0}%\n`);
+
+      for (const entry of entries) {
+        const icon = entry.success ? "[OK]" : "[FAIL]";
+        const date = new Date(entry.runAt).toLocaleString();
+        const dur = formatDuration(entry.durationMs);
+        lines.push(`${icon} ${date} (${dur})`);
+        if (entry.resultPreview) {
+          lines.push(`   ${entry.resultPreview.slice(0, 120)}${entry.resultPreview.length > 120 ? "..." : ""}`);
+        }
+        if (entry.error) {
+          lines.push(`   Error: ${entry.error}`);
+        }
+      }
+
+      return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+    }
+  );
+
+  // ── Missed runs report ────────────────────────────────────────────
+
+  server.tool(
+    "cron_missed_report",
+    "Report on missed cron runs across all jobs — shows which jobs missed executions while the server was down.",
+    {},
+    async () => {
+      const jobs = Array.from(cronState.jobs.values());
+      const jobsWithMisses = jobs.filter((j) => (j.missedRuns ?? 0) > 0);
+
+      if (jobsWithMisses.length === 0) {
+        return { content: [{ type: "text" as const, text: "No missed runs detected across all cron jobs." }] };
+      }
+
+      const totalMissed = jobsWithMisses.reduce((sum, j) => sum + (j.missedRuns ?? 0), 0);
+
+      const lines: string[] = [];
+      lines.push(`MISSED RUNS REPORT: ${totalMissed} total missed across ${jobsWithMisses.length} job(s)\n`);
+
+      for (const job of jobsWithMisses) {
+        lines.push(`[!] ${job.id} "${job.name}" — ${job.missedRuns} missed`);
+        lines.push(`   Schedule: every ${formatDuration(job.intervalMs)} | Total runs: ${job.runCount}`);
+        lines.push(`   Next run: ${job.enabled ? `in ${formatDuration(Math.max(0, job.nextRunAt - Date.now()))}` : "disabled"}`);
+        lines.push("");
+      }
+
+      lines.push("Tip: Use cron_run_now to manually trigger missed jobs.");
+
+      return { content: [{ type: "text" as const, text: lines.join("\n") }] };
     }
   );
 }

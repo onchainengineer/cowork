@@ -29,6 +29,8 @@ import type { WorkspaceChatMessage } from "@/common/orpc/types";
 import { ChannelConfigSchema } from "@/common/orpc/schemas/channels";
 import { TelegramAdapter } from "./channels/telegram/TelegramAdapter";
 import { DiscordAdapter } from "./channels/discord/DiscordAdapter";
+import { SlackAdapter } from "./channels/slack/SlackAdapter";
+import { WhatsAppAdapter } from "./channels/whatsapp/WhatsAppAdapter";
 import type { ChannelSessionRouter } from "./channelSessionRouter";
 
 // ── Event types ─────────────────────────────────────────────────────────
@@ -77,6 +79,8 @@ export class ChannelService extends EventEmitter {
     [
       ["telegram", (cfg) => new TelegramAdapter(cfg)],
       ["discord", (cfg) => new DiscordAdapter(cfg)],
+      ["slack", (cfg) => new SlackAdapter(cfg)],
+      ["whatsapp", (cfg) => new WhatsAppAdapter(cfg)],
     ]
   );
 

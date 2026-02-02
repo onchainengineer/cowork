@@ -248,6 +248,47 @@ export class WorkbenchClient {
     return this.post("/providers.list");
   }
 
+  // ── Inference / Models ──────────────────────────────────────────────
+
+  async listModels(): Promise<
+    Array<{
+      id: string;
+      name: string;
+      format?: string;
+      sizeBytes?: number;
+      quantization?: string;
+      localPath?: string;
+      backend?: string;
+    }>
+  > {
+    return this.post("/inference.listModels");
+  }
+
+  async getInferenceStatus(): Promise<{ available: boolean; loadedModelId: string | null }> {
+    return this.post("/inference.getStatus");
+  }
+
+  // ── Workspace Activity ──────────────────────────────────────────────
+
+  async listWorkspaceActivity(): Promise<Record<string, {
+    status?: string;
+    streaming?: boolean;
+    lastActivity?: number;
+    [key: string]: unknown;
+  }>> {
+    return this.post("/workspace.activity.list");
+  }
+
+  // ── File / Directory Operations ─────────────────────────────────────
+
+  async listDirectory(dirPath: string): Promise<unknown> {
+    return this.post("/general.listDirectory", { path: dirPath });
+  }
+
+  async createDirectory(dirPath: string): Promise<{ success: boolean; data?: { normalizedPath: string }; error?: string }> {
+    return this.post("/general.createDirectory", { path: dirPath });
+  }
+
   // ── Polling helper for send_message ───────────────────────────────
 
   /**
