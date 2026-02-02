@@ -378,6 +378,8 @@ async function loadServices(): Promise<void> {
     signingService: services.signingService,
     latticeService: services.latticeService,
     inferenceService: services.inferenceService,
+    channelService: services.channelService,
+    channelSessionRouter: services.channelSessionRouter,
   };
 
   electronIpcMain.handle("unix:get-is-rosetta", async () => {

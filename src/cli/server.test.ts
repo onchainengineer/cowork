@@ -85,6 +85,8 @@ async function createTestServer(): Promise<TestServerHandle> {
     signingService: services.signingService,
     latticeService: services.latticeService,
     inferenceService: services.inferenceService,
+    channelService: services.channelService,
+    channelSessionRouter: services.channelSessionRouter,
   };
 
   // Use the actual createOrpcServer function

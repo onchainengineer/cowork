@@ -24,6 +24,8 @@ import type { SessionUsageService } from "@/node/services/sessionUsageService";
 import type { TaskService } from "@/node/services/taskService";
 import type { LatticeService } from "@/node/services/latticeService";
 import type { InferenceService } from "@/node/services/inference";
+import type { ChannelService } from "@/node/services/channelService";
+import type { ChannelSessionRouter } from "@/node/services/channelSessionRouter";
 
 export interface ORPCContext {
   config: Config;
@@ -51,5 +53,7 @@ export interface ORPCContext {
   signingService: SigningService;
   latticeService: LatticeService;
   inferenceService: InferenceService;
+  channelService: ChannelService;
+  channelSessionRouter: ChannelSessionRouter;
   headers?: IncomingHttpHeaders;
 }

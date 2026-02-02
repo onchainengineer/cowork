@@ -10,6 +10,7 @@ import {
   Keyboard,
   Layout,
   BrainCircuit,
+  MessageSquare,
 } from "lucide-react";
 import { useSettings } from "@/browser/contexts/SettingsContext";
 import { useExperimentValue } from "@/browser/hooks/useExperiments";
@@ -25,6 +26,7 @@ import { ProjectSettingsSection } from "./sections/ProjectSettingsSection";
 import { LayoutsSection } from "./sections/LayoutsSection";
 import { ExperimentsSection } from "./sections/ExperimentsSection";
 import { KeybindsSection } from "./sections/KeybindsSection";
+import { ChannelsSection } from "./sections/ChannelsSection";
 import type { SettingsSection } from "./types";
 
 const BASE_SECTIONS: SettingsSection[] = [
@@ -45,6 +47,12 @@ const BASE_SECTIONS: SettingsSection[] = [
     label: "Providers",
     icon: <Key className="h-4 w-4" />,
     component: ProvidersSection,
+  },
+  {
+    id: "channels",
+    label: "Channels",
+    icon: <MessageSquare className="h-4 w-4" />,
+    component: ChannelsSection,
   },
   {
     id: "projects",

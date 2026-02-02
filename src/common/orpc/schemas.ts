@@ -189,5 +189,14 @@ export {
   voice,
   window,
   workspace,
+  channels,
+  ChannelConfigSchema,
+  ChannelMessageSchema,
+  ChannelListItemSchema,
+  ChannelTypeSchema,
+  ChannelStatusSchema,
+  ChannelSessionScopeSchema,
+  ChannelSessionEntrySchema,
+  ChannelPeerKindSchema,
 } from "./schemas/api";
 export type { WorkspaceSendMessageOutput } from "./schemas/api";

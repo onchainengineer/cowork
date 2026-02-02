@@ -5,6 +5,9 @@ import { ChatStatsSchema, SessionUsageFileSchema } from "./chatStats";
 import { SendMessageErrorSchema } from "./errors";
 import { BranchListResultSchema, FilePartSchema, UnixMessageSchema } from "./message";
 import { ProjectConfigSchema, SectionConfigSchema } from "./project";
+
+// Re-export channels namespace (defined in its own file for clarity)
+export { channels, ChannelConfigSchema, ChannelMessageSchema, ChannelListItemSchema, ChannelTypeSchema, ChannelStatusSchema, ChannelSessionScopeSchema, ChannelSessionEntrySchema, ChannelPeerKindSchema } from "./channels";
 import { ResultSchema } from "./result";
 import { RuntimeConfigSchema, RuntimeAvailabilitySchema } from "./runtime";
 import { SecretSchema } from "./secrets";

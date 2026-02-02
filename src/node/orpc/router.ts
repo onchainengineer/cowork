@@ -42,6 +42,7 @@ import {
 } from "@/node/services/agentDefinitions/agentDefinitionsService";
 import { resolveAgentInheritanceChain } from "@/node/services/agentDefinitions/resolveAgentInheritanceChain";
 import { isWorkspaceArchived } from "@/common/utils/archive";
+import type { ChannelMessage } from "@/common/orpc/schemas/channels";
 
 /**
  * Resolves runtime and discovery path for agent operations.
@@ -2179,6 +2180,117 @@ export const router = (authToken?: string) => {
         .handler(async ({ context, input }) =>
           context.inferenceService.runBenchmark(input.modelId),
         ),
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ██ Channels — cross-platform messaging adapters (Telegram, Discord…) █
+    // ═══════════════════════════════════════════════════════════════════════
+    channels: {
+      list: t
+        .input(schemas.channels.list.input)
+        .output(schemas.channels.list.output)
+        .handler(async ({ context }) => {
+          return context.channelService.listChannels();
+        }),
+
+      get: t
+        .input(schemas.channels.get.input)
+        .output(schemas.channels.get.output)
+        .handler(async ({ context, input }) => {
+          const config = context.channelService.getConfig(input.accountId);
+          if (!config) {
+            throw new Error(`Channel "${input.accountId}" not found`);
+          }
+          return config;
+        }),
+
+      create: t
+        .input(schemas.channels.create.input)
+        .output(schemas.channels.create.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.createChannel(input);
+        }),
+
+      update: t
+        .input(schemas.channels.update.input)
+        .output(schemas.channels.update.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.updateChannel(input);
+        }),
+
+      remove: t
+        .input(schemas.channels.remove.input)
+        .output(schemas.channels.remove.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.removeChannel(input.accountId);
+        }),
+
+      connect: t
+        .input(schemas.channels.connect.input)
+        .output(schemas.channels.connect.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.connectChannel(input.accountId);
+        }),
+
+      disconnect: t
+        .input(schemas.channels.disconnect.input)
+        .output(schemas.channels.disconnect.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.disconnectChannel(input.accountId);
+        }),
+
+      sendMessage: t
+        .input(schemas.channels.sendMessage.input)
+        .output(schemas.channels.sendMessage.output)
+        .handler(async ({ context, input }) => {
+          return context.channelService.sendMessage(input.accountId, input.message);
+        }),
+
+      onMessage: t
+        .input(schemas.channels.onMessage.input)
+        .output(schemas.channels.onMessage.output)
+        .handler(async function* ({ context, input }) {
+          const queue = createAsyncEventQueue<ChannelMessage>();
+
+          const handler = (message: ChannelMessage) => {
+            // Filter by accountId if specified
+            if (input?.accountId && message.channelAccountId !== input.accountId) {
+              return;
+            }
+            queue.push(message);
+          };
+
+          context.channelService.on("message", handler);
+
+          try {
+            yield* queue.iterate();
+          } finally {
+            queue.end();
+            context.channelService.off("message", handler);
+          }
+        }),
+
+      // ─── Session management (OpenClaw pattern) ─────────────────────
+      sessions: {
+        list: t
+          .input(schemas.channels.sessions.list.input)
+          .output(schemas.channels.sessions.list.output)
+          .handler(async ({ context, input }) => {
+            return context.channelSessionRouter.listSessions(input?.accountId);
+          }),
+
+        resolve: t
+          .input(schemas.channels.sessions.resolve.input)
+          .output(schemas.channels.sessions.resolve.output)
+          .handler(async ({ context, input }) => {
+            return context.channelSessionRouter.lookupSession(
+              input.channelType,
+              input.accountId,
+              input.peerId,
+              input.peerKind
+            );
+          }),
+      },
     },
   });
 };

@@ -54,6 +54,8 @@ import { getSigningService, type SigningService } from "@/node/services/signingS
 import { latticeService, type LatticeService } from "@/node/services/latticeService";
 import { setGlobalLatticeService } from "@/node/runtime/runtimeFactory";
 import { InferenceService } from "@/node/services/inference";
+import { ChannelService } from "@/node/services/channelService";
+import { ChannelSessionRouter } from "@/node/services/channelSessionRouter";
 
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
 const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Welcome to Lattice Workbench — a system of AI agents for software development.
@@ -105,6 +107,8 @@ export class ServiceContainer {
   public readonly signingService: SigningService;
   public readonly latticeService: LatticeService;
   public readonly inferenceService: InferenceService;
+  public readonly channelSessionRouter: ChannelSessionRouter;
+  public readonly channelService: ChannelService;
   private readonly initStateManager: InitStateManager;
   private readonly extensionMetadata: ExtensionMetadataService;
   private readonly ptyService: PTYService;
@@ -159,6 +163,8 @@ export class ServiceContainer {
       this.sessionUsageService
     );
     this.workspaceService.setMCPServerManager(this.mcpServerManager);
+    this.channelSessionRouter = new ChannelSessionRouter(config, this.workspaceService, this.projectService);
+    this.channelService = new ChannelService(config, this.workspaceService, this.channelSessionRouter);
     this.taskService = new TaskService(
       config,
       this.historyService,
@@ -252,6 +258,11 @@ export class ServiceContainer {
     await this.taskService.initialize();
     // Start idle compaction checker
     this.idleCompactionService.start();
+
+    // Initialize channel service (load saved configs, auto-connect enabled channels)
+    void this.channelService.initialize().catch((err) => {
+      log.warn("[ServiceContainer] Channel service init failed (non-fatal)", { error: err });
+    });
 
     // Refresh Lattice SSH config in background (handles binary path changes on restart)
     // Skip getLatticeInfo() to avoid caching "unavailable" if coder isn't installed yet
@@ -352,6 +363,7 @@ export class ServiceContainer {
    */
   async shutdown(): Promise<void> {
     this.idleCompactionService.stop();
+    await this.channelService.shutdown();
     await this.inferenceService.dispose();
     await this.telemetryService.shutdown();
   }
