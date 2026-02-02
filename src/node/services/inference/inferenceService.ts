@@ -52,6 +52,7 @@ export class InferenceService extends EventEmitter {
 
   constructor(rootDir: string, appResourcesPath?: string) {
     super();
+    this.setMaxListeners(500);
     this.rootDir = rootDir;
     this.appResourcesPath = appResourcesPath;
     const cacheDir = path.join(os.homedir(), ".lattice", "models");

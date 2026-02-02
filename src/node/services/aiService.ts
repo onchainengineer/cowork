@@ -477,7 +477,7 @@ export class AIService extends EventEmitter {
     super();
     // Increase max listeners to accommodate multiple concurrent workspace listeners
     // Each workspace subscribes to stream events, and we expect >10 concurrent workspaces
-    this.setMaxListeners(50);
+    this.setMaxListeners(500);
     this.workspaceMcpOverridesService =
       workspaceMcpOverridesService ?? new WorkspaceMcpOverridesService(config);
     this.config = config;

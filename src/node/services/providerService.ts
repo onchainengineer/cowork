@@ -19,7 +19,7 @@ export class ProviderService {
   constructor(private readonly config: Config) {
     // The provider config subscription may have many concurrent listeners (e.g. multiple windows).
     // Avoid noisy MaxListenersExceededWarning for normal usage.
-    this.emitter.setMaxListeners(50);
+    this.emitter.setMaxListeners(500);
   }
 
   /**

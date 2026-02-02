@@ -75,6 +75,7 @@ export class InitStateManager extends EventEmitter {
 
   constructor(config: Config) {
     super();
+    this.setMaxListeners(500);
     this.store = new EventStore(
       config,
       "init-status.json",
