@@ -186,6 +186,62 @@ export class WorkbenchClient {
     });
   }
 
+  async getChannel(accountId: string): Promise<{
+    type: string;
+    accountId: string;
+    enabled: boolean;
+    defaultProjectPath: string;
+    sessionScope: string;
+    credentials: Record<string, string>;
+    settings?: Record<string, unknown>;
+  }> {
+    return this.post("/channels.get", { accountId });
+  }
+
+  async createChannel(config: {
+    type: string;
+    accountId: string;
+    enabled: boolean;
+    defaultProjectPath: string;
+    sessionScope?: string;
+    credentials: Record<string, string>;
+    settings?: Record<string, unknown>;
+  }): Promise<{ success: boolean; error?: string }> {
+    return this.post("/channels.create", config);
+  }
+
+  async updateChannel(config: {
+    type: string;
+    accountId: string;
+    enabled: boolean;
+    defaultProjectPath: string;
+    sessionScope?: string;
+    credentials: Record<string, string>;
+    settings?: Record<string, unknown>;
+  }): Promise<{ success: boolean; error?: string }> {
+    return this.post("/channels.update", config);
+  }
+
+  async removeChannel(accountId: string): Promise<{ success: boolean; error?: string }> {
+    return this.post("/channels.remove", { accountId });
+  }
+
+  async listChannelSessions(accountId?: string): Promise<
+    Array<{
+      sessionKey: string;
+      workspaceId: string;
+      channelType: string;
+      accountId: string;
+      peerId: string;
+      peerKind: string;
+      displayName?: string;
+      lastMessageAt: number;
+      createdAt: number;
+    }>
+  > {
+    return this.post("/channels.sessions.list", accountId ? { accountId } : {});
+  }
+
   // ── Providers ─────────────────────────────────────────────────────
 
   async listProviders(): Promise<unknown[]> {

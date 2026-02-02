@@ -4,6 +4,9 @@
  * Ported from OpenClaw's cron system: the octopus can schedule recurring
  * tasks that execute automatically in workspace agents.
  *
+ * **Persistent**: all jobs saved to ~/.lattice/cron/jobs.json
+ * On restart, jobs are restored and timers re-armed automatically.
+ *
  * Use cases:
  *   - Daily code review sweeps
  *   - Periodic dependency updates
@@ -13,12 +16,15 @@
  *   - Automated git operations (pull, merge, rebase)
  */
 import { z } from "zod";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { WorkbenchClient } from "../client.js";
 
 // ── Types ────────────────────────────────────────────────────────────
 
-interface CronJob {
+interface CronJobData {
   id: string;
   name: string;
   schedule: string; // cron expression or interval string
@@ -32,6 +38,9 @@ interface CronJob {
   lastError?: string;
   runCount: number;
   nextRunAt: number;
+}
+
+interface CronJob extends CronJobData {
   timerId?: ReturnType<typeof setTimeout>;
 }
 
@@ -40,10 +49,69 @@ interface CronState {
   counter: number;
 }
 
+// ── Persistence layer ────────────────────────────────────────────────
+
+const CRON_DIR = path.join(os.homedir(), ".lattice", "cron");
+const JOBS_FILE = path.join(CRON_DIR, "jobs.json");
+
+function ensureCronDir(): void {
+  if (!fs.existsSync(CRON_DIR)) {
+    fs.mkdirSync(CRON_DIR, { recursive: true });
+  }
+}
+
+function saveJobs(): void {
+  try {
+    ensureCronDir();
+    // Strip timerId before serializing
+    const serialized = Array.from(cronState.jobs.values()).map((job): CronJobData => ({
+      id: job.id,
+      name: job.name,
+      schedule: job.schedule,
+      intervalMs: job.intervalMs,
+      workspaceId: job.workspaceId,
+      task: job.task,
+      enabled: job.enabled,
+      createdAt: job.createdAt,
+      lastRunAt: job.lastRunAt,
+      lastResult: job.lastResult,
+      lastError: job.lastError,
+      runCount: job.runCount,
+      nextRunAt: job.nextRunAt,
+    }));
+    fs.writeFileSync(JOBS_FILE, JSON.stringify({ counter: cronState.counter, jobs: serialized }, null, 2));
+  } catch {
+    // Non-fatal
+  }
+}
+
+function loadJobs(): void {
+  try {
+    if (!fs.existsSync(JOBS_FILE)) return;
+    const raw = fs.readFileSync(JOBS_FILE, "utf-8");
+    const data = JSON.parse(raw) as { counter: number; jobs: CronJobData[] };
+    cronState.counter = data.counter;
+    for (const jobData of data.jobs) {
+      // Recalculate nextRunAt if it's in the past
+      if (jobData.nextRunAt < Date.now()) {
+        jobData.nextRunAt = Date.now() + jobData.intervalMs;
+      }
+      cronState.jobs.set(jobData.id, { ...jobData });
+    }
+  } catch {
+    // Corrupted — start fresh
+  }
+}
+
+// ── State ────────────────────────────────────────────────────────────
+
 const cronState: CronState = {
   jobs: new Map(),
   counter: 0,
 };
+
+// Restore from disk
+loadJobs();
 
 function genCronId(): string {
   return `cron-${(++cronState.counter).toString().padStart(3, "0")}`;
@@ -146,13 +214,27 @@ function scheduleNextRun(client: WorkbenchClient, job: CronJob): void {
 
     // Schedule next run
     job.nextRunAt = Date.now() + job.intervalMs;
+    saveJobs();
     scheduleNextRun(client, job);
   }, delay);
+}
+
+// ── Restore timers for loaded jobs ───────────────────────────────────
+
+function restoreTimers(client: WorkbenchClient): void {
+  for (const [, job] of cronState.jobs) {
+    if (job.enabled) {
+      scheduleNextRun(client, job);
+    }
+  }
 }
 
 // ── Register cron tools ──────────────────────────────────────────────
 
 export function registerCronTools(server: McpServer, client: WorkbenchClient): void {
+
+  // Restore timers for jobs loaded from disk
+  restoreTimers(client);
 
   server.tool(
     "cron_create",
@@ -199,12 +281,13 @@ Examples:
         };
 
         cronState.jobs.set(id, job);
+        saveJobs();
         scheduleNextRun(client, job);
 
         return {
           content: [{
             type: "text" as const,
-            text: `⏰ Cron job created: ${id}\n  Name: ${name}\n  Schedule: every ${formatDuration(intervalMs)}\n  Workspace: ${workspaceId}\n  Next run: ${startImmediately ? "~now" : `in ${formatDuration(intervalMs)}`}\n  Task: ${task.slice(0, 100)}${task.length > 100 ? "..." : ""}`,
+            text: `Cron job created: ${id}\n  Name: ${name}\n  Schedule: every ${formatDuration(intervalMs)}\n  Workspace: ${workspaceId}\n  Next run: ${startImmediately ? "~now" : `in ${formatDuration(intervalMs)}`}\n  Task: ${task.slice(0, 100)}${task.length > 100 ? "..." : ""}`,
           }],
         };
       } catch (error) {
@@ -228,10 +311,10 @@ Examples:
       }
 
       const lines: string[] = [];
-      lines.push(`⏰ SCHEDULED JOBS (${jobs.length})\n`);
+      lines.push(`SCHEDULED JOBS (${jobs.length})\n`);
 
       for (const job of jobs) {
-        const icon = job.enabled ? "🟢" : "🔴";
+        const icon = job.enabled ? "[ON]" : "[OFF]";
         const nextIn = job.enabled ? formatDuration(Math.max(0, job.nextRunAt - Date.now())) : "disabled";
 
         lines.push(`${icon} ${job.id} "${job.name}"`);
@@ -246,11 +329,13 @@ Examples:
             lines.push(`   Last result: ${job.lastResult.slice(0, 150)}${job.lastResult.length > 150 ? "..." : ""}`);
           }
           if (job.lastError) {
-            lines.push(`   ⚠️ Last error: ${job.lastError}`);
+            lines.push(`   Last error: ${job.lastError}`);
           }
         }
         lines.push("");
       }
+
+      lines.push(`Persistence: ${fs.existsSync(JOBS_FILE) ? "jobs.json saved" : "not persisted"}`);
 
       return { content: [{ type: "text" as const, text: lines.join("\n") }] };
     }
@@ -272,13 +357,15 @@ Examples:
       if (enabled) {
         job.nextRunAt = Date.now() + job.intervalMs;
         scheduleNextRun(client, job);
-        return { content: [{ type: "text" as const, text: `✅ Job "${job.name}" enabled. Next run in ${formatDuration(job.intervalMs)}` }] };
+        saveJobs();
+        return { content: [{ type: "text" as const, text: `Job "${job.name}" enabled. Next run in ${formatDuration(job.intervalMs)}` }] };
       } else {
         if (job.timerId) {
           clearTimeout(job.timerId);
           job.timerId = undefined;
         }
-        return { content: [{ type: "text" as const, text: `🔴 Job "${job.name}" disabled.` }] };
+        saveJobs();
+        return { content: [{ type: "text" as const, text: `Job "${job.name}" disabled.` }] };
       }
     }
   );
@@ -293,8 +380,9 @@ Examples:
 
       if (job.timerId) clearTimeout(job.timerId);
       cronState.jobs.delete(jobId);
+      saveJobs();
 
-      return { content: [{ type: "text" as const, text: `🗑️ Job "${job.name}" (${jobId}) deleted. Ran ${job.runCount} times.` }] };
+      return { content: [{ type: "text" as const, text: `Job "${job.name}" (${jobId}) deleted. Ran ${job.runCount} times.` }] };
     }
   );
 
@@ -313,21 +401,24 @@ Examples:
         const sendResult = await client.sendMessage(job.workspaceId, `[CRON: ${job.name} — manual trigger]\n${job.task}`);
         if (!sendResult.success) {
           job.lastError = sendResult.error ?? "Send failed";
-          return { content: [{ type: "text" as const, text: `❌ Failed to trigger: ${sendResult.error}` }], isError: true };
+          saveJobs();
+          return { content: [{ type: "text" as const, text: `Failed to trigger: ${sendResult.error}` }], isError: true };
         }
 
         // Poll for response
         const response = await client.pollForResponse(job.workspaceId, 0, 180_000);
         job.lastResult = response;
         job.lastError = undefined;
+        saveJobs();
 
         return {
-          content: [{ type: "text" as const, text: `✅ Job "${job.name}" executed.\n\nResult:\n${response}` }],
+          content: [{ type: "text" as const, text: `Job "${job.name}" executed.\n\nResult:\n${response}` }],
         };
       } catch (error) {
         job.lastError = error instanceof Error ? error.message : String(error);
+        saveJobs();
         return {
-          content: [{ type: "text" as const, text: `❌ Error: ${job.lastError}` }],
+          content: [{ type: "text" as const, text: `Error: ${job.lastError}` }],
           isError: true,
         };
       }
@@ -351,13 +442,13 @@ Examples:
 
       if (name) {
         job.name = name;
-        changes.push(`name → "${name}"`);
+        changes.push(`name -> "${name}"`);
       }
       if (schedule) {
         job.intervalMs = parseInterval(schedule);
         job.schedule = schedule;
         job.nextRunAt = Date.now() + job.intervalMs;
-        changes.push(`schedule → every ${formatDuration(job.intervalMs)}`);
+        changes.push(`schedule -> every ${formatDuration(job.intervalMs)}`);
       }
       if (task) {
         job.task = task;
@@ -369,8 +460,10 @@ Examples:
         scheduleNextRun(client, job);
       }
 
+      saveJobs();
+
       return {
-        content: [{ type: "text" as const, text: `✏️ Job ${jobId} updated:\n  ${changes.join("\n  ")}` }],
+        content: [{ type: "text" as const, text: `Job ${jobId} updated:\n  ${changes.join("\n  ")}` }],
       };
     }
   );

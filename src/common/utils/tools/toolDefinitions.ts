@@ -143,23 +143,29 @@ const TaskToolAgentArgsSchema = z
     title: z.string().min(1),
     run_in_background: z.boolean().default(false),
   })
-  .strict()
-  .transform((args) => {
-    const hasAgentId = typeof args.agentId === "string" && args.agentId.length > 0;
-    const hasSubagentType = typeof args.subagent_type === "string" && args.subagent_type.length > 0;
+  .strict();
 
-    // Default to "task" agent when neither is provided (LLMs sometimes omit the field).
-    if (!hasAgentId && !hasSubagentType) {
-      return { ...args, agentId: "task" };
-    }
+/**
+ * Normalize task tool args after parsing.
+ * Handles backwards compatibility and defaults.
+ * Call this after parsing with TaskToolArgsSchema.
+ */
+export function normalizeTaskToolArgs(args: z.infer<typeof TaskToolAgentArgsSchema>): z.infer<typeof TaskToolAgentArgsSchema> {
+  const hasAgentId = typeof args.agentId === "string" && args.agentId.length > 0;
+  const hasSubagentType = typeof args.subagent_type === "string" && args.subagent_type.length > 0;
 
-    // If both are provided, prefer agentId and drop subagent_type.
-    if (hasAgentId && hasSubagentType) {
-      return { ...args, subagent_type: undefined };
-    }
+  // Default to "task" agent when neither is provided (LLMs sometimes omit the field).
+  if (!hasAgentId && !hasSubagentType) {
+    return { ...args, agentId: "task" };
+  }
 
-    return args;
-  });
+  // If both are provided, prefer agentId and drop subagent_type.
+  if (hasAgentId && hasSubagentType) {
+    return { ...args, subagent_type: undefined };
+  }
+
+  return args;
+}
 
 export const TaskToolArgsSchema = TaskToolAgentArgsSchema;
 

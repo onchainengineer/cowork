@@ -37,6 +37,7 @@ import {
   AgentReportToolArgsSchema,
   TaskToolResultSchema,
   TaskToolArgsSchema,
+  normalizeTaskToolArgs,
 } from "@/common/utils/tools/toolDefinitions";
 import { formatSendMessageError } from "@/node/services/utils/sendMessageError";
 import { enforceThinkingPolicy } from "@/common/utils/thinking/policy";
@@ -2306,6 +2307,9 @@ export class TaskService {
       });
       return false;
     }
+
+    // Apply normalization for backwards compatibility and defaults
+    const normalizedInput = normalizeTaskToolArgs(parsedInput.data);
 
     const updated: UnixMessage = {
       ...partial,

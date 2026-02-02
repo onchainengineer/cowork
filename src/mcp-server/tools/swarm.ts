@@ -24,9 +24,12 @@
  *   - Critical path metric: total latency = max(stage latencies)
  *   - Agents can be reused, forked, or retired between stages
  *   - Resource-aware: tracks CPU/memory for M3 Ultra parallel capacity
+ *   - **Persistent**: all state saved to ~/.lattice/swarm/ on every mutation
  */
 import { z } from "zod";
 import * as os from "os";
+import * as fs from "fs";
+import * as path from "path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { WorkbenchClient } from "../client.js";
 
@@ -83,6 +86,101 @@ interface SwarmState {
   startedAt: number;
 }
 
+// ── Persistence layer ────────────────────────────────────────────────
+
+const SWARM_DIR = path.join(os.homedir(), ".lattice", "swarm");
+const STATE_FILE = path.join(SWARM_DIR, "state.json");
+const MEMORY_FILE = path.join(SWARM_DIR, "memory.json");
+
+interface SerializedSwarmState {
+  agents: Array<[string, SwarmAgent]>;
+  tasks: Array<[string, SwarmTask]>;
+  stages: Array<[string, SwarmStage]>;
+  taskCounter: number;
+  agentCounter: number;
+  stageCounter: number;
+  startedAt: number;
+}
+
+function ensureSwarmDir(): void {
+  if (!fs.existsSync(SWARM_DIR)) {
+    fs.mkdirSync(SWARM_DIR, { recursive: true });
+  }
+}
+
+function saveState(): void {
+  try {
+    ensureSwarmDir();
+
+    const serialized: SerializedSwarmState = {
+      agents: Array.from(swarm.agents.entries()),
+      tasks: Array.from(swarm.tasks.entries()),
+      stages: Array.from(swarm.stages.entries()),
+      taskCounter: swarm.taskCounter,
+      agentCounter: swarm.agentCounter,
+      stageCounter: swarm.stageCounter,
+      startedAt: swarm.startedAt,
+    };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(serialized, null, 2));
+
+    // Shared memory in separate file (can be large)
+    const memSerialized = Array.from(swarm.sharedMemory.entries());
+    fs.writeFileSync(MEMORY_FILE, JSON.stringify(memSerialized, null, 2));
+  } catch {
+    // Non-fatal — log but don't crash
+  }
+}
+
+function loadState(): void {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      const raw = fs.readFileSync(STATE_FILE, "utf-8");
+      const data = JSON.parse(raw) as SerializedSwarmState;
+
+      swarm.agents = new Map(data.agents);
+      swarm.tasks = new Map(data.tasks);
+      swarm.stages = new Map(data.stages);
+      swarm.taskCounter = data.taskCounter;
+      swarm.agentCounter = data.agentCounter;
+      swarm.stageCounter = data.stageCounter;
+      swarm.startedAt = data.startedAt;
+
+      // Mark any "running" tasks as "timeout" since we restarted
+      for (const [, task] of swarm.tasks) {
+        if (task.status === "running" || task.status === "dispatched") {
+          task.status = "timeout";
+          task.completedAt = Date.now();
+          task.error = "Server restarted — task state lost";
+        }
+      }
+      // Mark any "working" agents as "idle" since their tasks timed out
+      for (const [, agent] of swarm.agents) {
+        if (agent.status === "working") {
+          agent.status = "idle";
+          agent.currentTaskId = undefined;
+        }
+      }
+      // Mark running stages as failed
+      for (const [, stage] of swarm.stages) {
+        if (stage.status === "running") {
+          stage.status = "failed";
+          stage.completedAt = Date.now();
+        }
+      }
+    }
+
+    if (fs.existsSync(MEMORY_FILE)) {
+      const raw = fs.readFileSync(MEMORY_FILE, "utf-8");
+      const entries = JSON.parse(raw) as Array<[string, string]>;
+      swarm.sharedMemory = new Map(entries);
+    }
+  } catch {
+    // Corrupted state — start fresh
+  }
+}
+
+// ── Initialize state ─────────────────────────────────────────────────
+
 const swarm: SwarmState = {
   agents: new Map(),
   tasks: new Map(),
@@ -93,6 +191,9 @@ const swarm: SwarmState = {
   stageCounter: 0,
   startedAt: Date.now(),
 };
+
+// Restore from disk on module load
+loadState();
 
 function genTaskId(): string {
   return `task-${(++swarm.taskCounter).toString().padStart(4, "0")}`;
@@ -260,6 +361,7 @@ async function pollTaskCompletion(
                 checkStageCompletion(task.stage);
               }
 
+              saveState();
               return;
             }
           }
@@ -282,6 +384,8 @@ async function pollTaskCompletion(
       agent.status = "idle";
       agent.currentTaskId = undefined;
     }
+
+    saveState();
   }
 }
 
@@ -305,6 +409,8 @@ function checkStageCompletion(stageId: string): void {
       .filter((t) => t.completedAt)
       .map((t) => t.completedAt! - t.dispatchedAt);
     stage.criticalPathMs = durations.length > 0 ? Math.max(...durations) : 0;
+
+    saveState();
   }
 }
 
@@ -339,7 +445,7 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
           return {
             content: [{
               type: "text" as const,
-              text: `⚠️ Warning: Requesting ${agents.length} agents but system estimates capacity for ~${resources.maxParallelAgents} parallel agents (${resources.freeMemGB}GB free RAM, ~3GB per agent).\nProceeding anyway — adjust if you hit memory pressure.`,
+              text: `Warning: Requesting ${agents.length} agents but system estimates capacity for ~${resources.maxParallelAgents} parallel agents (${resources.freeMemGB}GB free RAM, ~3GB per agent).\nProceeding anyway — adjust if you hit memory pressure.`,
             }],
           };
         }
@@ -357,7 +463,7 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
         const promises = agents.map(async (spec) => {
           const agentId = genAgentId();
           const branchName = `swarm-${spec.role.replace(/[^a-z0-9-]/gi, "-")}-${Date.now().toString(36)}`;
-          const title = spec.title ?? `🐙 ${spec.role}`;
+          const title = spec.title ?? `[swarm] ${spec.role}`;
 
           try {
             const result = await client.createWorkspace({
@@ -387,7 +493,6 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
               if (spec.systemPrompt) {
                 try {
                   await client.sendMessage(wsId, `[SYSTEM] You are a specialized agent with role: ${spec.role}\n\n${spec.systemPrompt}\n\nAcknowledge your role briefly.`);
-                  // Don't wait for response — it'll prime in background
                 } catch {
                   // Non-fatal
                 }
@@ -407,12 +512,14 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
         const ready = results.filter((r) => r.status === "ready");
         const failed = results.filter((r) => r.status !== "ready");
 
+        saveState();
+
         const lines: string[] = [];
-        lines.push(`🐙 Swarm: ${ready.length}/${agents.length} agents spawned`);
-        lines.push(`📊 System: ${resources.freeMemGB}GB free, ${resources.cpus} CPUs, ~${resources.estimatedCapacity} more agents possible\n`);
+        lines.push(`Swarm: ${ready.length}/${agents.length} agents spawned`);
+        lines.push(`System: ${resources.freeMemGB}GB free, ${resources.cpus} CPUs, ~${resources.estimatedCapacity} more agents possible\n`);
 
         for (const r of results) {
-          const icon = r.status === "ready" ? "✅" : "❌";
+          const icon = r.status === "ready" ? "[OK]" : "[FAIL]";
           lines.push(`${icon} ${r.agentId} [${r.role}]: ${r.workspaceId || r.status}`);
         }
 
@@ -464,8 +571,10 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
         // Non-fatal
       }
 
+      saveState();
+
       return {
-        content: [{ type: "text" as const, text: `🔄 Agent ${agentId} re-specialized as "${newRole}"` }],
+        content: [{ type: "text" as const, text: `Agent ${agentId} re-specialized as "${newRole}"` }],
       };
     }
   );
@@ -495,8 +604,10 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
         }
       }
 
+      saveState();
+
       return {
-        content: [{ type: "text" as const, text: `🏖️ Agent ${agentId} [${agent.role}] retired. Completed ${agent.tasksCompleted} tasks.` }],
+        content: [{ type: "text" as const, text: `Agent ${agentId} [${agent.role}] retired. Completed ${agent.tasksCompleted} tasks.` }],
       };
     }
   );
@@ -546,7 +657,8 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
             error: sendResult.error, baselineMessageCount: baselineCount,
           };
           swarm.tasks.set(taskId, swarmTask);
-          return { content: [{ type: "text" as const, text: `❌ Dispatch failed: ${sendResult.error}` }], isError: true };
+          saveState();
+          return { content: [{ type: "text" as const, text: `Dispatch failed: ${sendResult.error}` }], isError: true };
         }
 
         const swarmTask: SwarmTask = {
@@ -560,13 +672,15 @@ The orchestrator should analyze the task, decompose it, then spawn exactly the s
         agent.currentTaskId = taskId;
         agent.lastActiveAt = Date.now();
 
+        saveState();
+
         // Background poll
         pollTaskCompletion(client, taskId).catch(() => {});
 
         return {
           content: [{
             type: "text" as const,
-            text: `📨 Dispatched to ${agent.role} (${agentId})\nTask ID: ${taskId}\nStatus: running`,
+            text: `Dispatched to ${agent.role} (${agentId})\nTask ID: ${taskId}\nStatus: running`,
           }],
         };
       } catch (error) {
@@ -674,16 +788,17 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
         results.push(...settled);
 
         swarm.stages.set(stageId, stage);
+        saveState();
 
         const running = results.filter((r) => r.status === "running");
         const lines: string[] = [];
-        lines.push(`🚀 Stage "${name}" (${stageId}): ${running.length}/${tasks.length} tasks launched`);
+        lines.push(`Stage "${name}" (${stageId}): ${running.length}/${tasks.length} tasks launched`);
         if (deps.length > 0) lines.push(`   Dependencies: ${deps.join(", ")}`);
         lines.push("");
 
         for (const r of results) {
-          const icon = r.status === "running" ? "🏃" : "❌";
-          lines.push(`${icon} ${r.taskId} → ${r.role} (${r.agentId}): ${r.status}`);
+          const icon = r.status === "running" ? "[RUN]" : "[FAIL]";
+          lines.push(`${icon} ${r.taskId} -> ${r.role} (${r.agentId}): ${r.status}`);
         }
 
         lines.push("");
@@ -726,21 +841,18 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
 
       const lines: string[] = [];
 
-      // Header
-      lines.push("═══════════════════════════════════════════════════");
-      lines.push("🐙 OCTOPUS SWARM DASHBOARD");
-      lines.push("═══════════════════════════════════════════════════");
+      lines.push("=== OCTOPUS SWARM DASHBOARD ===");
       lines.push("");
 
       // Resources
-      lines.push(`📊 SYSTEM: ${resources.cpus} CPUs | ${resources.totalMemGB}GB RAM (${resources.usedPercent}% used)`);
+      lines.push(`SYSTEM: ${resources.cpus} CPUs | ${resources.totalMemGB}GB RAM (${resources.usedPercent}% used)`);
       lines.push(`   Free: ${resources.freeMemGB}GB | Capacity: ~${resources.maxParallelAgents} parallel agents`);
       lines.push("");
 
       // Agents
-      lines.push(`👥 AGENTS: ${working.length} working, ${idle.length} idle, ${retired.length} retired (${agents.length} total)`);
+      lines.push(`AGENTS: ${working.length} working, ${idle.length} idle, ${retired.length} retired (${agents.length} total)`);
       for (const a of [...working, ...idle]) {
-        const statusIcon = a.status === "working" ? "🔵" : "⚪";
+        const statusIcon = a.status === "working" ? "[BUSY]" : "[IDLE]";
         const elapsed = a.currentTaskId
           ? `${Math.round((Date.now() - a.lastActiveAt) / 1000)}s`
           : "";
@@ -750,11 +862,11 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
 
       // Stages
       if (stages.length > 0) {
-        lines.push(`📋 STAGES:`);
+        lines.push(`STAGES:`);
         for (const s of stages) {
-          const icon = s.status === "completed" ? "✅"
-            : s.status === "running" ? "🏃"
-            : s.status === "failed" ? "❌" : "⏳";
+          const icon = s.status === "completed" ? "[DONE]"
+            : s.status === "running" ? "[RUN]"
+            : s.status === "failed" ? "[FAIL]" : "[WAIT]";
           const duration = s.completedAt && s.startedAt
             ? `${Math.round((s.completedAt - s.startedAt) / 1000)}s`
             : s.startedAt
@@ -766,37 +878,38 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       }
 
       // Tasks summary
-      lines.push(`📌 TASKS: ${runningTasks.length} running, ${completedTasks.length} done, ${failedTasks.length} failed`);
+      lines.push(`TASKS: ${runningTasks.length} running, ${completedTasks.length} done, ${failedTasks.length} failed`);
 
       if (runningTasks.length > 0) {
         lines.push("   Running:");
         for (const t of runningTasks) {
           const elapsed = Math.round((Date.now() - t.dispatchedAt) / 1000);
-          lines.push(`   🏃 ${t.id} [${t.role}] — ${elapsed}s: ${t.task.slice(0, 80)}...`);
+          lines.push(`   [RUN] ${t.id} [${t.role}] — ${elapsed}s: ${t.task.slice(0, 80)}...`);
         }
       }
       lines.push("");
 
       // Critical Path
       if (criticalPath.totalMs > 0) {
-        lines.push(`⚡ CRITICAL PATH: ${Math.round(criticalPath.totalMs / 1000)}s`);
+        lines.push(`CRITICAL PATH: ${Math.round(criticalPath.totalMs / 1000)}s`);
         lines.push(`   Parallel efficiency: ${criticalPath.parallelEfficiency}x speedup vs sequential`);
         if (criticalPath.criticalStages.length > 0) {
-          lines.push(`   Bottleneck stages: ${criticalPath.criticalStages.join(" → ")}`);
+          lines.push(`   Bottleneck stages: ${criticalPath.criticalStages.join(" -> ")}`);
         }
       }
 
       // Shared memory
       if (swarm.sharedMemory.size > 0) {
         lines.push("");
-        lines.push(`🧠 SHARED MEMORY: ${swarm.sharedMemory.size} entries`);
+        lines.push(`SHARED MEMORY: ${swarm.sharedMemory.size} entries`);
         for (const [key] of swarm.sharedMemory) {
-          lines.push(`   📝 ${key}`);
+          lines.push(`   - ${key}`);
         }
       }
 
+      // Persistence info
       lines.push("");
-      lines.push("═══════════════════════════════════════════════════");
+      lines.push(`PERSISTENCE: ${fs.existsSync(STATE_FILE) ? "state.json saved" : "not persisted"} | ${fs.existsSync(MEMORY_FILE) ? "memory.json saved" : "no memory file"}`);
 
       return { content: [{ type: "text" as const, text: lines.join("\n") }] };
     }
@@ -856,16 +969,18 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
         }
       }
 
+      saveState();
+
       // Build results
       const lines: string[] = [];
       const collected = targetTaskIds.map((id) => swarm.tasks.get(id)).filter(Boolean) as SwarmTask[];
       const completed = collected.filter((t) => t.status === "completed");
       const failed = collected.filter((t) => t.status !== "completed");
 
-      lines.push(`🐙 Collected ${completed.length}/${collected.length} results${stageId ? ` (stage: ${stageId})` : ""}\n`);
+      lines.push(`Collected ${completed.length}/${collected.length} results${stageId ? ` (stage: ${stageId})` : ""}\n`);
 
       for (const t of collected) {
-        const icon = t.status === "completed" ? "✅" : "❌";
+        const icon = t.status === "completed" ? "[OK]" : "[FAIL]";
         const duration = t.completedAt ? `${Math.round((t.completedAt - t.dispatchedAt) / 1000)}s` : "?";
         lines.push(`${icon} ${t.id} [${t.role}] — ${t.status} (${duration})`);
         if (t.result) {
@@ -921,8 +1036,9 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
     },
     async ({ key, value }) => {
       swarm.sharedMemory.set(key, value);
+      saveState();
       return {
-        content: [{ type: "text" as const, text: `🧠 Stored in shared memory: "${key}" (${value.length} chars)\n${swarm.sharedMemory.size} total entries` }],
+        content: [{ type: "text" as const, text: `Stored in shared memory: "${key}" (${value.length} chars)\n${swarm.sharedMemory.size} total entries` }],
       };
     }
   );
@@ -937,7 +1053,7 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       if (key) {
         const value = swarm.sharedMemory.get(key);
         if (!value) return { content: [{ type: "text" as const, text: `Key "${key}" not found in shared memory` }], isError: true };
-        return { content: [{ type: "text" as const, text: `🧠 ${key}:\n${value}` }] };
+        return { content: [{ type: "text" as const, text: `${key}:\n${value}` }] };
       }
 
       // All entries
@@ -946,9 +1062,9 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       }
 
       const lines = Array.from(swarm.sharedMemory.entries()).map(
-        ([k, v]) => `📝 ${k}: ${v.slice(0, 200)}${v.length > 200 ? "..." : ""}`
+        ([k, v]) => `${k}: ${v.slice(0, 200)}${v.length > 200 ? "..." : ""}`
       );
-      return { content: [{ type: "text" as const, text: `🧠 Shared Memory (${swarm.sharedMemory.size} entries):\n\n${lines.join("\n\n")}` }] };
+      return { content: [{ type: "text" as const, text: `Shared Memory (${swarm.sharedMemory.size} entries):\n\n${lines.join("\n\n")}` }] };
     }
   );
 
@@ -958,6 +1074,7 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
     { key: z.string() },
     async ({ key }) => {
       const deleted = swarm.sharedMemory.delete(key);
+      saveState();
       return {
         content: [{ type: "text" as const, text: deleted ? `Deleted "${key}" from shared memory.` : `Key "${key}" not found.` }],
       };
@@ -976,24 +1093,24 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       const r = getSystemResources();
 
       const lines: string[] = [];
-      lines.push("📊 SYSTEM RESOURCES");
+      lines.push("SYSTEM RESOURCES");
       lines.push(`   CPU: ${r.cpus} cores`);
       lines.push(`   RAM: ${r.totalMemGB}GB total, ${r.freeMemGB}GB free (${r.usedPercent}% used)`);
       lines.push("");
-      lines.push("🐙 SWARM CAPACITY");
+      lines.push("SWARM CAPACITY");
       lines.push(`   Active agents: ${r.activeAgents}`);
       lines.push(`   Max parallel: ~${r.maxParallelAgents} (at ~3GB per agent)`);
       lines.push(`   Available slots: ${r.estimatedCapacity}`);
-      lines.push(`   Can spawn more: ${r.canSpawnMore ? "✅ YES" : "⚠️ MEMORY PRESSURE"}`);
+      lines.push(`   Can spawn more: ${r.canSpawnMore ? "YES" : "MEMORY PRESSURE"}`);
 
       // M3 Ultra specific guidance
       if (r.totalMemGB >= 192) {
         lines.push("");
-        lines.push("🖥️ M3 Ultra detected! You can run 50+ parallel agents comfortably.");
+        lines.push("M3 Ultra detected! You can run 50+ parallel agents comfortably.");
         lines.push("   Recommended: 40-60 concurrent agents for optimal throughput.");
       } else if (r.totalMemGB >= 96) {
         lines.push("");
-        lines.push("🖥️ High-memory machine — 20-30 parallel agents recommended.");
+        lines.push("High-memory machine — 20-30 parallel agents recommended.");
       }
 
       return { content: [{ type: "text" as const, text: lines.join("\n") }] };
@@ -1035,6 +1152,8 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
         }
       }
 
+      saveState();
+
       return {
         content: [{
           type: "text" as const,
@@ -1065,10 +1184,12 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       swarm.stageCounter = 0;
       swarm.startedAt = Date.now();
 
+      saveState();
+
       return {
         content: [{
           type: "text" as const,
-          text: `🔄 Swarm reset. Cleared ${stats.agents} agents, ${stats.tasks} tasks, ${stats.stages} stages, ${stats.memory} memory entries.`,
+          text: `Swarm reset. Cleared ${stats.agents} agents, ${stats.tasks} tasks, ${stats.stages} stages, ${stats.memory} memory entries.`,
         }],
       };
     }
@@ -1095,12 +1216,12 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
       }
 
       const lines = filtered.map((a) => {
-        const icon = a.status === "working" ? "🔵" : a.status === "idle" ? "⚪" : "🔴";
+        const icon = a.status === "working" ? "[BUSY]" : a.status === "idle" ? "[IDLE]" : "[OFF]";
         return `${icon} ${a.id} [${a.role}] ws:${a.workspaceId} — ${a.status} (${a.tasksCompleted} done)`;
       });
 
       return {
-        content: [{ type: "text" as const, text: `👥 Agents (${filtered.length}):\n${lines.join("\n")}` }],
+        content: [{ type: "text" as const, text: `Agents (${filtered.length}):\n${lines.join("\n")}` }],
       };
     }
   );

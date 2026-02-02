@@ -1,4 +1,4 @@
-import { TaskToolArgsSchema, TOOL_DEFINITIONS } from "./toolDefinitions";
+import { TaskToolArgsSchema, TOOL_DEFINITIONS, normalizeTaskToolArgs } from "./toolDefinitions";
 
 describe("TOOL_DEFINITIONS", () => {
   it("accepts custom subagent_type IDs (deprecated alias)", () => {
@@ -11,7 +11,8 @@ describe("TOOL_DEFINITIONS", () => {
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.subagent_type).toBe("potato");
+      const normalized = normalizeTaskToolArgs(parsed.data);
+      expect(normalized.subagent_type).toBe("potato");
     }
   });
 
