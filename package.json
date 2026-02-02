@@ -39,10 +39,12 @@
     "storybook": "make storybook",
     "storybook:build": "make storybook-build",
     "test:storybook": "make test-storybook",
-    "postinstall": "sh scripts/postinstall.sh"
+    "postinstall": "sh scripts/postinstall.sh",
+    "mcp-server": "npx tsx src/mcp-server/index.ts"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^3.0.65",
+    "@modelcontextprotocol/sdk": "^1.12.1",
     "@ai-sdk/anthropic": "^2.0.53",
     "@ai-sdk/deepseek": "^1.0.31",
     "@ai-sdk/google": "^2.0.44",

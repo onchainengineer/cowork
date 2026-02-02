@@ -246,6 +246,35 @@ export class ChannelSessionRouter {
   }
 
   /**
+   * Delete a session by key. Used by /new command to reset a conversation.
+   * Returns the deleted entry (if it existed) so the caller can clean up.
+   */
+  deleteSession(sessionKey: string): ChannelSessionEntry | undefined {
+    const entry = this.sessions.get(sessionKey);
+    if (entry) {
+      this.sessions.delete(sessionKey);
+      this.saveSessions();
+      log.info("[ChannelSessionRouter] Deleted session", { sessionKey, workspaceId: entry.workspaceId });
+    }
+    return entry;
+  }
+
+  /**
+   * Delete a session by looking up from a workspace ID.
+   */
+  deleteByWorkspaceId(workspaceId: string): ChannelSessionEntry | undefined {
+    for (const [key, entry] of this.sessions) {
+      if (entry.workspaceId === workspaceId) {
+        this.sessions.delete(key);
+        this.saveSessions();
+        log.info("[ChannelSessionRouter] Deleted session by workspaceId", { sessionKey: key, workspaceId });
+        return entry;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Reverse lookup: find session entry by workspace ID.
    * Used by the response path to route workspace output back to the channel peer.
    */

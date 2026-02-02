@@ -139,6 +139,14 @@ export class ServiceContainer {
           command: "npx @anthropic/mcp-playwright",
           disabled: false,
         },
+        // Lattice Workbench control — lets agents operate the workbench itself:
+        // create projects/workspaces, send messages, run bash, manage channels.
+        // Enables autonomous control from TG/Discord or any MCP-compatible client.
+        "lattice-workbench": {
+          transport: "stdio" as const,
+          command: "npx tsx src/mcp-server/index.ts",
+          disabled: false,
+        },
       },
     });
     this.sessionUsageService = new SessionUsageService(config, this.historyService);

@@ -48,6 +48,9 @@ export interface ChannelAdapter {
   /** Current connection status */
   readonly status: ChannelStatus;
 
+  /** Bot username (available after connect) — used for group chat mention filtering */
+  readonly botUsername?: string;
+
   /** Connect to the platform using the provided config */
   connect(config: ChannelConfig): Promise<void>;
 

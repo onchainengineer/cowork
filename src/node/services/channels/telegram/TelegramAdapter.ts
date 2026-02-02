@@ -54,6 +54,13 @@ interface TelegramVoice {
   file_size?: number;
 }
 
+interface TelegramMessageEntity {
+  type: string; // "mention", "bot_command", "text_mention", etc.
+  offset: number;
+  length: number;
+  user?: TelegramUser;
+}
+
 interface TelegramMessage {
   message_id: number;
   from?: TelegramUser;
@@ -65,6 +72,8 @@ interface TelegramMessage {
   document?: TelegramDocument;
   voice?: TelegramVoice;
   audio?: TelegramDocument;
+  entities?: TelegramMessageEntity[];
+  caption_entities?: TelegramMessageEntity[];
 }
 
 interface TelegramUpdate {
@@ -84,11 +93,19 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
   readonly type = "telegram" as const;
   readonly accountId: string;
 
+  /** Bot username from getMe — used for group chat @mention filtering */
+  private _botUsername?: string;
+
   private _status: ChannelStatus = "disconnected";
   private config?: ChannelConfig;
   private abortController?: AbortController;
   private lastUpdateId = 0;
   private polling = false;
+
+  /** The bot's username (available after connect). Used for group mention detection. */
+  get botUsername(): string | undefined {
+    return this._botUsername;
+  }
 
   constructor(config: ChannelConfig) {
     super();
@@ -134,9 +151,11 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         throw new Error(`Telegram getMe failed: ${data.description ?? "unknown error"}`);
       }
 
+      this._botUsername = data.result.username;
+
       log.info("[TelegramAdapter] Connected", {
         accountId: this.accountId,
-        botUsername: data.result.username,
+        botUsername: this._botUsername,
       });
 
       // Start long-polling
@@ -243,6 +262,23 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
     // Use caption for media messages, fall back to text
     const text = msg.text ?? msg.caption;
 
+    // Detect if bot is mentioned in group chats (for filtering)
+    const allEntities = [...(msg.entities ?? []), ...(msg.caption_entities ?? [])];
+    const hasBotCommand = allEntities.some((e) => e.type === "bot_command");
+    const hasBotMention = this._botUsername
+      ? allEntities.some(
+          (e) =>
+            e.type === "mention" &&
+            (msg.text ?? msg.caption ?? "")
+              .slice(e.offset, e.offset + e.length)
+              .toLowerCase() === `@${this._botUsername!.toLowerCase()}`
+        )
+      : false;
+
+    // Check if this is a reply to the bot's own message
+    // (Telegram includes reply_to_message but we keep types minimal — check via text mention)
+    const isGroupChat = msg.chat.type === "group" || msg.chat.type === "supergroup";
+
     const channelMessage: ChannelMessage = {
       id: `tg-${this.accountId}-${msg.message_id}`,
       channelType: "telegram",
@@ -262,6 +298,12 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         ...(attachments.length > 0 ? { attachments } : {}),
       },
       timestamp: msg.date * 1000,
+      metadata: {
+        chatType: msg.chat.type,
+        isGroupChat,
+        hasBotMention,
+        hasBotCommand,
+      },
     };
 
     this.emit("message", channelMessage);
@@ -407,6 +449,80 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         success: true,
         externalId: String(data.result.message_id),
       };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Send a photo to a chat. Accepts a URL or base64 data URL.
+   */
+  async sendPhoto(
+    chatId: string,
+    photoUrl: string,
+    caption?: string
+  ): Promise<ChannelSendResult> {
+    if (!this.config) {
+      return { success: false, error: "Not connected" };
+    }
+
+    try {
+      const response = await fetch(this.apiUrl("sendPhoto"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: photoUrl,
+          ...(caption ? { caption, parse_mode: "Markdown" } : {}),
+        }),
+      });
+
+      const data = (await response.json()) as TelegramApiResponse<TelegramMessage>;
+
+      if (!data.ok) {
+        return { success: false, error: data.description ?? "sendPhoto failed" };
+      }
+
+      return { success: true, externalId: String(data.result.message_id) };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  /**
+   * Send a document/file to a chat.
+   */
+  async sendDocument(
+    chatId: string,
+    documentUrl: string,
+    caption?: string,
+    filename?: string
+  ): Promise<ChannelSendResult> {
+    if (!this.config) {
+      return { success: false, error: "Not connected" };
+    }
+
+    try {
+      const response = await fetch(this.apiUrl("sendDocument"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          document: documentUrl,
+          ...(caption ? { caption, parse_mode: "Markdown" } : {}),
+          ...(filename ? { filename } : {}),
+        }),
+      });
+
+      const data = (await response.json()) as TelegramApiResponse<TelegramMessage>;
+
+      if (!data.ok) {
+        return { success: false, error: data.description ?? "sendDocument failed" };
+      }
+
+      return { success: true, externalId: String(data.result.message_id) };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return { success: false, error: errorMessage };

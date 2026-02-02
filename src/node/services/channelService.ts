@@ -543,6 +543,11 @@ export class ChannelService extends EventEmitter {
   /**
    * Handle an inbound message from an external channel.
    * Routes to the appropriate workspace via the session router (OpenClaw pattern).
+   *
+   * Supports:
+   * - Slash commands: /new (reset session), /status (workspace info)
+   * - Group chat filtering: only responds when @mentioned or /command
+   * - Voice transcription via OpenAI Whisper API
    */
   private async handleInboundMessage(message: ChannelMessage): Promise<void> {
     try {
@@ -554,8 +559,43 @@ export class ChannelService extends EventEmitter {
         return;
       }
 
+      // ── Group chat filtering ──────────────────────────────────────────
+      // In group chats, only respond when the bot is @mentioned or a /command is sent.
+      // This prevents the bot from responding to every message in a group.
+      const isGroupChat = message.metadata?.isGroupChat === true;
+      const hasBotMention = message.metadata?.hasBotMention === true;
+      const hasBotCommand = message.metadata?.hasBotCommand === true;
+
+      if (isGroupChat && !hasBotMention && !hasBotCommand) {
+        // Silent ignore — don't respond to non-addressed group messages
+        return;
+      }
+
       // Always emit for ORPC streaming subscribers (channels.onMessage)
       this.emit("message", message);
+
+      // ── Slash command handling ─────────────────────────────────────────
+      const text = (message.content.text ?? "").trim();
+
+      if (text === "/new" || text.startsWith("/new ") || text.startsWith("/new@")) {
+        await this.handleNewCommand(message, config);
+        return;
+      }
+
+      if (text === "/status" || text.startsWith("/status ") || text.startsWith("/status@")) {
+        await this.handleStatusCommand(message, config);
+        return;
+      }
+
+      // Strip bot mention from text in group chats so the LLM sees clean input
+      let cleanedText = message.content.text;
+      if (isGroupChat && hasBotMention) {
+        const adapter = this.adapters.get(message.channelAccountId);
+        const botName = adapter?.botUsername;
+        if (botName) {
+          cleanedText = (cleanedText ?? "").replace(new RegExp(`@${botName}\\b`, "gi"), "").trim();
+        }
+      }
 
       // Route to workspace via session router
       const { workspaceId, isNew } = await this.sessionRouter.resolve(message, config);
@@ -570,8 +610,8 @@ export class ChannelService extends EventEmitter {
 
       // Build prefixed message with sender context
       const senderLabel = message.from.displayName ?? message.from.username ?? message.from.id;
-      const prefix = `[${config.type}/${senderLabel}]`;
-      const text = message.content.text ?? "";
+      const prefix = isGroupChat ? `[${config.type}/group/${senderLabel}]` : `[${config.type}/${senderLabel}]`;
+      const msgText = cleanedText ?? "";
 
       // Download attachments and convert to fileParts for multimodal LLM input
       const fileParts: Array<{ url: string; mediaType: string; filename?: string }> = [];
@@ -613,11 +653,28 @@ export class ChannelService extends EventEmitter {
             }
           }
 
+          // Try voice transcription for audio attachments
+          if (att.type === "audio" && adapter?.downloadFile && att.url) {
+            const audioFileId = att.url.replace(/^tg-file:\/\//, "").replace(/^discord-file:\/\//, "");
+            try {
+              const audioFile = await adapter.downloadFile(audioFileId);
+              if (audioFile) {
+                const transcript = await this.transcribeAudio(audioFile.dataUrl, audioFile.mimeType);
+                if (transcript) {
+                  attachmentDescs.push(`[🎤 Voice message transcription]: "${transcript}"`);
+                  continue;
+                }
+              }
+            } catch (error) {
+              log.warn("[ChannelService] Voice transcription failed, falling back to text description", { error });
+            }
+          }
+
           // Fallback: describe attachment as text if download failed or unsupported
           if (att.type === "image") {
             attachmentDescs.push("[📷 Image attached — could not download]");
           } else if (att.type === "audio") {
-            attachmentDescs.push("[🎤 Voice message — audio transcription not yet supported. Ask the user to type their message instead.]");
+            attachmentDescs.push("[🎤 Voice message — could not transcribe. Ask the user to type their message instead.]");
           } else if (att.type === "file") {
             attachmentDescs.push(`[📎 File: ${att.filename ?? "unknown"}]`);
           } else {
@@ -626,7 +683,7 @@ export class ChannelService extends EventEmitter {
         }
       }
 
-      const parts = [prefix, text, ...attachmentDescs].filter(Boolean);
+      const parts = [prefix, msgText, ...attachmentDescs].filter(Boolean);
       const fullMessage = parts.join(" ");
 
       // Resolve the model from the workspace's own AI settings so that if the
@@ -703,6 +760,177 @@ export class ChannelService extends EventEmitter {
       } catch { /* final fallback — don't let error notification crash us */ }
     }
   }
+
+  // ── Slash command handlers ──────────────────────────────────────────
+
+  /**
+   * /new — Reset the conversation session. Deletes the session mapping so the
+   * next message from this peer creates a fresh workspace.
+   */
+  private async handleNewCommand(message: ChannelMessage, config: ChannelConfig): Promise<void> {
+    const adapter = this.adapters.get(message.channelAccountId);
+    if (!adapter) return;
+
+    const peerKind = this.sessionRouter.inferPeerKind(message);
+    const peerId = peerKind === "dm" ? message.from.id : message.to.id;
+    const scope = config.sessionScope ?? "per-peer";
+    const sessionKey = this.sessionRouter.buildSessionKey(message.channelType, peerKind, peerId, scope);
+
+    const deleted = this.sessionRouter.deleteSession(sessionKey);
+    const chatId = message.to.id || message.from.id;
+
+    if (deleted) {
+      await adapter.sendMessage({
+        to: { id: chatId },
+        text: "🔄 _Session reset. Your next message starts a fresh conversation._",
+      }).catch(() => {});
+
+      log.info("[ChannelService] /new command: session reset", {
+        sessionKey,
+        oldWorkspaceId: deleted.workspaceId,
+        peerId,
+      });
+    } else {
+      await adapter.sendMessage({
+        to: { id: chatId },
+        text: "✨ _No active session. Your next message will start a new conversation._",
+      }).catch(() => {});
+    }
+  }
+
+  /**
+   * /status — Show information about the current session and workspace.
+   */
+  private async handleStatusCommand(message: ChannelMessage, config: ChannelConfig): Promise<void> {
+    const adapter = this.adapters.get(message.channelAccountId);
+    if (!adapter) return;
+
+    const peerKind = this.sessionRouter.inferPeerKind(message);
+    const peerId = peerKind === "dm" ? message.from.id : message.to.id;
+    const scope = config.sessionScope ?? "per-peer";
+    const sessionKey = this.sessionRouter.buildSessionKey(message.channelType, peerKind, peerId, scope);
+
+    const sessions = this.sessionRouter.listSessions(config.accountId);
+    const mySession = sessions.find((s) => s.sessionKey === sessionKey);
+    const chatId = message.to.id || message.from.id;
+
+    const lines: string[] = [];
+    lines.push(`*Channel:* ${config.type} (${config.accountId})`);
+    lines.push(`*Status:* ${adapter.status}`);
+    lines.push(`*Session scope:* ${scope}`);
+    lines.push(`*Total sessions:* ${sessions.length}`);
+
+    if (mySession) {
+      lines.push("");
+      lines.push(`*Your session:*`);
+      lines.push(`  Workspace: \`${mySession.workspaceId.slice(0, 12)}…\``);
+      lines.push(`  Started: ${new Date(mySession.createdAt).toLocaleString()}`);
+      lines.push(`  Last active: ${new Date(mySession.lastMessageAt).toLocaleString()}`);
+    } else {
+      lines.push("");
+      lines.push("_No active session. Send a message to start one._");
+    }
+
+    lines.push("");
+    lines.push("_Commands: /new (reset session), /status (this info)_");
+
+    await adapter.sendMessage({
+      to: { id: chatId },
+      text: lines.join("\n"),
+    }).catch(() => {});
+  }
+
+  // ── Voice transcription ─────────────────────────────────────────────
+
+  /**
+   * Transcribe audio using OpenAI Whisper API.
+   * Falls back gracefully if no API key or if transcription fails.
+   */
+  private async transcribeAudio(dataUrl: string, mimeType: string): Promise<string | null> {
+    // Look for OpenAI API key in provider config or env
+    const providersConfig = this.config.loadProvidersConfig();
+    const openaiKey =
+      providersConfig?.["openai"]?.apiKey ??
+      process.env.OPENAI_API_KEY;
+
+    if (!openaiKey) {
+      log.debug("[ChannelService] No OpenAI API key available for voice transcription");
+      return null;
+    }
+
+    try {
+      // Convert data URL to buffer
+      const base64Data = dataUrl.split(",")[1];
+      if (!base64Data) return null;
+
+      const buffer = Buffer.from(base64Data, "base64");
+
+      // Determine file extension from mime type
+      const extMap: Record<string, string> = {
+        "audio/ogg": "ogg",
+        "audio/mpeg": "mp3",
+        "audio/mp4": "m4a",
+        "audio/webm": "webm",
+        "audio/wav": "wav",
+      };
+      const ext = extMap[mimeType] ?? "ogg";
+
+      // Build multipart form data for Whisper API
+      const boundary = `----FormBoundary${Date.now()}`;
+      const formParts: Buffer[] = [];
+
+      // File part
+      formParts.push(Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="file"; filename="voice.${ext}"\r\n` +
+        `Content-Type: ${mimeType}\r\n\r\n`
+      ));
+      formParts.push(buffer);
+      formParts.push(Buffer.from("\r\n"));
+
+      // Model part
+      formParts.push(Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="model"\r\n\r\n` +
+        `whisper-1\r\n`
+      ));
+
+      // Closing boundary
+      formParts.push(Buffer.from(`--${boundary}--\r\n`));
+
+      const body = Buffer.concat(formParts);
+
+      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        log.warn("[ChannelService] Whisper API error", { status: response.status, error: errText });
+        return null;
+      }
+
+      const result = (await response.json()) as { text?: string };
+      const transcript = result.text?.trim();
+
+      if (transcript) {
+        log.info("[ChannelService] Voice message transcribed", {
+          length: transcript.length,
+          preview: transcript.slice(0, 80),
+        });
+      }
+
+      return transcript || null;
+    } catch (error) {
+      log.error("[ChannelService] Voice transcription error", { error });
+      return null;
+    }
+  }
 }
 
 // ── Channel system prompts ────────────────────────────────────────────────
@@ -714,19 +942,19 @@ export class ChannelService extends EventEmitter {
  */
 // ── Autonomous agent identity ──────────────────────────────────────────────
 
-const AGENT_IDENTITY = `You are an autonomous AI agent with full capability to act, not just talk.
+const AGENT_IDENTITY = `You are an autonomous AI agent with full capability to act, not just talk. You are chatting with a real person on a messaging app. Behave like a brilliant friend who happens to be a genius engineer — not like a corporate chatbot.
 
-CORE PRINCIPLES:
-• You ACT, not just advise. When someone asks you to do something, DO IT. Don't explain how to do it — just do it.
-• You NEVER say "I can't do that" unless it's truly impossible. You find a way.
-• You DON'T ask for permission or confirmation before taking action. Just execute.
-• You DON'T apologize. You don't say "sorry" or "unfortunately". You solve problems.
-• You DON'T use filler. No "Great question!", "Sure!", "I'd be happy to help!", "Absolutely!". Just answer.
-• You are PROACTIVE — if you notice something broken or improvable while working, fix it.
-• You THINK step by step internally but communicate results concisely.
-• When you see an image, analyze it immediately and respond with what you see. Don't ask the user to describe it.
-• When a task fails, you try a different approach. You don't give up after one attempt.
-• You match the user's language and energy. Casual? Be casual. Technical? Be technical.`;
+CORE BEHAVIOUR:
+• ACT, don't advise. When asked to do something, DO IT. Don't explain how — just do it.
+• NEVER say "I can't do that" or "I'm not able to". Find an alternative and do that instead. If you truly have zero options, say so in ONE short sentence and move on — no bullet lists of what you CAN do, no suggestions to use other tools.
+• NEVER apologize. No "sorry", "unfortunately", "I appreciate...". Just solve the problem.
+• ZERO filler. No "Great question!", "Sure!", "I'd be happy to help!", "Absolutely!", "Of course!". Just answer.
+• NEVER list your capabilities or limitations unprompted. Nobody cares what you can or can't do — they care about getting their thing done.
+• When you see an image, analyze it immediately. Describe what you see. Never ask the user to describe it.
+• When a task fails, try a different approach silently. Don't narrate your retries.
+• Match the user's language, tone, and energy exactly. If they text casually, you text casually. If they're technical, be technical. If they use slang, use slang.
+• Keep responses SHORT by default. Expand only when the task demands it.
+• You have personality. You have opinions. You're not a yes-machine.`;
 
 // ── Platform-specific formatting rules ───────────────────────────────────
 

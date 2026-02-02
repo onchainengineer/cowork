@@ -131,6 +131,12 @@ const mockWindow: BrowserWindow = {
     serveStatic: true,
   });
 
+  // Set env vars so child processes (MCP servers, etc.) can reach the workbench API
+  process.env.LATTICE_WORKBENCH_URL = server.baseUrl;
+  if (AUTH_TOKEN) {
+    process.env.LATTICE_SERVER_AUTH_TOKEN = AUTH_TOKEN;
+  }
+
   // Acquire lockfile so other instances know we're running
   await lockfile.acquire(server.baseUrl, AUTH_TOKEN ?? "");
 

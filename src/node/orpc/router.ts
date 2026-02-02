@@ -686,7 +686,7 @@ export const router = (authToken?: string) => {
         list: t
           .input(schemas.projects.mcp.list.input)
           .output(schemas.projects.mcp.list.output)
-          .handler(({ context, input }) => context.mcpConfigService.listServers(input.projectPath)),
+          .handler(({ context, input }) => context.mcpServerManager.getAllServers(input.projectPath)),
         add: t
           .input(schemas.projects.mcp.add.input)
           .output(schemas.projects.mcp.add.output)
@@ -746,7 +746,7 @@ export const router = (authToken?: string) => {
           .input(schemas.projects.mcp.remove.input)
           .output(schemas.projects.mcp.remove.output)
           .handler(async ({ context, input }) => {
-            const existing = await context.mcpConfigService.listServers(input.projectPath);
+            const existing = await context.mcpServerManager.getAllServers(input.projectPath);
             const server = existing[input.name];
 
             const result = await context.mcpConfigService.removeServer(
@@ -788,7 +788,7 @@ export const router = (authToken?: string) => {
             const secrets = secretsToRecord(context.projectService.getSecrets(input.projectPath));
 
             const configuredTransport = input.name
-              ? (await context.mcpConfigService.listServers(input.projectPath))[input.name]
+              ? (await context.mcpServerManager.getAllServers(input.projectPath))[input.name]
                   ?.transport
               : undefined;
 
@@ -844,7 +844,7 @@ export const router = (authToken?: string) => {
           .input(schemas.projects.mcp.setEnabled.input)
           .output(schemas.projects.mcp.setEnabled.output)
           .handler(async ({ context, input }) => {
-            const existing = await context.mcpConfigService.listServers(input.projectPath);
+            const existing = await context.mcpServerManager.getAllServers(input.projectPath);
             const server = existing[input.name];
 
             const result = await context.mcpConfigService.setServerEnabled(
@@ -883,7 +883,7 @@ export const router = (authToken?: string) => {
           .input(schemas.projects.mcp.setToolAllowlist.input)
           .output(schemas.projects.mcp.setToolAllowlist.output)
           .handler(async ({ context, input }) => {
-            const existing = await context.mcpConfigService.listServers(input.projectPath);
+            const existing = await context.mcpServerManager.getAllServers(input.projectPath);
             const server = existing[input.name];
 
             const result = await context.mcpConfigService.setToolAllowlist(

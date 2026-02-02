@@ -248,6 +248,12 @@ export class ServerService {
     const server = await createOrpcServer(serverOptions);
     const networkBaseUrls = computeNetworkBaseUrls({ bindHost, port: server.port });
 
+    // Set env vars so child processes (MCP servers, etc.) can reach the workbench API
+    process.env.LATTICE_WORKBENCH_URL = server.baseUrl;
+    if (options.authToken) {
+      process.env.LATTICE_SERVER_AUTH_TOKEN = options.authToken;
+    }
+
     // Acquire the lockfile - clean up server if this fails
     try {
       await lockfile.acquire(server.baseUrl, options.authToken, {

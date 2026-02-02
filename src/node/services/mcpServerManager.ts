@@ -394,7 +394,7 @@ export class MCPServerManager {
    * Get all servers from config (both enabled and disabled) + inline servers.
    * Returns full MCPServerInfo to preserve disabled state.
    */
-  private async getAllServers(projectPath: string): Promise<Record<string, MCPServerInfo>> {
+  async getAllServers(projectPath: string): Promise<Record<string, MCPServerInfo>> {
     const configServers = this.ignoreConfigFile
       ? {}
       : await this.configService.listServers(projectPath);
@@ -759,7 +759,7 @@ export class MCPServerManager {
     const { projectPath, name, command, transport, url, headers, projectSecrets } = options;
 
     if (name?.trim()) {
-      const servers = await this.configService.listServers(projectPath);
+      const servers = await this.getAllServers(projectPath);
       const server = servers[name];
       if (!server) {
         return { success: false, error: `Server "${name}" not found in configuration` };

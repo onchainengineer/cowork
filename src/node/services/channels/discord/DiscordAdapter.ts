@@ -77,6 +77,7 @@ export class DiscordAdapter extends EventEmitter implements ChannelAdapter {
   private sessionId?: string;
   private resumeGatewayUrl?: string;
   private botUserId?: string;
+  private _botUsername?: string;
   private reconnecting = false;
 
   constructor(config: ChannelConfig) {
@@ -86,6 +87,11 @@ export class DiscordAdapter extends EventEmitter implements ChannelAdapter {
 
   get status(): ChannelStatus {
     return this._status;
+  }
+
+  /** Bot username (available after connect) — used for group mention detection. */
+  get botUsername(): string | undefined {
+    return this._botUsername;
   }
 
   private setStatus(status: ChannelStatus): void {
@@ -123,10 +129,11 @@ export class DiscordAdapter extends EventEmitter implements ChannelAdapter {
 
       const me = (await meRes.json()) as DiscordUser;
       this.botUserId = me.id;
+      this._botUsername = me.username;
 
       log.info("[DiscordAdapter] Authenticated", {
         accountId: this.accountId,
-        botUsername: me.username,
+        botUsername: this._botUsername,
       });
 
       // Connect to Gateway
