@@ -46,6 +46,14 @@ interface TelegramDocument {
   file_size?: number;
 }
 
+interface TelegramVoice {
+  file_id: string;
+  file_unique_id: string;
+  duration: number;
+  mime_type?: string;
+  file_size?: number;
+}
+
 interface TelegramMessage {
   message_id: number;
   from?: TelegramUser;
@@ -55,6 +63,8 @@ interface TelegramMessage {
   caption?: string;
   photo?: TelegramPhotoSize[];
   document?: TelegramDocument;
+  voice?: TelegramVoice;
+  audio?: TelegramDocument;
 }
 
 interface TelegramUpdate {
@@ -191,8 +201,8 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
     // Skip messages without sender (channel posts, etc.)
     if (!msg.from) return;
 
-    // Build attachments from photos/documents
-    const attachments: Array<{ type: "image" | "file"; url?: string; mimeType?: string; filename?: string }> = [];
+    // Build attachments from photos/documents/voice
+    const attachments: Array<{ type: "image" | "file" | "audio" | "video"; url?: string; mimeType?: string; filename?: string }> = [];
 
     if (msg.photo && msg.photo.length > 0) {
       // Telegram sends multiple sizes — use the largest
@@ -210,6 +220,23 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         url: `tg-file://${msg.document.file_id}`,
         mimeType: msg.document.mime_type,
         filename: msg.document.file_name,
+      });
+    }
+
+    if (msg.voice) {
+      attachments.push({
+        type: "audio",
+        url: `tg-file://${msg.voice.file_id}`,
+        mimeType: msg.voice.mime_type ?? "audio/ogg",
+      });
+    }
+
+    if (msg.audio) {
+      attachments.push({
+        type: "audio",
+        url: `tg-file://${msg.audio.file_id}`,
+        mimeType: msg.audio.mime_type ?? "audio/mpeg",
+        filename: msg.audio.file_name,
       });
     }
 

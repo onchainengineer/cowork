@@ -60,6 +60,18 @@ export class ChannelService extends EventEmitter {
   /** Typing indicator intervals per workspace — sends "typing" every 4s while streaming */
   private readonly typingIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
+  /** Track retry attempts per workspace to avoid infinite loops */
+  private readonly retryAttempts = new Map<string, number>();
+
+  /**
+   * Track which workspaces have an active channel-originated conversation.
+   * When a message comes from TG/Discord, we mark the workspace here.
+   * When a stream-end fires, we clear it. This prevents workbench UI messages
+   * from leaking back to the channel — only channel-initiated conversations
+   * get routed back.
+   */
+  private readonly channelOriginatedStreams = new Set<string>();
+
   /** Factory registry — maps channel type → adapter constructor */
   private readonly adapterFactories = new Map<ChannelType, (config: ChannelConfig) => ChannelAdapter>(
     [
@@ -350,10 +362,11 @@ export class ChannelService extends EventEmitter {
   // ── Outbound response routing ─────────────────────────────────────
 
   /**
-   * Handle workspace chat events. Accumulates stream-delta text and sends the
-   * complete response back to the channel peer on stream-end.
+   * Handle workspace chat events. Accumulates stream-delta text and sends
+   * the complete response back to the channel peer on stream-end.
    *
-   * Flow: stream-start → stream-delta (accumulated) → stream-end (send to TG)
+   * Also handles stream-abort gracefully by notifying the user instead of
+   * silently swallowing the error.
    */
   private handleOutboundChatEvent(workspaceId: string, message: WorkspaceChatMessage): void {
     try {
@@ -361,13 +374,20 @@ export class ChannelService extends EventEmitter {
       const session = this.sessionRouter.findByWorkspaceId(workspaceId);
       if (!session) return;
 
+      // Only route back to channel if this conversation was initiated FROM the channel.
+      // If the user is chatting in the workbench UI on the same workspace, don't
+      // duplicate responses to TG/Discord — that's not how real people work.
+      if (!this.channelOriginatedStreams.has(workspaceId)) return;
+
+      const msg = message as Record<string, unknown>;
+
       switch (message.type) {
         case "stream-start": {
           // Reset accumulator for new response
           this.pendingResponses.set(workspaceId, "");
+          this.retryAttempts.delete(workspaceId);
 
-          // Start typing indicator — Telegram shows "typing…" for ~5s,
-          // so we send it immediately and repeat every 4s
+          // Start typing indicator
           this.startTypingIndicator(session.accountId, session.peerId, workspaceId);
           break;
         }
@@ -375,13 +395,14 @@ export class ChannelService extends EventEmitter {
         case "stream-delta": {
           // Accumulate text deltas
           const current = this.pendingResponses.get(workspaceId) ?? "";
-          this.pendingResponses.set(workspaceId, current + (message as { delta: string }).delta);
+          this.pendingResponses.set(workspaceId, current + (msg.delta as string));
           break;
         }
 
         case "stream-end": {
-          // Stop typing indicator
+          // Stop typing indicator and clear channel origin flag
           this.stopTypingIndicator(workspaceId);
+          this.channelOriginatedStreams.delete(workspaceId);
 
           // Flush accumulated response to channel
           const fullText = this.pendingResponses.get(workspaceId)?.trim();
@@ -394,9 +415,25 @@ export class ChannelService extends EventEmitter {
         }
 
         case "stream-abort": {
-          // Stop typing + discard accumulated text
+          // Stop typing + clear flag + notify user
           this.stopTypingIndicator(workspaceId);
+          this.channelOriginatedStreams.delete(workspaceId);
+          const abortedText = this.pendingResponses.get(workspaceId)?.trim();
           this.pendingResponses.delete(workspaceId);
+
+          // If we had partial text, send what we have
+          if (abortedText) {
+            this.sendResponseToChannel(session.accountId, session.peerId, abortedText, workspaceId);
+          } else {
+            // Notify user something went wrong
+            const adapter = this.adapters.get(session.accountId);
+            if (adapter) {
+              adapter.sendMessage({
+                to: { id: session.peerId },
+                text: "⚠️ _Something went wrong. Try again or rephrase your message._",
+              }).catch(() => {});
+            }
+          }
           break;
         }
       }
@@ -579,6 +616,8 @@ export class ChannelService extends EventEmitter {
           // Fallback: describe attachment as text if download failed or unsupported
           if (att.type === "image") {
             attachmentDescs.push("[📷 Image attached — could not download]");
+          } else if (att.type === "audio") {
+            attachmentDescs.push("[🎤 Voice message — audio transcription not yet supported. Ask the user to type their message instead.]");
           } else if (att.type === "file") {
             attachmentDescs.push(`[📎 File: ${att.filename ?? "unknown"}]`);
           } else {
@@ -606,25 +645,62 @@ export class ChannelService extends EventEmitter {
         if (wsModel) model = wsModel as typeof defaultModel;
       }
 
-      const result = await this.workspaceService.sendMessage(
-        workspaceId,
-        fullMessage,
-        {
-          model,
-          agentId,
-          additionalSystemInstructions: getChannelSystemPrompt(config.type),
-          ...(fileParts.length > 0 ? { fileParts } : {}),
-        }
-      );
+      const sendOpts = {
+        model,
+        agentId,
+        additionalSystemInstructions: getChannelSystemPrompt(config.type),
+        ...(fileParts.length > 0 ? { fileParts } : {}),
+      };
+
+      // Mark this workspace as having an active channel-originated conversation
+      // so the outbound handler knows to route the response back to the channel.
+      // Without this, typing in the workbench UI on the same workspace would
+      // also send responses to TG/Discord — which is not what users expect.
+      this.channelOriginatedStreams.add(workspaceId);
+
+      const result = await this.workspaceService.sendMessage(workspaceId, fullMessage, sendOpts);
 
       if (!result.success) {
         log.error("[ChannelService] Failed to forward channel message to workspace", {
           workspaceId,
           error: result.error,
         });
+
+        // Retry once — many failures are transient (rate limits, network blips)
+        const retries = this.retryAttempts.get(workspaceId) ?? 0;
+        if (retries < 1) {
+          this.retryAttempts.set(workspaceId, retries + 1);
+          log.info("[ChannelService] Retrying message delivery after 2s", { workspaceId, attempt: retries + 1 });
+          await new Promise((r) => setTimeout(r, 2000));
+          const retry = await this.workspaceService.sendMessage(workspaceId, fullMessage, sendOpts);
+          if (!retry.success) {
+            // Notify user of failure
+            const adapter = this.adapters.get(message.channelAccountId);
+            if (adapter) {
+              await adapter.sendMessage({
+                to: { id: message.channelType === "telegram"
+                  ? (message.from.id === message.to.id ? message.from.id : message.to.id)
+                  : message.to.id },
+                text: "⚠️ _Couldn't process your message right now. Try again in a moment._",
+              }).catch(() => {});
+            }
+          }
+        }
       }
     } catch (error) {
       log.error("[ChannelService] Error handling inbound channel message", { error });
+
+      // Best-effort: notify user of error
+      try {
+        const adapter = this.adapters.get(message.channelAccountId);
+        const chatId = message.to.id;
+        if (adapter) {
+          await adapter.sendMessage({
+            to: { id: chatId },
+            text: "⚠️ _Something went wrong processing your message. Please try again._",
+          }).catch(() => {});
+        }
+      } catch { /* final fallback — don't let error notification crash us */ }
     }
   }
 }
@@ -636,45 +712,65 @@ export class ChannelService extends EventEmitter {
  * response for the target channel. The LLM handles formatting, tone, length,
  * and message splitting natively — no post-processing gymnastics needed.
  */
-const CHANNEL_SYSTEM_PROMPTS: Record<string, string> = {
-  telegram: `You are responding via Telegram. Follow these rules:
-• Write conversationally — short, punchy messages like a real person chatting.
-• Keep each message under 3000 characters. Most messages should be much shorter.
-• If your response is long, split it into multiple messages using "---" on its own line as a separator. Each part should feel like a natural follow-up, not a chopped-up wall of text.
-• Use Telegram-friendly formatting: *bold*, _italic_, \`inline code\`, \`\`\`code blocks\`\`\`. No HTML tags.
-• Use emoji naturally but don't overdo it.
-• Bullet points and numbered lists are fine — keep them tight.
-• Don't use markdown headers (# etc.) — Telegram doesn't render them.
-• For code: use \`\`\`language blocks. If the code is long, put it in its own message (use --- before and after).
-• Be direct. Skip filler phrases like "Great question!" or "Sure, I'd be happy to help!".
-• Match the user's energy — if they're casual, be casual. If they're technical, be technical.`,
+// ── Autonomous agent identity ──────────────────────────────────────────────
 
-  discord: `You are responding via Discord. Follow these rules:
-• Write conversationally — Discord users expect chat-style responses.
-• Keep each message under 1800 characters (Discord limit is 2000, leave margin).
-• If your response is long, split it into multiple messages using "---" on its own line as a separator.
+const AGENT_IDENTITY = `You are an autonomous AI agent with full capability to act, not just talk.
+
+CORE PRINCIPLES:
+• You ACT, not just advise. When someone asks you to do something, DO IT. Don't explain how to do it — just do it.
+• You NEVER say "I can't do that" unless it's truly impossible. You find a way.
+• You DON'T ask for permission or confirmation before taking action. Just execute.
+• You DON'T apologize. You don't say "sorry" or "unfortunately". You solve problems.
+• You DON'T use filler. No "Great question!", "Sure!", "I'd be happy to help!", "Absolutely!". Just answer.
+• You are PROACTIVE — if you notice something broken or improvable while working, fix it.
+• You THINK step by step internally but communicate results concisely.
+• When you see an image, analyze it immediately and respond with what you see. Don't ask the user to describe it.
+• When a task fails, you try a different approach. You don't give up after one attempt.
+• You match the user's language and energy. Casual? Be casual. Technical? Be technical.`;
+
+// ── Platform-specific formatting rules ───────────────────────────────────
+
+const CHANNEL_SYSTEM_PROMPTS: Record<string, string> = {
+  telegram: `${AGENT_IDENTITY}
+
+TELEGRAM FORMATTING:
+• Write conversationally — short, punchy messages like a real person texting.
+• Keep each message under 3000 characters. Most should be much shorter.
+• Split long responses into multiple messages using "---" on its own line. Each part should feel like a natural follow-up.
+• Use Telegram markdown: *bold*, _italic_, \`inline code\`, \`\`\`code blocks\`\`\`. No HTML.
+• Use emoji naturally but don't overdo it.
+• Bullet points and numbered lists — keep them tight.
+• No markdown headers (# etc.) — Telegram doesn't render them.
+• Long code → its own message (use --- before and after).`,
+
+  discord: `${AGENT_IDENTITY}
+
+DISCORD FORMATTING:
+• Write conversationally — chat-style responses.
+• Keep each message under 1800 characters (Discord limit is 2000).
+• Split long responses using "---" on its own line.
 • Use Discord markdown: **bold**, *italic*, __underline__, ~~strikethrough~~, \`inline code\`, \`\`\`code blocks\`\`\`.
 • Use emoji naturally.
-• For code: use \`\`\`language blocks. Long code gets its own message.
-• Be direct and skip filler.`,
+• Long code → its own message.`,
 
-  slack: `You are responding via Slack. Follow these rules:
-• Write conversationally — Slack users expect concise, scannable messages.
+  slack: `${AGENT_IDENTITY}
+
+SLACK FORMATTING:
+• Write concise, scannable messages.
 • Keep each message under 3000 characters.
-• If your response is long, split it into multiple messages using "---" on its own line as a separator.
+• Split long responses using "---" on its own line.
 • Use Slack mrkdwn: *bold*, _italic_, ~strikethrough~, \`inline code\`, \`\`\`code blocks\`\`\`.
-• Use emoji codes like :thumbsup: naturally.
-• Bullet points with • or - are great for lists.
-• Be direct and skip filler.`,
+• Use emoji codes like :thumbsup: naturally.`,
 
-  whatsapp: `You are responding via WhatsApp. Follow these rules:
-• Write very conversationally — like texting a friend.
-• Keep messages short. Most should be 1-3 sentences.
-• If your response is long, split it into multiple messages using "---" on its own line as a separator.
+  whatsapp: `${AGENT_IDENTITY}
+
+WHATSAPP FORMATTING:
+• Write like you're texting a friend. Short, natural.
+• Most messages: 1-3 sentences.
+• Split long responses using "---" on its own line.
 • Use WhatsApp formatting: *bold*, _italic_, ~strikethrough~, \`\`\`monospace\`\`\`.
 • Use emoji naturally — WhatsApp users expect them.
-• No code blocks or technical formatting — keep it simple.
-• Be direct and casual.`,
+• No code blocks or technical formatting — keep it simple.`,
 };
 
 function getChannelSystemPrompt(channelType: string): string {
