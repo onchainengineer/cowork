@@ -144,27 +144,21 @@ const TaskToolAgentArgsSchema = z
     run_in_background: z.boolean().default(false),
   })
   .strict()
-  .superRefine((args, ctx) => {
+  .transform((args) => {
     const hasAgentId = typeof args.agentId === "string" && args.agentId.length > 0;
     const hasSubagentType = typeof args.subagent_type === "string" && args.subagent_type.length > 0;
 
+    // Default to "task" agent when neither is provided (LLMs sometimes omit the field).
     if (!hasAgentId && !hasSubagentType) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Provide agentId (preferred) or subagent_type",
-        path: ["agentId"],
-      });
-      return;
+      return { ...args, agentId: "task" };
     }
 
+    // If both are provided, prefer agentId and drop subagent_type.
     if (hasAgentId && hasSubagentType) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Provide only one of agentId or subagent_type (not both)",
-        path: ["agentId"],
-      });
-      return;
+      return { ...args, subagent_type: undefined };
     }
+
+    return args;
   });
 
 export const TaskToolArgsSchema = TaskToolAgentArgsSchema;
@@ -669,7 +663,8 @@ export const TOOL_DEFINITIONS = {
   task: {
     description:
       "Spawn a sub-agent task (child workspace). " +
-      "\n\nProvide subagent_type, prompt, title, run_in_background. " +
+      "\n\nREQUIRED: You MUST provide agentId (e.g. 'task', 'exec', 'explore', or any custom agent id). " +
+      "Also provide prompt, title, and optionally run_in_background. " +
       "\n\nIf run_in_background is false, waits for the sub-agent to finish and returns a completed reportMarkdown. " +
       "If run_in_background is true, returns a queued/running taskId; use task_await to wait for completion, task_list to rediscover active tasks, and task_terminate to stop it. " +
       "Use the bash tool to run shell commands.",

@@ -129,22 +129,15 @@ export class ServiceContainer {
     this.backgroundProcessManager = new BackgroundProcessManager(
       path.join(os.tmpdir(), "unix-bashes")
     );
+    const workbenchRoot = path.resolve(__dirname, "../../..");
     this.mcpServerManager = new MCPServerManager(this.mcpConfigService, {
       bundledServers: {
-        // Playwright browser automation — available to all agents by default.
-        // Users can disable per-project in .lattice/mcp.jsonc:
-        //   { "servers": { "playwright": { "disabled": true } } }
-        playwright: {
-          transport: "stdio" as const,
-          command: "npx @anthropic/mcp-playwright",
-          disabled: false,
-        },
         // Lattice Workbench control — lets agents operate the workbench itself:
         // create projects/workspaces, send messages, run bash, manage channels.
         // Enables autonomous control from TG/Discord or any MCP-compatible client.
         "lattice-workbench": {
           transport: "stdio" as const,
-          command: "npx tsx src/mcp-server/index.ts",
+          command: `npx tsx ${path.join(workbenchRoot, "src/mcp-server/index.ts")}`,
           disabled: false,
         },
       },
