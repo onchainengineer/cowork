@@ -97,6 +97,16 @@ async function main(): Promise<void> {
   console.error(`[lattice-workbench-mcp] Workbench URL: ${workbenchUrl}`);
   console.error(`[lattice-workbench-mcp] Auth: ${authToken ? "enabled" : "none"}`);
   console.error(`[lattice-workbench-mcp] Tools registered: workspace, project, channel, config, system, bootstrap, swarm, cron, health, codex, skills`);
+
+  // Graceful shutdown — close WebSocket and transport on exit signals
+  const shutdown = async () => {
+    console.error(`[lattice-workbench-mcp] Shutting down...`);
+    client.closeWebSocket();
+    await server.close();
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
 
 main().catch((error) => {

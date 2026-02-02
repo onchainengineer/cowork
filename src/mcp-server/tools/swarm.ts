@@ -1235,10 +1235,7 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
           const inactiveMs = Date.now() - agent.lastActiveAt;
           if (agent.status === "working" && inactiveMs > threshold) {
             // Agent has been "working" but no activity for too long
-            agent.status = "idle";
-            agent.currentTaskId = undefined;
-
-            // Mark the current task as timeout
+            // Mark the current task as timeout BEFORE clearing the reference
             if (agent.currentTaskId) {
               const task = swarm.tasks.get(agent.currentTaskId);
               if (task && task.status === "running") {
@@ -1247,6 +1244,8 @@ Think of it like K2.5 PARL: decompose into parallelizable subtasks, execute conc
                 task.error = `Agent stale — no activity for ${Math.round(inactiveMs / 1000)}s`;
               }
             }
+            agent.status = "idle";
+            agent.currentTaskId = undefined;
             saveState();
             return { agentId: agent.id, role: agent.role, status: "STALE", detail: `Inactive ${Math.round(inactiveMs / 1000)}s → reset to idle` };
           }
