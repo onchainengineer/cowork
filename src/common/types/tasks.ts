@@ -20,8 +20,8 @@ export interface TaskSettings {
 }
 
 export const TASK_SETTINGS_LIMITS = {
-  maxParallelAgentTasks: { min: 1, max: 10, default: 3 },
-  maxTaskNestingDepth: { min: 1, max: 5, default: 3 },
+  maxParallelAgentTasks: { min: 1, max: 350, default: 3 },
+  maxTaskNestingDepth: { min: 1, max: 10, default: 3 },
 } as const;
 
 export const SYSTEM1_BASH_OUTPUT_COMPACTION_LIMITS = {
