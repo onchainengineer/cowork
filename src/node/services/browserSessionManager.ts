@@ -21,7 +21,9 @@
 
 import { EventEmitter } from "events";
 import { execSync, spawn, type ChildProcess } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 import { log } from "@/node/services/log";
 
 // Playwright types - dynamically imported to avoid hard dependency at startup
@@ -192,6 +194,8 @@ export class BrowserSessionManager extends EventEmitter {
   private usedPorts = new Set<number>();
   /** Base port for CDP debugging (each session gets a unique port) */
   private static BASE_DEBUG_PORT = 9222;
+  /** Base directory for persistent browser profiles */
+  private static PROFILES_DIR = join(homedir(), ".lattice", "browser-profiles");
   /** Cached system Chrome path (null = not checked yet, "" = not found) */
   private systemChromePath: string | null | undefined = undefined;
 
@@ -221,6 +225,32 @@ export class BrowserSessionManager extends EventEmitter {
     }
     this.usedPorts.add(port);
     return port;
+  }
+
+  /**
+   * Get or create a persistent profile directory for a workspace.
+   * This ensures cookies, localStorage, login sessions, etc. survive across
+   * browser restarts. Each workspace gets its own isolated profile.
+   *
+   *   ~/.lattice/browser-profiles/{workspaceId}/
+   *
+   * You log in once → the agent can reuse that session forever.
+   */
+  private getProfileDir(workspaceId: string): string {
+    const dir = join(BrowserSessionManager.PROFILES_DIR, workspaceId);
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+      log.info("[BrowserSessionManager] Created persistent profile dir", { dir });
+    }
+    return dir;
+  }
+
+  /**
+   * Get the Playwright storage state path for a workspace (for Playwright fallback).
+   * Stores cookies + localStorage as JSON so they persist across sessions.
+   */
+  private getStorageStatePath(workspaceId: string): string {
+    return join(this.getProfileDir(workspaceId), "storage-state.json");
   }
 
   /**
@@ -324,7 +354,9 @@ export class BrowserSessionManager extends EventEmitter {
       // Launch the real system Chrome, then connect Playwright via CDP.
       // This is indistinguishable from a human using Chrome.
       try {
-        const userDataDir = `/tmp/lattice-browser-${workspaceId}-${Date.now()}`;
+        // Use persistent profile dir so login sessions survive across restarts.
+        // You log in to X, Reddit, LinkedIn once → agent reuses those sessions.
+        const userDataDir = this.getProfileDir(workspaceId);
         chromeProcess = await this.launchNativeChrome(chromePath, debugPort, userDataDir);
 
         // Connect Playwright to the running Chrome via CDP
@@ -386,7 +418,12 @@ export class BrowserSessionManager extends EventEmitter {
       const pages = context.pages();
       page = pages[0] ?? await context.newPage();
     } else {
-      // Playwright Chromium — create a context with realistic settings
+      // Playwright Chromium — create a context with realistic settings.
+      // Restore saved storage state (cookies + localStorage) if available
+      // so login sessions persist across browser restarts.
+      const storageStatePath = this.getStorageStatePath(workspaceId);
+      const hasStorageState = existsSync(storageStatePath);
+
       context = await browser.newContext({
         viewport: { width: 1280, height: 800 },
         userAgent:
@@ -394,6 +431,8 @@ export class BrowserSessionManager extends EventEmitter {
         locale: "en-US",
         timezoneId: "America/New_York",
         screen: { width: 1440, height: 900 },
+        // Restore cookies & localStorage from previous session
+        ...(hasStorageState ? { storageState: storageStatePath } : {}),
       });
 
       // Stealth scripts for Playwright Chromium
@@ -404,6 +443,12 @@ export class BrowserSessionManager extends EventEmitter {
       });
 
       page = await context.newPage();
+
+      if (hasStorageState) {
+        log.info("[BrowserSessionManager] Restored storage state from previous session", {
+          workspaceId,
+        });
+      }
     }
 
     const sessionId = `browser-${workspaceId}-${++this.sessionCounter}`;
@@ -933,10 +978,27 @@ export class BrowserSessionManager extends EventEmitter {
 
   /**
    * Close a browser session and clean up resources.
+   * For Playwright sessions, saves cookies + localStorage to disk
+   * so the next session can restore them (persistent login).
    */
   async closeSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
     if (!session) return;
+
+    // Save storage state BEFORE closing (Playwright mode only).
+    // Native Chrome persists via its user-data-dir automatically.
+    if (session.launchMode === "playwright-chromium") {
+      try {
+        const storageStatePath = this.getStorageStatePath(session.workspaceId);
+        await session.context.storageState({ path: storageStatePath });
+        log.info("[BrowserSessionManager] Saved storage state", {
+          sessionId,
+          workspaceId: session.workspaceId,
+        });
+      } catch {
+        // Non-fatal — context may already be closed
+      }
+    }
 
     session.status = "closed";
     // Release debug port
