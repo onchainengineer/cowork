@@ -2,7 +2,7 @@
 // Do not edit manually
 
 export const VERSION = {
-  git_commit: "299dbc91",
-  git_describe: "299dbc91-dirty",
-  buildTime: "2026-02-02T08:01:24Z",
+  git_commit: "dffc657e",
+  git_describe: "dffc657e-dirty",
+  buildTime: "2026-02-02T08:52:59Z",
 };

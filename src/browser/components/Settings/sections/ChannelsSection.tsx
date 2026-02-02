@@ -126,7 +126,7 @@ function ChannelItem({
   const info = PLATFORM_INFO[channel.type];
   const isConnected = channel.status === "connected";
   const isConnecting = channel.status === "connecting";
-  const sessionCount = config ? "—" : "—";
+  const sessionCount = channel.sessionCount;
 
   return (
     <div className="border-border-medium rounded-lg border">
@@ -516,6 +516,12 @@ export function ChannelsSection() {
 
   useEffect(() => {
     loadChannels();
+
+    // Auto-refresh every 5 seconds so status + session counts stay live
+    const interval = setInterval(() => {
+      loadChannels();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [loadChannels]);
 
   const handleConnect = useCallback(

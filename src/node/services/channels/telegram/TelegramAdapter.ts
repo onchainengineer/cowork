@@ -30,12 +30,31 @@ interface TelegramChat {
   type: "private" | "group" | "supergroup" | "channel";
 }
 
+interface TelegramPhotoSize {
+  file_id: string;
+  file_unique_id: string;
+  width: number;
+  height: number;
+  file_size?: number;
+}
+
+interface TelegramDocument {
+  file_id: string;
+  file_unique_id: string;
+  file_name?: string;
+  mime_type?: string;
+  file_size?: number;
+}
+
 interface TelegramMessage {
   message_id: number;
   from?: TelegramUser;
   chat: TelegramChat;
   date: number;
   text?: string;
+  caption?: string;
+  photo?: TelegramPhotoSize[];
+  document?: TelegramDocument;
 }
 
 interface TelegramUpdate {
@@ -172,6 +191,31 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
     // Skip messages without sender (channel posts, etc.)
     if (!msg.from) return;
 
+    // Build attachments from photos/documents
+    const attachments: Array<{ type: "image" | "file"; url?: string; mimeType?: string; filename?: string }> = [];
+
+    if (msg.photo && msg.photo.length > 0) {
+      // Telegram sends multiple sizes — use the largest
+      const largest = msg.photo[msg.photo.length - 1]!;
+      attachments.push({
+        type: "image",
+        url: `tg-file://${largest.file_id}`,
+        mimeType: "image/jpeg",
+      });
+    }
+
+    if (msg.document) {
+      attachments.push({
+        type: "file",
+        url: `tg-file://${msg.document.file_id}`,
+        mimeType: msg.document.mime_type,
+        filename: msg.document.file_name,
+      });
+    }
+
+    // Use caption for media messages, fall back to text
+    const text = msg.text ?? msg.caption;
+
     const channelMessage: ChannelMessage = {
       id: `tg-${this.accountId}-${msg.message_id}`,
       channelType: "telegram",
@@ -187,7 +231,8 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         id: String(msg.chat.id),
       },
       content: {
-        text: msg.text,
+        text,
+        ...(attachments.length > 0 ? { attachments } : {}),
       },
       timestamp: msg.date * 1000,
     };
@@ -214,6 +259,76 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
     }
   }
 
+  /**
+   * Download a file from Telegram by file_id.
+   * Uses getFile → file_path → download URL → base64 data URL.
+   */
+  async downloadFile(fileId: string): Promise<{ dataUrl: string; mimeType: string } | null> {
+    if (!this.config) return null;
+
+    try {
+      // Step 1: Get file path from Telegram
+      const fileInfoRes = await fetch(this.apiUrl("getFile"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: fileId }),
+      });
+      const fileInfo = (await fileInfoRes.json()) as TelegramApiResponse<{
+        file_id: string;
+        file_path?: string;
+        file_size?: number;
+      }>;
+
+      if (!fileInfo.ok || !fileInfo.result.file_path) {
+        log.warn("[TelegramAdapter] getFile failed", { fileId, error: fileInfo.description });
+        return null;
+      }
+
+      // Skip files larger than 15MB (Telegram bot API limit is 20MB, but be conservative for base64 bloat)
+      if (fileInfo.result.file_size && fileInfo.result.file_size > 15 * 1024 * 1024) {
+        log.warn("[TelegramAdapter] File too large, skipping download", {
+          fileId,
+          size: fileInfo.result.file_size,
+        });
+        return null;
+      }
+
+      // Step 2: Download the file bytes
+      const downloadUrl = `https://api.telegram.org/file/bot${this.token}/${fileInfo.result.file_path}`;
+      const fileRes = await fetch(downloadUrl);
+      if (!fileRes.ok) {
+        log.warn("[TelegramAdapter] File download failed", { fileId, status: fileRes.status });
+        return null;
+      }
+
+      const buffer = Buffer.from(await fileRes.arrayBuffer());
+      const base64 = buffer.toString("base64");
+
+      // Infer MIME type from file path extension
+      const ext = fileInfo.result.file_path.split(".").pop()?.toLowerCase() ?? "";
+      const mimeMap: Record<string, string> = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp",
+        pdf: "application/pdf",
+        mp4: "video/mp4",
+        ogg: "audio/ogg",
+        mp3: "audio/mpeg",
+      };
+      const mimeType = mimeMap[ext] ?? "application/octet-stream";
+
+      return {
+        dataUrl: `data:${mimeType};base64,${base64}`,
+        mimeType,
+      };
+    } catch (error) {
+      log.error("[TelegramAdapter] downloadFile error", { fileId, error });
+      return null;
+    }
+  }
+
   async sendMessage(message: OutboundChannelMessage): Promise<ChannelSendResult> {
     if (!this.config) {
       return { success: false, error: "Not connected" };
@@ -222,23 +337,26 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
     const text = message.text ?? "";
 
     try {
-      // Try sending with HTML formatting first
+      // Send with Markdown parse mode — the LLM is instructed to write
+      // Telegram-native markdown (*bold*, _italic_, `code`, ```blocks```).
+      // If Markdown parsing fails, retry as plain text.
       let response = await fetch(this.apiUrl("sendMessage"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: message.to.id,
-          text: markdownToTelegramHTML(text),
-          parse_mode: "HTML",
+          text,
+          parse_mode: "Markdown",
+          disable_web_page_preview: true,
           ...(message.threadId ? { message_thread_id: Number(message.threadId) } : {}),
         }),
       });
 
       let data = (await response.json()) as TelegramApiResponse<TelegramMessage>;
 
-      // If HTML parsing failed (bad entities), retry as plain text
-      if (!data.ok && data.description?.includes("parse")) {
-        log.warn("[TelegramAdapter] HTML parse failed, retrying as plain text", {
+      // If Markdown parsing failed (unmatched entities, etc.), retry as plain text
+      if (!data.ok && (data.description?.includes("parse") || data.description?.includes("entity"))) {
+        log.warn("[TelegramAdapter] Markdown parse failed, retrying as plain text", {
           error: data.description,
         });
         response = await fetch(this.apiUrl("sendMessage"), {
@@ -247,6 +365,7 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
           body: JSON.stringify({
             chat_id: message.to.id,
             text,
+            disable_web_page_preview: true,
             ...(message.threadId ? { message_thread_id: Number(message.threadId) } : {}),
           }),
         });
@@ -286,58 +405,3 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
   }
 }
 
-// ── Markdown → Telegram HTML converter ──────────────────────────────────
-
-/**
- * Convert common markdown to Telegram-supported HTML subset.
- * Telegram supports: <b>, <i>, <u>, <s>, <code>, <pre>, <a href="">.
- *
- * This is intentionally simple — handles the most common patterns
- * from LLM output without pulling in a full markdown parser.
- */
-function markdownToTelegramHTML(md: string): string {
-  // First, escape HTML entities in the source text
-  let html = md
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-
-  // Code blocks: ```lang\n...\n``` → <pre><code class="language-lang">...</code></pre>
-  html = html.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    (_match, lang: string, code: string) => {
-      const langAttr = lang ? ` class="language-${lang}"` : "";
-      return `<pre><code${langAttr}>${code.trimEnd()}</code></pre>`;
-    }
-  );
-
-  // Inline code: `...` → <code>...</code>
-  html = html.replace(/`([^`\n]+)`/g, "<code>$1</code>");
-
-  // Bold: **text** or __text__ → <b>text</b>
-  html = html.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-  html = html.replace(/__(.+?)__/g, "<b>$1</b>");
-
-  // Italic: *text* or _text_ → <i>text</i>  (but not inside words like file_name)
-  html = html.replace(/(?<![\\w*])\*([^*\n]+)\*(?![\\w*])/g, "<i>$1</i>");
-  html = html.replace(/(?<!\w)_([^_\n]+)_(?!\w)/g, "<i>$1</i>");
-
-  // Strikethrough: ~~text~~ → <s>text</s>
-  html = html.replace(/~~(.+?)~~/g, "<s>$1</s>");
-
-  // Links: [text](url) → <a href="url">text</a>
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-  // Headings: # text → <b>text</b> (Telegram has no heading tag)
-  html = html.replace(/^#{1,6}\s+(.+)$/gm, "<b>$1</b>");
-
-  // Bullet lists: - item or * item → • item
-  html = html.replace(/^[\s]*[-*]\s+/gm, "• ");
-
-  // Numbered lists: keep as-is (1. item)
-
-  // Horizontal rules: --- or *** → ———
-  html = html.replace(/^[-*]{3,}$/gm, "———");
-
-  return html;
-}

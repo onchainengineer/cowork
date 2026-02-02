@@ -60,6 +60,9 @@ export interface ChannelAdapter {
   /** Send a typing/activity indicator to a chat (optional — not all platforms support it) */
   sendTypingIndicator?(chatId: string): Promise<void>;
 
+  /** Download a file by platform-specific ID and return as base64 data URL (optional) */
+  downloadFile?(fileId: string): Promise<{ dataUrl: string; mimeType: string } | null>;
+
   /** Subscribe to incoming messages. Returns unsubscribe function. */
   onMessage(handler: (message: ChannelMessage) => void): () => void;
 

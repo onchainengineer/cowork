@@ -93,6 +93,7 @@ export const ChannelListItemSchema = z.object({
   sessionScope: ChannelSessionScopeSchema,
   status: ChannelStatusSchema,
   enabled: z.boolean(),
+  sessionCount: z.number().meta({ description: "Number of active session mappings for this channel" }),
 });
 
 export type ChannelListItem = z.infer<typeof ChannelListItemSchema>;

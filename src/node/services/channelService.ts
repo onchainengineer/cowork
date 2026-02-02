@@ -339,6 +339,7 @@ export class ChannelService extends EventEmitter {
       sessionScope: config.sessionScope ?? "per-peer",
       status: this.adapters.get(config.accountId)?.status ?? "disconnected",
       enabled: config.enabled,
+      sessionCount: this.sessionRouter.listSessions(config.accountId).length,
     }));
   }
 
@@ -534,7 +535,60 @@ export class ChannelService extends EventEmitter {
       const senderLabel = message.from.displayName ?? message.from.username ?? message.from.id;
       const prefix = `[${config.type}/${senderLabel}]`;
       const text = message.content.text ?? "";
-      const fullMessage = `${prefix} ${text}`;
+
+      // Download attachments and convert to fileParts for multimodal LLM input
+      const fileParts: Array<{ url: string; mediaType: string; filename?: string }> = [];
+      const attachmentDescs: string[] = [];
+
+      if (message.content.attachments?.length) {
+        const adapter = this.adapters.get(message.channelAccountId);
+
+        for (const att of message.content.attachments) {
+          // Try to download the file and pass as vision input
+          if (adapter?.downloadFile && att.url) {
+            // Extract platform file ID from the URL (e.g. "tg-file://ABC123" → "ABC123")
+            const fileId = att.url.replace(/^tg-file:\/\//, "").replace(/^discord-file:\/\//, "");
+            try {
+              const downloaded = await adapter.downloadFile(fileId);
+              if (downloaded && downloaded.mimeType.startsWith("image/")) {
+                fileParts.push({
+                  url: downloaded.dataUrl,
+                  mediaType: downloaded.mimeType,
+                  filename: att.filename,
+                });
+                log.info("[ChannelService] Downloaded image for multimodal input", {
+                  type: att.type,
+                  mimeType: downloaded.mimeType,
+                });
+                continue; // Successfully downloaded — skip text fallback
+              } else if (downloaded && downloaded.mimeType === "application/pdf") {
+                fileParts.push({
+                  url: downloaded.dataUrl,
+                  mediaType: downloaded.mimeType,
+                  filename: att.filename,
+                });
+                continue;
+              }
+            } catch (error) {
+              log.warn("[ChannelService] Failed to download attachment, falling back to text description", {
+                error,
+              });
+            }
+          }
+
+          // Fallback: describe attachment as text if download failed or unsupported
+          if (att.type === "image") {
+            attachmentDescs.push("[📷 Image attached — could not download]");
+          } else if (att.type === "file") {
+            attachmentDescs.push(`[📎 File: ${att.filename ?? "unknown"}]`);
+          } else {
+            attachmentDescs.push(`[📁 ${att.type}]`);
+          }
+        }
+      }
+
+      const parts = [prefix, text, ...attachmentDescs].filter(Boolean);
+      const fullMessage = parts.join(" ");
 
       // Resolve the model from the workspace's own AI settings so that if the
       // user switches models in the workbench UI, Telegram messages honour that
@@ -559,6 +613,7 @@ export class ChannelService extends EventEmitter {
           model,
           agentId,
           additionalSystemInstructions: getChannelSystemPrompt(config.type),
+          ...(fileParts.length > 0 ? { fileParts } : {}),
         }
       );
 
