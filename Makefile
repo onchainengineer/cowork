@@ -190,7 +190,7 @@ dev-server: node_modules/.installed build-main ## Start server mode with hot rel
 	@$(BUN_OR_NPX) concurrently -k \
 		"$(BUN_OR_NPX) concurrently \"$(TSGO) -w -p tsconfig.main.json\" \"$(BUN_OR_NPX) tsc-alias -w -p tsconfig.main.json\"" \
 		'$(BUN_OR_NPX) esbuild src/cli/api.ts $(ESBUILD_CLI_FLAGS) --watch' \
-		"$(BUN_OR_NPX) nodemon --watch dist/cli/index.js --watch dist/cli/server.js --delay 500ms --exec 'NODE_ENV=development node dist/cli/index.js server --host $(or $(BACKEND_HOST),127.0.0.1) --port $(or $(BACKEND_PORT),3000)'" \
+		"$(BUN_OR_NPX) nodemon --watch dist/cli/index.js --watch dist/cli/server.js --watch dist/node --delay 3000ms --exec 'NODE_ENV=development node dist/cli/index.js server --host $(or $(BACKEND_HOST),127.0.0.1) --port $(or $(BACKEND_PORT),3000)'" \
 		"UNIX_VITE_HOST=$(or $(VITE_HOST),127.0.0.1) UNIX_VITE_PORT=$(or $(VITE_PORT),5173) UNIX_VITE_ALLOWED_HOSTS=$(VITE_ALLOWED_HOSTS) UNIX_BACKEND_PORT=$(or $(BACKEND_PORT),3000) vite"
 endif
 
