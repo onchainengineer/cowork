@@ -279,6 +279,28 @@ export class ChannelService extends EventEmitter {
       return { success: false, error: `Channel "${accountId}" is already connected` };
     }
 
+    // ── Prevent duplicate bot token conflicts ──
+    // Telegram only allows one getUpdates consumer per bot token.
+    // If another channel is already using the same token, disconnect it first.
+    const newToken = config.credentials?.botToken;
+    if (newToken && config.type === "telegram") {
+      for (const [existingId, existingAdapter] of this.adapters) {
+        const existingConfig = this.configs.get(existingId);
+        if (
+          existingConfig &&
+          existingConfig.type === "telegram" &&
+          existingConfig.credentials?.botToken === newToken &&
+          existingId !== accountId
+        ) {
+          log.warn("[ChannelService] Disconnecting duplicate bot token", {
+            existingChannel: existingId,
+            newChannel: accountId,
+          });
+          await this.disconnectChannel(existingId);
+        }
+      }
+    }
+
     const factory = this.adapterFactories.get(config.type);
     if (!factory) {
       return { success: false, error: `Unsupported channel type: ${config.type}` };

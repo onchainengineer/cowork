@@ -190,7 +190,17 @@ export class TelegramAdapter extends EventEmitter implements ChannelAdapter {
         });
 
         if (!response.ok) {
-          log.error("[TelegramAdapter] Polling HTTP error", { status: response.status });
+          if (response.status === 409) {
+            // 409 Conflict = another instance is already polling this bot token.
+            // Stop immediately — retrying will just spam errors.
+            log.error("[TelegramAdapter] 409 Conflict — another process is polling this bot token. Stopping.", {
+              accountId: this.accountId,
+            });
+            this.polling = false;
+            this.setStatus("error");
+            break;
+          }
+          log.error("[TelegramAdapter] Polling HTTP error", { status: response.status, accountId: this.accountId });
           await this.sleep(5000);
           continue;
         }
