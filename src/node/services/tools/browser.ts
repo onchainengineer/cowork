@@ -9,6 +9,10 @@
  *
  * The tool lazily creates a BrowserSessionManager-backed session on first use
  * and reuses it for subsequent calls within the same workspace.
+ *
+ * IMPORTANT: Screenshots are compressed (JPEG, quality 50) and capped at 100KB
+ * base64 to avoid blowing up the agent's context window. Full-quality snapshots
+ * are still captured for the UI panel separately.
  */
 
 import { tool } from "ai";
@@ -20,6 +24,19 @@ import {
   type BrowserAction,
   type BrowserActionType,
 } from "@/node/services/browserSessionManager";
+
+/**
+ * Max base64 screenshot size to return to the agent (in chars).
+ * ~100KB base64 ≈ ~75KB image ≈ ~25K tokens. Beyond this we return
+ * a text description + page text instead.
+ */
+const MAX_SCREENSHOT_BASE64_CHARS = 100_000;
+
+/**
+ * Max text content length returned to the agent.
+ * Prevents massive DOM dumps from eating the context.
+ */
+const MAX_TEXT_CONTENT_CHARS = 30_000;
 
 /**
  * Global fallback BrowserSessionManager instance.
@@ -34,6 +51,26 @@ function getOrCreateManager(config: ToolConfiguration): BrowserSessionManager {
     globalBrowserManager = new BrowserSessionManager();
   }
   return globalBrowserManager;
+}
+
+/**
+ * Truncate content to stay within token budget.
+ */
+function capContent(content: string, contentType: string): string {
+  if (contentType === "screenshot") {
+    if (content.length > MAX_SCREENSHOT_BASE64_CHARS) {
+      // Screenshot too large — return a placeholder.
+      // The agent should use read_text instead for this page.
+      return `[Screenshot too large (${Math.round(content.length / 1000)}KB). Use read_text action to get page content instead.]`;
+    }
+    return content;
+  }
+  // Text and HTML content
+  const limit = MAX_TEXT_CONTENT_CHARS;
+  if (content.length > limit) {
+    return content.slice(0, limit) + `\n\n[Content truncated at ${limit} chars. Use a selector to read specific sections.]`;
+  }
+  return content;
 }
 
 /**
@@ -93,10 +130,20 @@ export const createBrowserTool: ToolFactory = (config: ToolConfiguration) => {
           return { success: false, error: result.error };
         }
 
+        // Cap content size to prevent context window overflow
+        const cappedContent = capContent(result.content, result.contentType);
+
+        // If screenshot was too large and got replaced with text,
+        // update the content_type accordingly
+        const effectiveType =
+          result.contentType === "screenshot" && cappedContent !== result.content
+            ? "text"
+            : result.contentType;
+
         return {
           success: true,
-          content_type: result.contentType,
-          content: result.content,
+          content_type: effectiveType as "text" | "html" | "screenshot" | "info",
+          content: cappedContent,
           url: result.url,
           title: result.title,
         };

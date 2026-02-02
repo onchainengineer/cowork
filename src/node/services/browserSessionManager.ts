@@ -1,17 +1,27 @@
 /**
- * BrowserSessionManager - Manages Playwright browser instances per workspace.
+ * BrowserSessionManager - Manages browser instances per workspace.
  *
  * Each workspace (and sub-agent) can have its own isolated browser session.
  * Sessions are lazily created and automatically cleaned up on workspace close.
  *
- * Uses Playwright's Chromium browser for full browser automation:
- * - Navigate, click, type, scroll, screenshot, extract text/HTML
- * - Supports multiple pages (tabs) per session
- * - Screenshots returned as base64 PNG for agent consumption
- * - CDP session exposed for advanced use cases
+ * Two launch strategies (auto-detected):
+ *
+ * 1. NATIVE CHROME (preferred) — Launches the real system Chrome/Chromium
+ *    with --remote-debugging-port, then Playwright connects via CDP.
+ *    This is a real, fully native desktop browser — zero bot detection,
+ *    real GPU, real WebGL fingerprint, real everything. Perfect for
+ *    sites like X, Reddit, LinkedIn that aggressively detect automation.
+ *
+ * 2. PLAYWRIGHT CHROMIUM (fallback) — If no system Chrome is found,
+ *    falls back to Playwright's bundled Chromium with stealth flags.
+ *
+ * On dedicated Mac Studios each agent gets its own native Chrome window.
+ * The user can VNC/screen-share in and interact directly.
  */
 
 import { EventEmitter } from "events";
+import { execSync, spawn, type ChildProcess } from "child_process";
+import { existsSync } from "fs";
 import { log } from "@/node/services/log";
 
 // Playwright types - dynamically imported to avoid hard dependency at startup
@@ -37,6 +47,10 @@ export interface BrowserSession {
   cdpUrl: string | null;
   /** HTTP URL for the page being viewed — frontend can load this in a webview */
   debugUrl: string | null;
+  /** Launch mode used for this session */
+  launchMode: "native-chrome" | "playwright-chromium";
+  /** Child process handle if we spawned native Chrome (needed for cleanup) */
+  chromeProcess: ChildProcess | null;
 }
 
 export type BrowserActionType =
@@ -117,6 +131,55 @@ const VISUAL_ACTIONS = new Set<BrowserActionType>([
   "go_back", "go_forward", "new_tab", "switch_tab", "evaluate",
 ]);
 
+// ── Chrome Discovery ─────────────────────────────────────────────────
+
+/** Known Chrome/Chromium paths per platform */
+const CHROME_PATHS: Record<string, string[]> = {
+  darwin: [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+  ],
+  linux: [
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/snap/bin/chromium",
+    "/usr/bin/brave-browser",
+    "/usr/bin/microsoft-edge",
+  ],
+  win32: [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    `${process.env.LOCALAPPDATA ?? ""}\\Google\\Chrome\\Application\\chrome.exe`,
+  ],
+};
+
+/**
+ * Find the system Chrome/Chromium binary.
+ * Returns the path or null if not found.
+ */
+function findSystemChrome(): string | null {
+  const candidates = CHROME_PATHS[process.platform] ?? [];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  // Try `which` on unix
+  if (process.platform !== "win32") {
+    try {
+      const result = execSync("which google-chrome || which chromium || which chromium-browser", {
+        encoding: "utf-8",
+        timeout: 3000,
+      }).trim();
+      if (result) return result;
+    } catch { /* not found */ }
+  }
+  return null;
+}
+
 // ── Session Manager ──────────────────────────────────────────────────
 
 export class BrowserSessionManager extends EventEmitter {
@@ -129,6 +192,8 @@ export class BrowserSessionManager extends EventEmitter {
   private usedPorts = new Set<number>();
   /** Base port for CDP debugging (each session gets a unique port) */
   private static BASE_DEBUG_PORT = 9222;
+  /** Cached system Chrome path (null = not checked yet, "" = not found) */
+  private systemChromePath: string | null | undefined = undefined;
 
   /**
    * Lazily import Playwright to avoid loading it at startup.
@@ -159,88 +224,188 @@ export class BrowserSessionManager extends EventEmitter {
   }
 
   /**
+   * Get cached system Chrome path.
+   */
+  private getSystemChrome(): string | null {
+    if (this.systemChromePath === undefined) {
+      this.systemChromePath = findSystemChrome();
+      if (this.systemChromePath) {
+        log.info("[BrowserSessionManager] Found system Chrome", {
+          path: this.systemChromePath,
+        });
+      } else {
+        log.info("[BrowserSessionManager] No system Chrome found, will use Playwright Chromium");
+      }
+    }
+    return this.systemChromePath ?? null;
+  }
+
+  /**
+   * Launch a native Chrome process with remote debugging.
+   * Returns the child process and waits for the debug port to be ready.
+   */
+  private async launchNativeChrome(
+    chromePath: string,
+    debugPort: number,
+    userDataDir: string,
+  ): Promise<ChildProcess> {
+    const args = [
+      `--remote-debugging-port=${debugPort}`,
+      "--remote-allow-origins=*",
+      `--user-data-dir=${userDataDir}`,
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--window-size=1280,800",
+      // Don't restore previous session
+      "--no-restore-session-state",
+      // Start with a blank page
+      "about:blank",
+    ];
+
+    log.info("[BrowserSessionManager] Launching native Chrome", {
+      chromePath,
+      debugPort,
+      userDataDir,
+    });
+
+    const chromeProcess = spawn(chromePath, args, {
+      stdio: "ignore",
+      detached: false,
+    });
+
+    // Wait for the debug port to become available
+    const maxWait = 15_000;
+    const start = Date.now();
+    while (Date.now() - start < maxWait) {
+      try {
+        const resp = await fetch(`http://127.0.0.1:${debugPort}/json/version`);
+        if (resp.ok) {
+          log.info("[BrowserSessionManager] Native Chrome ready", { debugPort });
+          return chromeProcess;
+        }
+      } catch {
+        // Not ready yet
+      }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    // Timed out — kill the process
+    chromeProcess.kill();
+    throw new Error(`Native Chrome failed to start on port ${debugPort} within ${maxWait}ms`);
+  }
+
+  /**
    * Create a new browser session for a workspace.
    *
-   * Launches Chromium with --remote-debugging-port so the frontend can
-   * embed a live <webview> pointing at the same browser the agent controls.
-   * Playwright connects via CDP to automate the same browser instance.
+   * Strategy:
+   * 1. Try to launch native system Chrome with --remote-debugging-port
+   *    then connect Playwright via CDP. This gives a 100% real browser.
+   * 2. Fall back to Playwright's bundled Chromium if no system Chrome.
+   *
+   * On a dedicated Mac Studio each agent gets its own Chrome window.
    */
   async createSession(
     workspaceId: string,
     options?: { headless?: boolean }
   ): Promise<BrowserSession> {
     const pw = await this.getPlaywright();
-    const headless = options?.headless ?? false; // Default to visible for embedded view
+    const headless = options?.headless ?? false;
     const debugPort = this.getNextDebugPort();
+    const chromePath = this.getSystemChrome();
 
-    // Launch Chromium with remote debugging enabled.
-    // Use stealth-friendly flags to avoid bot detection on sites like X, Reddit, etc.
-    const browser = await pw.chromium.launch({
-      headless,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        `--remote-debugging-port=${debugPort}`,
-        // Allow the Electron webview to connect
-        "--remote-allow-origins=*",
-        // Stealth: disable automation flags that sites check
-        "--disable-blink-features=AutomationControlled",
-        // Stealth: enable GPU so WebGL fingerprint looks real
-        "--enable-webgl",
-        "--enable-accelerated-2d-canvas",
-        // Realistic window size
-        "--window-size=1280,800",
-      ],
-      ignoreDefaultArgs: [
-        // Remove the "Chrome is being controlled by automated test software" bar
-        "--enable-automation",
-      ],
-    });
-
-    // Get the CDP WebSocket endpoint from the browser
-    // Playwright exposes this after launch when remote-debugging-port is set
+    let browser: PlaywrightBrowser;
     let cdpUrl: string | null = null;
     let debugUrl: string | null = null;
-    try {
-      // Fetch the CDP info from the debug endpoint
-      const resp = await fetch(`http://127.0.0.1:${debugPort}/json/version`);
-      if (resp.ok) {
-        const info = await resp.json() as { webSocketDebuggerUrl?: string };
-        cdpUrl = info.webSocketDebuggerUrl ?? null;
+    let launchMode: "native-chrome" | "playwright-chromium";
+    let chromeProcess: ChildProcess | null = null;
+
+    if (chromePath && !headless) {
+      // ── Strategy 1: Native Chrome ──────────────────────────────
+      // Launch the real system Chrome, then connect Playwright via CDP.
+      // This is indistinguishable from a human using Chrome.
+      try {
+        const userDataDir = `/tmp/lattice-browser-${workspaceId}-${Date.now()}`;
+        chromeProcess = await this.launchNativeChrome(chromePath, debugPort, userDataDir);
+
+        // Connect Playwright to the running Chrome via CDP
+        browser = await pw.chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
+
+        launchMode = "native-chrome";
+        debugUrl = `http://127.0.0.1:${debugPort}`;
+
+        // Fetch the CDP WebSocket URL
+        try {
+          const resp = await fetch(`${debugUrl}/json/version`);
+          if (resp.ok) {
+            const info = (await resp.json()) as {
+              webSocketDebuggerUrl?: string;
+            };
+            cdpUrl = info.webSocketDebuggerUrl ?? null;
+          }
+        } catch {
+          /* non-fatal */
+        }
+
+        log.info("[BrowserSessionManager] Connected to native Chrome via CDP", {
+          debugPort,
+          cdpUrl,
+        });
+      } catch (err) {
+        // Native Chrome failed — fall back to Playwright
+        const msg = err instanceof Error ? err.message : String(err);
+        log.warn("[BrowserSessionManager] Native Chrome launch failed, falling back to Playwright", {
+          error: msg,
+        });
+        chromeProcess = null;
+        this.usedPorts.delete(debugPort);
+        // Re-acquire port for Playwright fallback
+        const fallbackPort = this.getNextDebugPort();
+        const result = await this.launchPlaywrightChromium(pw, headless, fallbackPort);
+        browser = result.browser;
+        cdpUrl = result.cdpUrl;
+        debugUrl = result.debugUrl;
+        launchMode = "playwright-chromium";
       }
-      debugUrl = `http://127.0.0.1:${debugPort}`;
-    } catch {
-      log.warn("[BrowserSessionManager] Could not fetch CDP info", { debugPort });
+    } else {
+      // ── Strategy 2: Playwright Chromium (fallback / headless) ──
+      const result = await this.launchPlaywrightChromium(pw, headless, debugPort);
+      browser = result.browser;
+      cdpUrl = result.cdpUrl;
+      debugUrl = result.debugUrl;
+      launchMode = "playwright-chromium";
     }
 
-    // Use a realistic, up-to-date user agent (Chrome 131 on macOS)
-    const context = await browser.newContext({
-      viewport: { width: 1280, height: 800 },
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      locale: "en-US",
-      timezoneId: "America/New_York",
-      // Realistic screen dimensions
-      screen: { width: 1440, height: 900 },
-    });
+    // Get the default context (native Chrome) or create one (Playwright)
+    let context: PlaywrightBrowserContext;
+    let page: PlaywrightPage;
 
-    // Remove navigator.webdriver flag — sites like X check for this
-    await context.addInitScript(() => {
-      Object.defineProperty(navigator, "webdriver", {
-        get: () => undefined,
+    if (launchMode === "native-chrome") {
+      // Native Chrome connected via CDP — use the default context
+      const contexts = browser.contexts();
+      context = contexts[0] ?? await browser.newContext();
+      const pages = context.pages();
+      page = pages[0] ?? await context.newPage();
+    } else {
+      // Playwright Chromium — create a context with realistic settings
+      context = await browser.newContext({
+        viewport: { width: 1280, height: 800 },
+        userAgent:
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        locale: "en-US",
+        timezoneId: "America/New_York",
+        screen: { width: 1440, height: 900 },
       });
-      // Fake plugins array so it looks like a real browser
-      Object.defineProperty(navigator, "plugins", {
-        get: () => [1, 2, 3, 4, 5],
-      });
-      // Fake languages
-      Object.defineProperty(navigator, "languages", {
-        get: () => ["en-US", "en"],
-      });
-    });
 
-    const page = await context.newPage();
+      // Stealth scripts for Playwright Chromium
+      await context.addInitScript(() => {
+        Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+        Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
+        Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
+      });
+
+      page = await context.newPage();
+    }
+
     const sessionId = `browser-${workspaceId}-${++this.sessionCounter}`;
     const pageId = `page-0`;
 
@@ -257,15 +422,66 @@ export class BrowserSessionManager extends EventEmitter {
       headless,
       cdpUrl,
       debugUrl,
+      launchMode,
+      chromeProcess,
     };
 
     this.sessions.set(sessionId, session);
     log.info("[BrowserSessionManager] Created session", {
-      sessionId, workspaceId, headless, debugPort, cdpUrl,
+      sessionId,
+      workspaceId,
+      headless,
+      debugPort,
+      launchMode,
+      cdpUrl,
     });
     this.emit("session-created", { sessionId, workspaceId });
 
     return session;
+  }
+
+  /**
+   * Fallback: Launch Playwright's bundled Chromium with stealth flags.
+   */
+  private async launchPlaywrightChromium(
+    pw: typeof import("playwright"),
+    headless: boolean,
+    debugPort: number,
+  ): Promise<{
+    browser: PlaywrightBrowser;
+    cdpUrl: string | null;
+    debugUrl: string | null;
+  }> {
+    const browser = await pw.chromium.launch({
+      headless,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        `--remote-debugging-port=${debugPort}`,
+        "--remote-allow-origins=*",
+        "--disable-blink-features=AutomationControlled",
+        "--enable-webgl",
+        "--enable-accelerated-2d-canvas",
+        "--window-size=1280,800",
+      ],
+      ignoreDefaultArgs: ["--enable-automation"],
+    });
+
+    let cdpUrl: string | null = null;
+    let debugUrl: string | null = null;
+    try {
+      const resp = await fetch(`http://127.0.0.1:${debugPort}/json/version`);
+      if (resp.ok) {
+        const info = (await resp.json()) as { webSocketDebuggerUrl?: string };
+        cdpUrl = info.webSocketDebuggerUrl ?? null;
+      }
+      debugUrl = `http://127.0.0.1:${debugPort}`;
+    } catch {
+      log.warn("[BrowserSessionManager] Could not fetch CDP info", { debugPort });
+    }
+
+    return { browser, cdpUrl, debugUrl };
   }
 
   /**
@@ -513,9 +729,13 @@ export class BrowserSessionManager extends EventEmitter {
         }
 
         case "screenshot": {
+          // Use JPEG with reduced quality for agent consumption (saves ~80% tokens).
+          // Full-quality PNGs are still captured via autoCapture for the UI panel.
+          // Quality 30 + JPEG = ~20-40KB vs ~500KB+ for PNG = massive token savings.
           const buffer = await page.screenshot({
             fullPage: action.fullPage ?? false,
-            type: "png",
+            type: "jpeg",
+            quality: 30,
           });
           const base64 = buffer.toString("base64");
           return {
@@ -731,8 +951,17 @@ export class BrowserSessionManager extends EventEmitter {
     } catch {
       // Browser may already be closed
     }
+    // Kill native Chrome process if we spawned one
+    if (session.chromeProcess) {
+      try {
+        session.chromeProcess.kill();
+      } catch { /* ignore */ }
+    }
     this.sessions.delete(sessionId);
-    log.info("[BrowserSessionManager] Closed session", { sessionId });
+    log.info("[BrowserSessionManager] Closed session", {
+      sessionId,
+      launchMode: session.launchMode,
+    });
     this.emit("session-closed", { sessionId, workspaceId: session.workspaceId });
   }
 
@@ -766,6 +995,7 @@ export class BrowserSessionManager extends EventEmitter {
     lastActivity: number;
     cdpUrl: string | null;
     debugUrl: string | null;
+    launchMode: string;
   } | null {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
@@ -780,6 +1010,7 @@ export class BrowserSessionManager extends EventEmitter {
       lastActivity: session.lastActivity,
       cdpUrl: session.cdpUrl,
       debugUrl: session.debugUrl,
+      launchMode: session.launchMode,
     };
   }
 }
