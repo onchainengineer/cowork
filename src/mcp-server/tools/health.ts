@@ -131,7 +131,7 @@ Like OpenClaw's "doctor" command.`,
         }
 
         // Wait for response
-        const response = await client.pollForResponse(workspaceId, baselineCount, timeout);
+        const response = await client.waitForResponse(workspaceId, baselineCount, timeout);
         const latency = Date.now() - start;
 
         const isResponsive = response.length > 0 && !response.startsWith("[Timeout");

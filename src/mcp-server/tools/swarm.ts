@@ -295,97 +295,68 @@ function calculateCriticalPath(): {
   };
 }
 
-// ── Background poller ────────────────────────────────────────────────
+// ── Background task completion watcher ────────────────────────────────
+// Uses waitForResponse (WS streaming with polling fallback) instead of
+// raw polling for lower latency task completion detection.
 
 async function pollTaskCompletion(
   client: WorkbenchClient,
   taskId: string
 ): Promise<void> {
-  const maxPollTime = 600_000; // 10 minutes for complex tasks
-  const pollInterval = 3000;
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < maxPollTime) {
-    await new Promise((r) => setTimeout(r, pollInterval));
-
-    const task = swarm.tasks.get(taskId);
-    if (!task || task.status !== "running") return;
-
-    try {
-      const replay = (await client.getFullReplay(task.workspaceId)) as Array<{
-        role?: string;
-        type?: string;
-        content?: string;
-        text?: string;
-      }>;
-
-      if (replay.length > task.baselineMessageCount) {
-        const assistantMsgs = replay.filter(
-          (m) => m.role === "assistant" || m.type === "assistant"
-        );
-
-        if (assistantMsgs.length > 0) {
-          const last = assistantMsgs[assistantMsgs.length - 1]!;
-          const text = last.content ?? last.text ?? "";
-
-          if (text.length > 0) {
-            // Confirm stream is done
-            await new Promise((r) => setTimeout(r, pollInterval));
-            const finalReplay = (await client.getFullReplay(task.workspaceId)) as Array<{
-              role?: string;
-              type?: string;
-              content?: string;
-              text?: string;
-            }>;
-            const finalAssistant = finalReplay.filter(
-              (m) => m.role === "assistant" || m.type === "assistant"
-            );
-
-            if (finalAssistant.length > 0) {
-              const finalText = finalAssistant[finalAssistant.length - 1]!;
-              task.status = "completed";
-              task.completedAt = Date.now();
-              task.result = finalText.content ?? finalText.text ?? text;
-
-              // Update agent state
-              const agent = swarm.agents.get(task.agentId);
-              if (agent) {
-                agent.status = "idle";
-                agent.lastActiveAt = Date.now();
-                agent.tasksCompleted++;
-                agent.currentTaskId = undefined;
-              }
-
-              // Check if stage is complete
-              if (task.stage) {
-                checkStageCompletion(task.stage);
-              }
-
-              saveState();
-              return;
-            }
-          }
-        }
-      }
-    } catch {
-      // Transient — keep polling
-    }
-  }
-
-  // Timeout
   const task = swarm.tasks.get(taskId);
-  if (task && task.status === "running") {
-    task.status = "timeout";
-    task.completedAt = Date.now();
-    task.error = "Agent did not respond within 10 minutes";
+  if (!task || task.status !== "running") return;
 
-    const agent = swarm.agents.get(task.agentId);
+  try {
+    const response = await client.waitForResponse(
+      task.workspaceId,
+      task.baselineMessageCount,
+      600_000 // 10 min timeout for complex tasks
+    );
+
+    // Re-check task status (might have been cancelled)
+    const currentTask = swarm.tasks.get(taskId);
+    if (!currentTask || currentTask.status !== "running") return;
+
+    if (response.startsWith("[Timeout")) {
+      currentTask.status = "timeout";
+      currentTask.completedAt = Date.now();
+      currentTask.error = "Agent did not respond within 10 minutes";
+    } else {
+      currentTask.status = "completed";
+      currentTask.completedAt = Date.now();
+      currentTask.result = response;
+    }
+
+    // Update agent state
+    const agent = swarm.agents.get(currentTask.agentId);
     if (agent) {
       agent.status = "idle";
+      agent.lastActiveAt = Date.now();
+      if (currentTask.status === "completed") agent.tasksCompleted++;
       agent.currentTaskId = undefined;
     }
 
+    // Check if stage is complete
+    if (currentTask.stage) {
+      checkStageCompletion(currentTask.stage);
+    }
+
     saveState();
+  } catch {
+    // Fatal error — mark task as failed
+    const failedTask = swarm.tasks.get(taskId);
+    if (failedTask && failedTask.status === "running") {
+      failedTask.status = "timeout";
+      failedTask.completedAt = Date.now();
+      failedTask.error = "Response watcher failed";
+
+      const agent = swarm.agents.get(failedTask.agentId);
+      if (agent) {
+        agent.status = "idle";
+        agent.currentTaskId = undefined;
+      }
+      saveState();
+    }
   }
 }
 

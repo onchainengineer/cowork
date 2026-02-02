@@ -137,8 +137,8 @@ export function registerWorkspaceTools(server: McpServer, client: WorkbenchClien
           };
         }
 
-        // Poll for the agent's response
-        const response = await client.pollForResponse(
+        // Wait for the agent's response (streaming with polling fallback)
+        const response = await client.waitForResponse(
           workspaceId,
           beforeCount,
           timeoutMs ?? 120_000

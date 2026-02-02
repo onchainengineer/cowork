@@ -251,7 +251,7 @@ function scheduleNextRun(client: WorkbenchClient, job: CronJob): void {
       } else {
         // Poll for response (shorter timeout for cron — 3 min)
         try {
-          const response = await client.pollForResponse(job.workspaceId, 0, 180_000);
+          const response = await client.waitForResponse(job.workspaceId, 0, 180_000);
           job.lastResult = response;
           job.lastError = undefined;
           addHistory(job, runStartedAt, true, response);
@@ -466,7 +466,7 @@ Examples:
         }
 
         // Poll for response
-        const response = await client.pollForResponse(job.workspaceId, 0, 180_000);
+        const response = await client.waitForResponse(job.workspaceId, 0, 180_000);
         job.lastResult = response;
         job.lastError = undefined;
         saveJobs();

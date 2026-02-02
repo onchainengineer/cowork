@@ -366,7 +366,7 @@ Execute this skill code in the workspace. Follow the instructions and use the pr
 
         // Poll for response
         const timeout = timeoutMs ?? 180_000;
-        const response = await client.pollForResponse(workspaceId, baselineCount, timeout);
+        const response = await client.waitForResponse(workspaceId, baselineCount, timeout);
 
         return {
           content: [{

@@ -598,7 +598,7 @@ function createToolBridge(client: WorkbenchClient): Record<string, Record<string
         try { baseline = ((await client.getFullReplay(wsId)) as unknown[]).length; } catch {}
         const result = await client.sendMessage(wsId, msg);
         if (!result.success) return `Send failed: ${result.error}`;
-        return client.pollForResponse(wsId, baseline, timeoutMs);
+        return client.waitForResponse(wsId, baseline, timeoutMs);
       },
       getChatHistory: async (input) => client.getFullReplay(input.workspaceId as string),
       interrupt: async (input) => client.interruptStream(input.workspaceId as string),
@@ -695,7 +695,7 @@ function createToolBridge(client: WorkbenchClient): Record<string, Record<string
         const replay = (await client.getFullReplay(wsId)) as unknown[];
         const baseline = replay.length;
         await client.sendMessage(wsId, "[PING]");
-        const response = await client.pollForResponse(wsId, baseline, (input.timeoutMs as number) ?? 30_000);
+        const response = await client.waitForResponse(wsId, baseline, (input.timeoutMs as number) ?? 30_000);
         return { responsive: !response.startsWith("[Timeout"), latencyMs: Date.now() - start };
       },
       bulkCheck: async () => {
