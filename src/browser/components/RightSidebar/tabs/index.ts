@@ -30,4 +30,5 @@ export {
   ReviewTabLabel,
   StatsTabLabel,
   TerminalTabLabel,
+  BrowserTabLabel,
 } from "./TabLabels";

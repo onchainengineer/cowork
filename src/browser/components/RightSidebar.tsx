@@ -69,6 +69,7 @@ import {
   type TerminalSessionCreateOptions,
 } from "@/browser/utils/terminal";
 import {
+  BrowserTabLabel,
   ClusterTabLabel,
   CostsTabLabel,
   ExplorerTabLabel,
@@ -81,6 +82,7 @@ import {
   type ReviewStats,
 } from "./RightSidebar/tabs";
 import { FileViewerTab } from "./RightSidebar/FileViewer";
+import { BrowserTab } from "./RightSidebar/BrowserTab";
 import { ClusterTab } from "./RightSidebar/ClusterTab";
 import { ModelsTab } from "./RightSidebar/ModelsTab";
 import { ExplorerTab } from "./RightSidebar/ExplorerTab";
@@ -355,6 +357,8 @@ const RightSidebarTabsetNode: React.FC<RightSidebarTabsetNodeProps> = (props) =>
       label = <ClusterTabLabel />;
     } else if (tab === "models") {
       label = <ModelsTabLabel />;
+    } else if (tab === "browser") {
+      label = <BrowserTabLabel />;
     } else if (tab === "stats") {
       label = <StatsTabLabel sessionDuration={props.sessionDuration} />;
     } else if (isTerminal) {
@@ -556,6 +560,17 @@ const RightSidebarTabsetNode: React.FC<RightSidebarTabsetNodeProps> = (props) =>
             className="h-full"
           >
             <ModelsTab workspaceId={props.workspaceId} />
+          </div>
+        )}
+
+        {props.node.activeTab === "browser" && (
+          <div
+            role="tabpanel"
+            id={`${tabsetBaseId}-panel-browser`}
+            aria-labelledby={`${tabsetBaseId}-tab-browser`}
+            className="h-full"
+          >
+            <BrowserTab workspaceId={props.workspaceId} />
           </div>
         )}
 

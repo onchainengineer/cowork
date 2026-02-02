@@ -26,6 +26,7 @@ import type { LatticeService } from "@/node/services/latticeService";
 import type { InferenceService } from "@/node/services/inference";
 import type { ChannelService } from "@/node/services/channelService";
 import type { ChannelSessionRouter } from "@/node/services/channelSessionRouter";
+import type { BrowserSessionManager } from "@/node/services/browserSessionManager";
 
 export interface ORPCContext {
   config: Config;
@@ -55,5 +56,6 @@ export interface ORPCContext {
   inferenceService: InferenceService;
   channelService: ChannelService;
   channelSessionRouter: ChannelSessionRouter;
+  browserSessionManager: BrowserSessionManager;
   headers?: IncomingHttpHeaders;
 }

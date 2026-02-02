@@ -78,7 +78,7 @@ export interface TabConfig {
 }
 
 /** Static tab configurations (non-terminal tabs) */
-export const TAB_CONFIGS: Record<"costs" | "review" | "explorer" | "cluster" | "models" | "stats", TabConfig> = {
+export const TAB_CONFIGS: Record<"costs" | "review" | "explorer" | "cluster" | "models" | "stats" | "browser", TabConfig> = {
   costs: {
     name: "Costs",
     contentClassName: "overflow-y-auto p-[15px]",
@@ -104,6 +104,10 @@ export const TAB_CONFIGS: Record<"costs" | "review" | "explorer" | "cluster" | "
     contentClassName: "overflow-y-auto p-[15px]",
     featureFlag: "statsTab",
   },
+  browser: {
+    name: "Browser",
+    contentClassName: "overflow-hidden p-0",
+  },
 };
 
 /** Terminal tab configuration */
@@ -122,7 +126,7 @@ export const FILE_TAB_CONFIG: TabConfig = {
 
 /** Get config for a tab type */
 export function getTabConfig(tab: TabType): TabConfig {
-  if (tab === "costs" || tab === "review" || tab === "explorer" || tab === "cluster" || tab === "models" || tab === "stats") {
+  if (tab === "costs" || tab === "review" || tab === "explorer" || tab === "cluster" || tab === "models" || tab === "stats" || tab === "browser") {
     return TAB_CONFIGS[tab];
   }
   // File tabs

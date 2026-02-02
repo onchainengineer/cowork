@@ -30,6 +30,7 @@ import type {
   GlobToolResultSchema,
   GrepToolResultSchema,
   NotebookEditToolResultSchema,
+  BrowserToolResultSchema,
 } from "@/common/utils/tools/toolDefinitions";
 
 // Bash Tool Types
@@ -354,6 +355,9 @@ export interface WebFetchToolArgs {
 
 // WebFetchToolResult derived from Zod schema (single source of truth)
 export type WebFetchToolResult = z.infer<typeof WebFetchToolResultSchema>;
+
+// Browser Tool Types
+export type BrowserToolResult = z.infer<typeof BrowserToolResultSchema>;
 
 // Notify Tool Types
 export type NotifyToolResult =

@@ -56,6 +56,7 @@ import { setGlobalLatticeService } from "@/node/runtime/runtimeFactory";
 import { InferenceService } from "@/node/services/inference";
 import { ChannelService } from "@/node/services/channelService";
 import { ChannelSessionRouter } from "@/node/services/channelSessionRouter";
+import { BrowserSessionManager } from "@/node/services/browserSessionManager";
 
 const UNIX_HELP_CHAT_WELCOME_MESSAGE_ID = "unix-chat-welcome";
 const UNIX_HELP_CHAT_WELCOME_MESSAGE = `Welcome to Lattice Workbench — a system of AI agents for software development.
@@ -114,6 +115,7 @@ export class ServiceContainer {
   private readonly ptyService: PTYService;
   private readonly backgroundProcessManager: BackgroundProcessManager;
   public readonly idleCompactionService: IdleCompactionService;
+  public readonly browserSessionManager: BrowserSessionManager;
 
   constructor(config: Config) {
     this.config = config;
@@ -129,6 +131,7 @@ export class ServiceContainer {
     this.backgroundProcessManager = new BackgroundProcessManager(
       path.join(os.tmpdir(), "unix-bashes")
     );
+    this.browserSessionManager = new BrowserSessionManager();
     const workbenchRoot = path.resolve(__dirname, "../../..");
     this.mcpServerManager = new MCPServerManager(this.mcpConfigService, {
       bundledServers: {
@@ -153,6 +156,7 @@ export class ServiceContainer {
       this.workspaceMcpOverridesService
     );
     this.aiService.setMCPServerManager(this.mcpServerManager);
+    this.aiService.setBrowserSessionManager(this.browserSessionManager);
     this.workspaceService = new WorkspaceService(
       config,
       this.historyService,
@@ -365,6 +369,7 @@ export class ServiceContainer {
   async shutdown(): Promise<void> {
     this.idleCompactionService.stop();
     await this.channelService.shutdown();
+    await this.browserSessionManager.closeAll();
     await this.inferenceService.dispose();
     await this.telemetryService.shutdown();
   }

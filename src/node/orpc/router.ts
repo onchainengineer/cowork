@@ -1,4 +1,5 @@
 import { os } from "@orpc/server";
+import { z } from "zod";
 import * as schemas from "@/common/orpc/schemas";
 import type { ORPCContext } from "./context";
 import {
@@ -2291,6 +2292,26 @@ export const router = (authToken?: string) => {
             );
           }),
       },
+    },
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // BROWSER — embedded browser session state for BrowserTab UI
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    browser: {
+      /** Get all browser sessions for a workspace + debug URLs for live webview */
+      state: t
+        .input(z.object({ workspaceId: z.string() }))
+        .handler(async ({ context, input }) => {
+          const mgr = context.browserSessionManager;
+          const sessions = mgr.listSessions(input.workspaceId).map((s) => {
+            const info = mgr.getSessionInfo(s.id);
+            return info;
+          }).filter(Boolean);
+          const snapshot = mgr.getSnapshot(input.workspaceId);
+          const activePageUrl = mgr.getActivePageUrl(input.workspaceId);
+          return { sessions, snapshot, activePageUrl };
+        }),
     },
   });
 };

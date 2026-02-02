@@ -1008,6 +1008,103 @@ export const TOOL_DEFINITIONS = {
       .strict(),
   },
   // #endregion NOTIFY_DOCS
+  // #region BROWSER_DOCS
+  browser: {
+    description:
+      "Control a browser to interact with web pages. Each workspace gets its own isolated browser session " +
+      "(separate cookies, storage, login state). Use this for web automation: navigating sites, " +
+      "filling forms, clicking buttons, reading page content, and taking screenshots.\n\n" +
+      "## Workflow pattern (Anthropic computer-use style):\n" +
+      "1. `navigate` to a URL\n" +
+      "2. `screenshot` to see the current state\n" +
+      "3. Decide next action based on what you see\n" +
+      "4. `click`, `type`, `scroll`, etc.\n" +
+      "5. `screenshot` again to verify the result\n" +
+      "6. Repeat until task is complete\n\n" +
+      "## Available actions:\n" +
+      "- **navigate**: Go to a URL\n" +
+      "- **click**: Click an element by CSS selector or [x,y] coordinate\n" +
+      "- **type**: Type text into a field (by selector or focused element)\n" +
+      "- **scroll**: Scroll up/down/left/right\n" +
+      "- **screenshot**: Capture the visible page as base64 PNG\n" +
+      "- **read_text**: Extract text content from page or element\n" +
+      "- **read_html**: Get raw HTML of page or element\n" +
+      "- **wait**: Wait for an element to appear or a fixed delay\n" +
+      "- **select**: Select a dropdown option\n" +
+      "- **hover**: Hover over an element\n" +
+      "- **go_back** / **go_forward**: Browser history navigation\n" +
+      "- **new_tab**: Open a new browser tab (optionally with URL)\n" +
+      "- **close_tab**: Close a tab\n" +
+      "- **list_tabs**: List all open tabs\n" +
+      "- **switch_tab**: Switch to a different tab\n" +
+      "- **evaluate**: Run JavaScript in the page context\n\n" +
+      "## Tips:\n" +
+      "- Always screenshot after navigation or clicks to verify state\n" +
+      "- Use CSS selectors when possible; fall back to coordinates for complex UIs\n" +
+      "- For login flows, type username → click next → type password → click submit\n" +
+      "- Sub-agents each get their own browser — use for parallel web tasks",
+    schema: z.object({
+      action: z
+        .enum([
+          "navigate",
+          "click",
+          "type",
+          "scroll",
+          "screenshot",
+          "read_text",
+          "read_html",
+          "wait",
+          "select",
+          "hover",
+          "go_back",
+          "go_forward",
+          "new_tab",
+          "close_tab",
+          "list_tabs",
+          "switch_tab",
+          "evaluate",
+        ])
+        .describe("The browser action to perform"),
+      url: z.string().optional().describe("URL to navigate to (for navigate/new_tab actions)"),
+      selector: z
+        .string()
+        .optional()
+        .describe("CSS selector for element interaction (click, type, read_text, etc.)"),
+      text: z.string().optional().describe("Text to type (for type action)"),
+      value: z.string().optional().describe("Value to select (for select action)"),
+      coordinate: z
+        .tuple([z.number(), z.number()])
+        .optional()
+        .describe("Click/hover coordinate [x, y] — use when CSS selector is not reliable"),
+      direction: z
+        .enum(["up", "down", "left", "right"])
+        .optional()
+        .describe("Scroll direction (default: down)"),
+      amount: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Scroll amount in pixels (default: 500)"),
+      full_page: z
+        .boolean()
+        .optional()
+        .describe("Capture full-page screenshot (default: false, captures viewport only)"),
+      timeout_ms: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Action timeout in milliseconds (default: 30000)"),
+      page_id: z
+        .string()
+        .optional()
+        .describe("Tab/page ID for tab operations (close_tab, switch_tab)"),
+      code: z
+        .string()
+        .optional()
+        .describe("JavaScript code to evaluate in page context (for evaluate action)"),
+    }),
+  },
+  // #endregion BROWSER_DOCS
 } as const;
 
 // -----------------------------------------------------------------------------
@@ -1319,6 +1416,21 @@ export const NotebookEditToolResultSchema = z.union([
   }),
 ]);
 
+// -- Browser result --
+export const BrowserToolResultSchema = z.union([
+  z.object({
+    success: z.literal(true),
+    content_type: z.enum(["text", "html", "screenshot", "info"]),
+    content: z.string(),
+    url: z.string(),
+    title: z.string(),
+  }),
+  z.object({
+    success: z.literal(false),
+    error: z.string(),
+  }),
+]);
+
 /**
  * Names of tools that are bridgeable to PTC sandbox.
  * If adding a new tool here, you must also add its result schema below.
@@ -1341,7 +1453,8 @@ export type BridgeableToolName =
   | "task"
   | "task_await"
   | "task_list"
-  | "task_terminate";
+  | "task_terminate"
+  | "browser";
 
 /**
  * Lookup map for result schemas by tool name.
@@ -1368,6 +1481,7 @@ export const RESULT_SCHEMAS: Record<BridgeableToolName, z.ZodType> = {
   task_await: TaskAwaitToolResultSchema,
   task_list: TaskListToolResultSchema,
   task_terminate: TaskTerminateToolResultSchema,
+  browser: BrowserToolResultSchema,
 };
 
 /**
@@ -1432,6 +1546,7 @@ export function getAvailableTools(
     "glob",
     "grep",
     "notebook_edit",
+    "browser",
   ];
 
   // Add provider-specific tools

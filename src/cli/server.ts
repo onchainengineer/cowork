@@ -120,6 +120,7 @@ const mockWindow: BrowserWindow = {
     inferenceService: serviceContainer.inferenceService,
     channelService: serviceContainer.channelService,
     channelSessionRouter: serviceContainer.channelSessionRouter,
+    browserSessionManager: serviceContainer.browserSessionManager,
   };
 
   const mdnsAdvertiser = new MdnsAdvertiserService();

@@ -28,6 +28,7 @@ import { registerCronTools } from "./tools/cron.js";
 import { registerHealthTools } from "./tools/health.js";
 import { registerCodexTools } from "./tools/codex.js";
 import { registerSkillsTools } from "./tools/skills.js";
+import { registerBrowserTools } from "./tools/browser.js";
 
 // ── Parse CLI args ──────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ async function main(): Promise<void> {
   registerHealthTools(server, client);
   registerCodexTools(server, client);
   registerSkillsTools(server, client);
+  registerBrowserTools(server);
 
   // Connect via stdio transport
   const transport = new StdioServerTransport();
@@ -96,7 +98,7 @@ async function main(): Promise<void> {
   console.error(`[lattice-workbench-mcp] Server started`);
   console.error(`[lattice-workbench-mcp] Workbench URL: ${workbenchUrl}`);
   console.error(`[lattice-workbench-mcp] Auth: ${authToken ? "enabled" : "none"}`);
-  console.error(`[lattice-workbench-mcp] Tools registered: workspace, project, channel, config, system, bootstrap, swarm, cron, health, codex, skills`);
+  console.error(`[lattice-workbench-mcp] Tools registered: workspace, project, channel, config, system, bootstrap, swarm, cron, health, codex, skills, browser`);
 
   // Graceful shutdown — close WebSocket and transport on exit signals
   const shutdown = async () => {

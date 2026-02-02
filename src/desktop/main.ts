@@ -380,6 +380,7 @@ async function loadServices(): Promise<void> {
     inferenceService: services.inferenceService,
     channelService: services.channelService,
     channelSessionRouter: services.channelSessionRouter,
+    browserSessionManager: services.browserSessionManager,
   };
 
   electronIpcMain.handle("unix:get-is-rosetta", async () => {
@@ -545,6 +546,8 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, "../preload.js"),
+      // Enable <webview> tag for embedding live browser sessions in the BrowserTab panel
+      webviewTag: true,
     },
     title: "LATTICE WORKBENCH",
     // Hide menu bar on Linux by default (like VS Code)

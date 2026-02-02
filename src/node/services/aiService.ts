@@ -450,6 +450,7 @@ export class AIService extends EventEmitter {
   private mockModeEnabled: boolean;
   private mockAiStreamPlayer?: MockAiStreamPlayer;
   private readonly backgroundProcessManager?: BackgroundProcessManager;
+  private browserSessionManager?: import("@/node/services/browserSessionManager").BrowserSessionManager;
   private readonly sessionUsageService?: SessionUsageService;
 
   // Tracks in-flight stream startup (before StreamManager emits stream-start).
@@ -507,6 +508,10 @@ export class AIService extends EventEmitter {
 
   setTaskService(taskService: TaskService): void {
     this.taskService = taskService;
+  }
+
+  setBrowserSessionManager(manager: import("@/node/services/browserSessionManager").BrowserSessionManager): void {
+    this.browserSessionManager = manager;
   }
 
   setInferenceService(service: import("@/node/services/inference").InferenceService): void {
@@ -1780,6 +1785,7 @@ export class AIService extends EventEmitter {
           ),
           runtimeTempDir,
           backgroundProcessManager: this.backgroundProcessManager,
+          browserSessionManager: this.browserSessionManager,
           // Plan agent configuration for plan file access.
           // - read: plan file is readable in all agents (useful context)
           // - write: enforced by file_edit_* tools (plan file is read-only outside plan agent)

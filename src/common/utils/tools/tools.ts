@@ -83,6 +83,8 @@ export interface ToolConfiguration {
   enableAgentReport?: boolean;
   /** PTC experiments inherited from parent (for subagent spawning) */
   experiments?: { programmaticToolCalling?: boolean; programmaticToolCallingExclusive?: boolean };
+  /** Browser session manager for browser automation tool (optional) */
+  browserSessionManager?: import("@/node/services/browserSessionManager").BrowserSessionManager;
 }
 
 /**
@@ -270,6 +272,8 @@ export async function getToolsForModel(
   // Lazy-load web_fetch to avoid loading jsdom (ESM-only) at Jest setup time
   // This allows integration tests to run without transforming jsdom's dependencies
   const { createWebFetchTool } = await import("@/node/services/tools/web_fetch");
+  // Lazy-load browser tool to avoid loading playwright at Jest setup time
+  const { createBrowserTool } = await import("@/node/services/tools/browser");
 
   // Runtime-dependent tools need to wait for workspace initialization
   // Wrap them to handle init waiting centrally instead of in each tool
@@ -307,6 +311,9 @@ export async function getToolsForModel(
 
     // Jupyter notebook editing (JSON parse/mutate/write)
     notebook_edit: wrap(createNotebookEditTool(config)),
+
+    // Browser automation (Playwright-backed, one session per workspace)
+    browser: wrap(createBrowserTool(config)),
   };
 
   // Non-runtime tools execute immediately (no init wait needed)

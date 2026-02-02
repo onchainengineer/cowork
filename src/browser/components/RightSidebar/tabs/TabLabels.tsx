@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { ExternalLink, FolderTree, HardDrive, Network, Terminal as TerminalIcon, X } from "lucide-react";
+import { ExternalLink, FolderTree, Globe, HardDrive, Network, Terminal as TerminalIcon, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { FileIcon } from "../../FileIcon";
 import { formatTabDuration, type ReviewStats } from "./registry";
@@ -187,3 +187,11 @@ export const TerminalTabLabel: React.FC<TerminalTabLabelProps> = ({
     </span>
   );
 };
+
+/** Browser tab label with globe icon */
+export const BrowserTabLabel: React.FC = () => (
+  <span className="inline-flex items-center gap-1">
+    <Globe className="h-3 w-3 shrink-0" />
+    Browser
+  </span>
+);
