@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/img/logo.webp" alt="LATTICE WORKBENCH logo" width="15%" />
-
 # Lattice Workbench
 
 ### The Interface of [Lattice — Agent Headquarters](https://latticeruntime.com)
@@ -9,8 +7,6 @@
 **Build agents. Test agents. Monitor agents. One tool.**
 
 </div>
-
-![LATTICE WORKBENCH product screenshot](docs/img/product-hero.webp)
 
 ## Part of the Lattice Ecosystem
 
@@ -29,7 +25,7 @@ brew install latticehq/lattice/lattice
 ```
 
 <div align="center">
-  <img src="../docs/img/lattice-headquarters.png" alt="Lattice: The Open-Source Headquarters for AI Agent Governance" width="100%" />
+  <img src="docs/img/lattice-headquarters.png" alt="Lattice: The Open-Source Headquarters for AI Agent Governance" width="100%" />
 </div>
 
 ## Features
@@ -79,43 +75,6 @@ Use local models alongside cloud providers. Lattice Inference provides an OpenAI
 
 ### With Lattice Registry
 Deploy agents from Workbench using Registry templates. One command gives you a governed agent environment on Docker, Kubernetes, AWS, GCP, or Azure — with identity and audit built in.
-
-## Screenshots
-
-<div align="center">
-  <p><em>Integrated code-review for faster iteration:</p>
-  <img src="./docs/img/code-review.webp" alt="Screenshot of code review" />
-</div>
-
-<div align="center">
-  <p><em>Agents report their status through the sidebar:</em></p>
-  <img src="./docs/img/agent-status.webp" alt="Screenshot of agent status" />
-</div>
-
-<div align="center">
-  <p><em>Git divergence UI keeps you looped in on changes and potential conflicts:</em></p>
-  <img src="./docs/img/git-status.webp" alt="Screenshot of git status" />
-</div>
-
-<div align="center">
-  <p><em>Mermaid diagrams make it easier to review complex proposals from the Agent:</em></p>
-  <img src="./docs/img/plan-mermaid.webp" alt="Screenshot of mermaid diagram" />
-</div>
-
-<div align="center">
-  <p><em>Project secrets help split your Human and Agent identities:</em></p>
-  <img src="./docs/img/project-secrets.webp" alt="Screenshot of project secrets" />
-</div>
-
-<div align="center">
-  <p><em>Stay looped in on costs and token consumption:</em></p>
-  <img src="./docs/img/costs-tab.webp" alt="Screenshot of costs table" />
-</div>
-
-<div align="center">
-  <p><em>Opportunistic compaction helps keep context small:</em></p>
-  <img src="./docs/img/opportunistic-compaction.webp" alt="Screenshot of opportunistic compaction" />
-</div>
 
 ## Development
 
