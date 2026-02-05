@@ -83,6 +83,12 @@ export const PROVIDER_DEFINITIONS = {
     factoryName: "createOllama",
     requiresApiKey: false, // Local service
   },
+  "claude-code": {
+    displayName: "Claude Code (Max/Pro)",
+    import: () => Promise.resolve({}), // Custom LanguageModelV2 via claudeCodeProvider — spawns `claude` CLI
+    factoryName: "",
+    requiresApiKey: false, // Uses Claude Code CLI authentication (setup-token / auth login)
+  },
   "lattice-inference": {
     displayName: "Lattice Inference",
     import: () => Promise.resolve({}), // No external SDK — custom LanguageModelV2 via InferenceService

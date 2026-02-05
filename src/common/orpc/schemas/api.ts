@@ -149,6 +149,14 @@ export const providers = {
     input: z.void(),
     output: z.array(z.string()),
   },
+  testConnection: {
+    input: z.object({ provider: z.string(), model: z.string().optional() }),
+    output: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      latencyMs: z.number().optional(),
+    }),
+  },
   // Subscription: emits when provider config changes (API keys, models, etc.)
   onConfigChanged: {
     input: z.void(),

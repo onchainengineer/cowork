@@ -532,6 +532,12 @@ export const router = (authToken?: string) => {
         .handler(({ context, input }) =>
           context.providerService.setModels(input.provider, input.models)
         ),
+      testConnection: t
+        .input(schemas.providers.testConnection.input)
+        .output(schemas.providers.testConnection.output)
+        .handler(({ context, input }) =>
+          context.providerService.testConnection(input.provider, input.model)
+        ),
       onConfigChanged: t
         .input(schemas.providers.onConfigChanged.input)
         .output(schemas.providers.onConfigChanged.output)

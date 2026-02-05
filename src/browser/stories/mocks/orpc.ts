@@ -499,6 +499,7 @@ export function createMockORPCClient(options: MockORPCClientOptions = {}): APICl
       getConfig: () => Promise.resolve(providersConfig),
       setProviderConfig: () => Promise.resolve({ success: true, data: undefined }),
       setModels: () => Promise.resolve({ success: true, data: undefined }),
+      testConnection: () => Promise.resolve({ success: true, message: "Mock connection successful.", latencyMs: 42 }),
     },
     general: {
       listDirectory: () => Promise.resolve({ entries: [], hasMore: false }),

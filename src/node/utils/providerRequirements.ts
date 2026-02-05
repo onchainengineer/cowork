@@ -143,6 +143,12 @@ export function resolveProviderCredentials(
     return { isConfigured: true };
   }
 
+  // Claude Code CLI: auto-configured via `claude setup-token` (Max/Pro subscription)
+  // Token sources: CLAUDE_CODE_OAUTH_TOKEN env var, macOS Keychain, ~/.claude/.credentials.json
+  if (provider === "claude-code") {
+    return { isConfigured: true };
+  }
+
   // Keyless providers (e.g., ollama): require explicit opt-in via baseUrl or models
   const def = PROVIDER_DEFINITIONS[provider];
   if (!def.requiresApiKey) {

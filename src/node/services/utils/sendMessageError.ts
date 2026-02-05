@@ -45,7 +45,9 @@ export const formatSendMessageError = (
   switch (error.type) {
     case "api_key_not_found":
       return {
-        message: `API key not configured for ${error.provider}. Please add your API key in settings.`,
+        message: error.provider === "claude-code"
+          ? `Claude Code CLI not found. Install with: npm install -g @anthropic-ai/claude-code`
+          : `API key not configured for ${error.provider}. Please add your API key in settings.`,
         errorType: "authentication",
       };
     case "provider_not_supported":

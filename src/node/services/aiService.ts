@@ -53,6 +53,8 @@ import type { UnixProviderOptions } from "@/common/types/providerOptions";
 import type { BackgroundProcessManager } from "@/node/services/backgroundProcessManager";
 import type { FileState, EditedFileAttachment } from "@/node/services/agentSession";
 import { log } from "./log";
+import { getClaudeCodeAccessToken, isOAuthToken } from "./claudeCodeCredentials";
+import { createClaudeCodeModel, findClaudeBinary } from "./claudeCodeProvider";
 import { injectFileAtMentions } from "./fileAtMentions";
 import {
   transformModelMessages,
@@ -1082,8 +1084,22 @@ export class AIService extends EventEmitter {
         return Ok(provider(modelId) as LanguageModel);
       }
 
+      // Handle Claude Code CLI provider (Max/Pro subscription)
+      // Spawns `claude -p` subprocess — OAuth tokens are handled internally by the CLI.
+      // This approach is the same used by Cline, OpenClaw, etc. since OAuth tokens
+      // (sk-ant-oat01-*) CANNOT be used directly against api.anthropic.com.
+      if (providerName === "claude-code") {
+        if (!findClaudeBinary()) {
+          return Err({
+            type: "api_key_not_found",
+            provider: providerName,
+          });
+        }
+        return Ok(createClaudeCodeModel(modelId) as LanguageModel);
+      }
+
       // Generic handler for simple providers (standard API key + factory pattern)
-      // Providers with custom logic (anthropic, openai, xai, ollama, openrouter, bedrock, github-copilot, github-copilot-direct)
+      // Providers with custom logic (anthropic, openai, xai, ollama, openrouter, bedrock, github-copilot, github-copilot-direct, claude-code)
       // are handled explicitly above. New providers using the standard pattern need only be
       // added to PROVIDER_DEFINITIONS - no code changes required here.
       const providerDef = PROVIDER_DEFINITIONS[providerName as ProviderName];

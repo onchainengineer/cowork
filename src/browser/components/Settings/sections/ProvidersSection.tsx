@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Check, X, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, X, Eye, EyeOff, ExternalLink, Loader2, Zap } from "lucide-react";
 
 import { createEditKeyHandler } from "@/browser/utils/ui/keybinds";
 import { SUPPORTED_PROVIDERS } from "@/common/constants/providers";
@@ -39,6 +39,11 @@ interface FieldConfig {
 function getProviderFields(provider: ProviderName): FieldConfig[] {
   // GitHub Copilot uses CLI auth - no fields needed
   if (provider === "github-copilot") {
+    return [];
+  }
+
+  // Claude Code: uses CLI subprocess — no manual token entry needed
+  if (provider === "claude-code") {
     return [];
   }
 
@@ -118,6 +123,13 @@ export function ProvidersSection() {
   } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    provider: string;
+    success: boolean;
+    message: string;
+    latencyMs?: number;
+  } | null>(null);
 
   const handleToggleProvider = (provider: string) => {
     setExpandedProvider((prev) => (prev === provider ? null : provider));
@@ -173,6 +185,27 @@ export function ProvidersSection() {
       void api.providers.setProviderConfig({ provider, keyPath: [field], value: "" });
     },
     [api, updateOptimistically]
+  );
+
+  const handleTestConnection = useCallback(
+    async (provider: string) => {
+      if (!api || testingProvider) return;
+      setTestingProvider(provider);
+      setTestResult(null);
+      try {
+        const result = await api.providers.testConnection({ provider });
+        setTestResult({ provider, ...result });
+      } catch (error) {
+        setTestResult({
+          provider,
+          success: false,
+          message: error instanceof Error ? error.message : "Test failed",
+        });
+      } finally {
+        setTestingProvider(null);
+      }
+    },
+    [api, testingProvider]
   );
 
   /** Check if provider is configured (uses backend-computed isConfigured) */
@@ -292,6 +325,33 @@ export function ProvidersSection() {
                   </div>
                 )}
 
+                {fields.length === 0 && provider === "claude-code" && (
+                  <div className="text-muted space-y-1 text-xs">
+                    <div>
+                      Uses your Claude Max/Pro subscription via Claude Code CLI.
+                    </div>
+                    <div>
+                      Install:{" "}
+                      <code className="text-accent">npm install -g @anthropic-ai/claude-code</code>
+                    </div>
+                    <div>
+                      Then authenticate:{" "}
+                      <code className="text-accent">claude auth login</code> or{" "}
+                      <code className="text-accent">claude setup-token</code>
+                    </div>
+                    {configured && (
+                      <div className="text-green-500">
+                        ✓ Claude Code CLI detected — use Test Connection to verify auth.
+                      </div>
+                    )}
+                    {!configured && (
+                      <div className="text-yellow-500">
+                        Claude Code CLI not found in PATH.
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {fields.map((fieldConfig) => {
                   const isEditing =
                     editingField?.provider === provider && editingField?.field === fieldConfig.key;
@@ -390,6 +450,43 @@ export function ProvidersSection() {
                     </div>
                   );
                 })}
+
+                {/* Test Connection button — shown for all configured providers */}
+                {configured && provider !== "github-copilot" && (
+                  <div className="border-border-light border-t pt-3">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleTestConnection(provider)}
+                        disabled={testingProvider === provider}
+                        className="h-7 gap-1.5 px-3 text-xs"
+                      >
+                        {testingProvider === provider ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Testing...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-3 w-3" />
+                            Test Connection
+                          </>
+                        )}
+                      </Button>
+                      {testResult && testResult.provider === provider && (
+                        <span
+                          className={`text-xs ${testResult.success ? "text-green-500" : "text-red-400"}`}
+                        >
+                          {testResult.message}
+                          {testResult.latencyMs != null && testResult.success && (
+                            <span className="text-muted ml-1">({testResult.latencyMs}ms)</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* OpenAI service tier dropdown */}
                 {provider === "openai" && (

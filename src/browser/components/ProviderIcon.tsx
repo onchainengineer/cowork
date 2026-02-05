@@ -29,6 +29,7 @@ const PROVIDER_ICONS: Partial<Record<ProviderName, React.FC>> = {
   openrouter: OpenRouterIcon,
   bedrock: AWSIcon,
   ollama: OllamaIcon,
+  "claude-code": AnthropicIcon,
   "lattice-inference": LatticeIcon,
 };
 
