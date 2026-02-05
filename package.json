@@ -248,7 +248,7 @@
     "LICENSE"
   ],
   "build": {
-    "appId": "com.lattice.app",
+    "appId": "com.latticeruntime.workbench",
     "productName": "Lattice",
     "publish": {
       "provider": "github",
