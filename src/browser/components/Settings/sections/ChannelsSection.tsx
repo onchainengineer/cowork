@@ -6,9 +6,8 @@ import {
   PowerOff,
   Trash2,
   RefreshCw,
-  ChevronDown,
   ChevronRight,
-  Send,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/browser/components/ui/button";
 import { Input } from "@/browser/components/ui/input";
@@ -27,18 +26,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/browser/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/browser/components/ui/tooltip";
 import { useAPI } from "@/browser/contexts/API";
+import { copyToClipboard } from "@/browser/utils/clipboard";
 import type { ChannelListItem, ChannelConfig } from "@/common/types/channel";
 
 // ── Platform metadata ──────────────────────────────────────────────────
 
 const PLATFORM_INFO: Record<
   string,
-  { label: string; icon: string; credentialLabel: string; credentialKey: string; placeholder: string }
+  { label: string; icon: string; color: string; credentialLabel: string; credentialKey: string; placeholder: string }
 > = {
   telegram: {
     label: "Telegram",
     icon: "T",
+    color: "bg-blue-500/20 text-blue-400",
     credentialLabel: "Bot Token",
     credentialKey: "botToken",
     placeholder: "123456:ABC-DEF1234ghIkl-zyx57W2v...",
@@ -46,6 +48,7 @@ const PLATFORM_INFO: Record<
   discord: {
     label: "Discord",
     icon: "D",
+    color: "bg-indigo-500/20 text-indigo-400",
     credentialLabel: "Bot Token",
     credentialKey: "botToken",
     placeholder: "MTA5NzE5OTk4NjM0...",
@@ -53,6 +56,7 @@ const PLATFORM_INFO: Record<
   slack: {
     label: "Slack",
     icon: "S",
+    color: "bg-purple-500/20 text-purple-400",
     credentialLabel: "Bot Token",
     credentialKey: "botToken",
     placeholder: "xoxb-...",
@@ -60,177 +64,19 @@ const PLATFORM_INFO: Record<
   whatsapp: {
     label: "WhatsApp",
     icon: "W",
+    color: "bg-green-500/20 text-green-400",
     credentialLabel: "Access Token",
     credentialKey: "accessToken",
     placeholder: "EAAx...",
   },
 };
 
-// ── Status badge ──────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    connected: "bg-green-500/20 text-green-400",
-    connecting: "bg-yellow-500/20 text-yellow-400",
-    disconnected: "bg-zinc-500/20 text-zinc-400",
-    error: "bg-red-500/20 text-red-400",
-  };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${colors[status] ?? colors.disconnected}`}>
-      {status}
-    </span>
-  );
-}
-
-// ── Platform icon ─────────────────────────────────────────────────────
-
-function PlatformIcon({ type }: { type: string }) {
-  const colors: Record<string, string> = {
-    telegram: "bg-blue-500/20 text-blue-400",
-    discord: "bg-indigo-500/20 text-indigo-400",
-    slack: "bg-purple-500/20 text-purple-400",
-    whatsapp: "bg-green-500/20 text-green-400",
-  };
-  const info = PLATFORM_INFO[type];
-  return (
-    <div
-      className={`flex h-8 w-8 items-center justify-center rounded-md text-sm font-bold ${colors[type] ?? "bg-zinc-500/20 text-zinc-400"}`}
-    >
-      {info?.icon ?? "?"}
-    </div>
-  );
-}
-
-// ── Channel item row ──────────────────────────────────────────────────
-
-interface ChannelItemProps {
-  channel: ChannelListItem;
-  onConnect: (accountId: string) => void;
-  onDisconnect: (accountId: string) => void;
-  onRemove: (accountId: string) => void;
-  onToggle: (channel: ChannelListItem, enabled: boolean) => void;
-  expanded: boolean;
-  onToggleExpand: () => void;
-  config?: ChannelConfig;
-}
-
-function ChannelItem({
-  channel,
-  onConnect,
-  onDisconnect,
-  onRemove,
-  expanded,
-  onToggleExpand,
-  config,
-}: ChannelItemProps) {
-  const info = PLATFORM_INFO[channel.type];
-  const isConnected = channel.status === "connected";
-  const isConnecting = channel.status === "connecting";
-  const sessionCount = channel.sessionCount;
-
-  return (
-    <div className="border-border-medium rounded-lg border">
-      {/* Header row */}
-      <div
-        className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-hover/50"
-        onClick={onToggleExpand}
-      >
-        <button className="text-muted shrink-0">
-          {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        </button>
-        <PlatformIcon type={channel.type} />
-        <div className="flex-1">
-          <div className="text-foreground flex items-center gap-2 text-sm font-medium">
-            {info?.label ?? channel.type}
-            <span className="text-muted font-normal">/{channel.accountId}</span>
-          </div>
-          <div className="text-muted mt-0.5 text-xs">
-            Scope: {channel.sessionScope} &middot; Sessions: {sessionCount}
-          </div>
-        </div>
-        <StatusBadge status={channel.status} />
-        <div className="flex items-center gap-1">
-          {isConnected ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDisconnect(channel.accountId);
-              }}
-              title="Disconnect"
-            >
-              <PowerOff className="h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                onConnect(channel.accountId);
-              }}
-              disabled={isConnecting}
-              title="Connect"
-            >
-              <Power className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted hover:text-error h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(channel.accountId);
-            }}
-            title="Remove channel"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Expanded details */}
-      {expanded && config && (
-        <div className="border-border-medium space-y-3 border-t px-4 py-3">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-            <div>
-              <span className="text-muted">Account ID</span>
-              <div className="text-foreground font-mono">{config.accountId}</div>
-            </div>
-            <div>
-              <span className="text-muted">Session Scope</span>
-              <div className="text-foreground">{config.sessionScope ?? "per-peer"}</div>
-            </div>
-            <div>
-              <span className="text-muted">Default Project</span>
-              <div className="text-foreground font-mono truncate" title={config.defaultProjectPath}>
-                {config.defaultProjectPath ?? "Not set"}
-              </div>
-            </div>
-            <div>
-              <span className="text-muted">Enabled</span>
-              <div className="text-foreground">{config.enabled ? "Yes" : "No"}</div>
-            </div>
-          </div>
-          <div>
-            <span className="text-muted text-xs">Credentials</span>
-            <div className="text-foreground mt-1 font-mono text-xs">
-              {Object.keys(config.credentials).map((key) => (
-                <div key={key}>
-                  {key}: {"*".repeat(8)}...
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+const STATUS_COLORS: Record<string, string> = {
+  connected: "bg-green-500",
+  connecting: "bg-yellow-500 animate-pulse",
+  disconnected: "bg-zinc-500",
+  error: "bg-red-500",
+};
 
 // ── Create channel dialog ─────────────────────────────────────────────
 
@@ -263,7 +109,6 @@ function ChannelCreateDialog({ isOpen, onClose, onCreated }: CreateDialogProps) 
       .then((list) => {
         const paths = list.map(([path]) => path);
         setProjects(paths);
-        // Auto-select first project if none selected
         if (!projectPath && paths.length > 0) {
           setProjectPath(paths[0]!);
         }
@@ -343,22 +188,22 @@ function ChannelCreateDialog({ isOpen, onClose, onCreated }: CreateDialogProps) 
         }
       }}
     >
-      <DialogContent maxWidth="480px" aria-describedby={undefined}>
+      <DialogContent maxWidth="440px" aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>Add Channel</DialogTitle>
+          <DialogTitle className="text-sm">Add Channel</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-3 py-1">
           {/* Platform type */}
-          <div className="space-y-1.5">
-            <label className="text-foreground text-sm font-medium">Platform</label>
+          <div className="space-y-1">
+            <label className="text-foreground text-[11px] font-medium">Platform</label>
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="border-border-medium bg-background h-9 w-full">
+              <SelectTrigger className="border-border-medium bg-background h-7 w-full text-[11px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(PLATFORM_INFO).map(([key, p]) => (
-                  <SelectItem key={key} value={key}>
+                  <SelectItem key={key} value={key} className="text-[11px]">
                     {p.label}
                   </SelectItem>
                 ))}
@@ -367,54 +212,54 @@ function ChannelCreateDialog({ isOpen, onClose, onCreated }: CreateDialogProps) 
           </div>
 
           {/* Account ID */}
-          <div className="space-y-1.5">
-            <label className="text-foreground text-sm font-medium">Account ID</label>
-            <p className="text-muted text-xs">A unique name for this channel (e.g. "my-bot", "support-bot")</p>
+          <div className="space-y-1">
+            <label className="text-foreground text-[11px] font-medium">Account ID</label>
+            <div className="text-muted text-[10px]">Unique name for this channel (e.g. "my-bot")</div>
             <Input
               value={accountId}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccountId(e.target.value)}
               placeholder="my-telegram-bot"
-              className="border-border-medium bg-background h-9"
+              className="border-border-medium bg-background h-7 text-[11px]"
             />
           </div>
 
           {/* Credential */}
-          <div className="space-y-1.5">
-            <label className="text-foreground text-sm font-medium">{info?.credentialLabel ?? "Token"}</label>
-            <p className="text-muted text-xs">
+          <div className="space-y-1">
+            <label className="text-foreground text-[11px] font-medium">{info?.credentialLabel ?? "Token"}</label>
+            <div className="text-muted text-[10px]">
               {type === "telegram"
-                ? "Get this from @BotFather on Telegram"
+                ? "Get from @BotFather on Telegram"
                 : type === "discord"
-                  ? "Get this from the Discord Developer Portal"
+                  ? "Get from Discord Developer Portal"
                   : "Platform authentication token"}
-            </p>
+            </div>
             <Input
               value={credential}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCredential(e.target.value)}
               placeholder={info?.placeholder ?? "Enter token..."}
-              className="border-border-medium bg-background h-9 font-mono text-xs"
+              className="border-border-medium bg-background h-7 font-mono text-[11px]"
               type="password"
             />
           </div>
 
           {/* Default project */}
-          <div className="space-y-1.5">
-            <label className="text-foreground text-sm font-medium">
+          <div className="space-y-1">
+            <label className="text-foreground text-[11px] font-medium">
               Project <span className="text-error">*</span>
             </label>
-            <p className="text-muted text-xs">
-              New workspaces will be created in this project when a new user messages the bot
-            </p>
+            <div className="text-muted text-[10px]">
+              New workspaces created in this project for inbound messages
+            </div>
             {projects.length > 0 ? (
               <Select value={projectPath} onValueChange={setProjectPath}>
-                <SelectTrigger className="border-border-medium bg-background h-9 w-full font-mono text-xs">
+                <SelectTrigger className="border-border-medium bg-background h-7 w-full font-mono text-[11px]">
                   <SelectValue placeholder="Select a project..." />
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => {
                     const shortName = p.split("/").slice(-2).join("/");
                     return (
-                      <SelectItem key={p} value={p}>
+                      <SelectItem key={p} value={p} className="text-[11px]">
                         {shortName}
                       </SelectItem>
                     );
@@ -426,42 +271,43 @@ function ChannelCreateDialog({ isOpen, onClose, onCreated }: CreateDialogProps) 
                 value={projectPath}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectPath(e.target.value)}
                 placeholder="/path/to/your/project"
-                className="border-border-medium bg-background h-9 font-mono text-xs"
+                className="border-border-medium bg-background h-7 font-mono text-[11px]"
               />
             )}
           </div>
 
           {/* Session scope */}
-          <div className="space-y-1.5">
-            <label className="text-foreground text-sm font-medium">Session Scope</label>
-            <p className="text-muted text-xs">How messages from different users are routed</p>
+          <div className="space-y-1">
+            <label className="text-foreground text-[11px] font-medium">Session Scope</label>
             <Select value={sessionScope} onValueChange={setSessionScope}>
-              <SelectTrigger className="border-border-medium bg-background h-9 w-full">
+              <SelectTrigger className="border-border-medium bg-background h-7 w-full text-[11px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="per-peer">Per User (isolated workspaces)</SelectItem>
-                <SelectItem value="per-channel-peer">Per Channel + User</SelectItem>
-                <SelectItem value="shared">Shared (all users in one workspace)</SelectItem>
+                <SelectItem value="per-peer" className="text-[11px]">Per User (isolated)</SelectItem>
+                <SelectItem value="per-channel-peer" className="text-[11px]">Per Channel + User</SelectItem>
+                <SelectItem value="shared" className="text-[11px]">Shared (single workspace)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Enabled toggle */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between py-0.5">
             <div>
-              <div className="text-foreground text-sm font-medium">Auto-connect</div>
-              <div className="text-muted text-xs">Connect automatically when workbench starts</div>
+              <div className="text-foreground text-[11px] font-medium">Auto-connect</div>
+              <div className="text-muted text-[10px]">Connect when workbench starts</div>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Toggle auto-connect" />
           </div>
 
-          {error && <p className="text-error text-xs">{error}</p>}
+          {error && <p className="text-error text-[11px]">{error}</p>}
         </div>
 
         <DialogFooter>
           <Button
             variant="secondary"
+            size="sm"
+            className="h-7 text-[11px]"
             onClick={() => {
               resetForm();
               onClose();
@@ -469,8 +315,8 @@ function ChannelCreateDialog({ isOpen, onClose, onCreated }: CreateDialogProps) 
           >
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={saving}>
-            {saving ? "Creating..." : "Create Channel"}
+          <Button size="sm" className="h-7 text-[11px]" onClick={handleCreate} disabled={saving}>
+            {saving ? "Creating..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -496,7 +342,6 @@ export function ChannelsSection() {
       const list = await api.channels.list();
       setChannels(list);
 
-      // Load full configs for each channel
       const configMap = new Map<string, ChannelConfig>();
       for (const ch of list) {
         try {
@@ -517,7 +362,6 @@ export function ChannelsSection() {
   useEffect(() => {
     loadChannels();
 
-    // Auto-refresh every 5 seconds so status + session counts stay live
     const interval = setInterval(() => {
       loadChannels();
     }, 5000);
@@ -587,79 +431,310 @@ export function ChannelsSection() {
     [api, configs, loadChannels]
   );
 
+  const toggleExpand = (accountId: string) => {
+    setExpandedId((prev) => (prev === accountId ? null : accountId));
+  };
+
+  // ── Expanded detail row ──
+  const renderExpandedRow = (ch: ChannelListItem) => {
+    const config = configs.get(ch.accountId);
+    if (!config) return null;
+
+    const projectShort = config.defaultProjectPath
+      ? config.defaultProjectPath.split("/").slice(-2).join("/")
+      : "Not set";
+
+    return (
+      <tr key={`${ch.accountId}-detail`}>
+        <td colSpan={6} className="p-0">
+          <div className="bg-background-secondary/20 border-t border-border-medium/50 px-4 py-2.5">
+            <div className="ml-4 space-y-2">
+              {/* Account ID */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Account</span>
+                <button
+                  type="button"
+                  className="text-muted hover:text-foreground flex items-center gap-1 bg-transparent p-0 text-[11px] font-mono"
+                  onClick={() => void copyToClipboard(config.accountId)}
+                >
+                  <code>{config.accountId}</code>
+                  <Copy className="h-2.5 w-2.5 opacity-50" />
+                </button>
+              </div>
+
+              {/* Project */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Project</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-foreground text-[11px] font-mono truncate max-w-[280px] block cursor-help">
+                      {projectShort}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-[11px] font-mono">
+                    {config.defaultProjectPath ?? "Not set"}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+
+              {/* Session scope */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Scope</span>
+                <span className="text-foreground text-[11px]">{config.sessionScope ?? "per-peer"}</span>
+              </div>
+
+              {/* Auto-connect */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Auto-connect</span>
+                <Switch
+                  checked={config.enabled}
+                  onCheckedChange={(val) => handleToggle(ch, val)}
+                  aria-label="Toggle auto-connect"
+                />
+              </div>
+
+              {/* Credentials */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Credentials</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.keys(config.credentials).map((key) => (
+                    <span
+                      key={key}
+                      className="bg-background-secondary rounded px-1.5 py-0.5 font-mono text-[10px] text-muted"
+                    >
+                      {key}: {"*".repeat(8)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-1">
+                <span className="w-20 shrink-0" />
+                <div className="flex items-center gap-2">
+                  {ch.status === "connected" ? (
+                    <button
+                      type="button"
+                      className="text-muted hover:text-foreground flex items-center gap-1 text-[10px]"
+                      onClick={() => handleDisconnect(ch.accountId)}
+                    >
+                      <PowerOff className="h-3 w-3" />
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-muted hover:text-foreground flex items-center gap-1 text-[10px]"
+                      onClick={() => handleConnect(ch.accountId)}
+                      disabled={ch.status === "connecting"}
+                    >
+                      <Power className="h-3 w-3" />
+                      Connect
+                    </button>
+                  )}
+                  <span className="text-border-medium">|</span>
+                  <button
+                    type="button"
+                    className="text-muted hover:text-red-400 flex items-center gap-1 text-[10px]"
+                    onClick={() => handleRemove(ch.accountId)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted text-xs">
-            Connect external messaging platforms (Telegram, Discord, etc.) to your workbench. Each
-            channel acts as a single identity — the octopus — routing messages to isolated workspace
-            sessions per user.
-          </p>
-        </div>
-      </div>
-
-      {/* Actions bar */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsCreateOpen(true)}
-          className="gap-1.5"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Channel
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setLoading(true);
-            loadChannels();
-          }}
-          className="gap-1.5"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
-
-      {error && <p className="text-error text-xs">{error}</p>}
-
-      {/* Channel list */}
-      {loading && channels.length === 0 ? (
-        <div className="text-muted flex items-center justify-center py-12 text-sm">Loading channels...</div>
-      ) : channels.length === 0 ? (
-        <div className="border-border-medium flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12">
-          <MessageSquare className="text-muted h-8 w-8" />
-          <div className="text-center">
-            <p className="text-foreground text-sm font-medium">No channels configured</p>
-            <p className="text-muted mt-1 text-xs">
-              Add a Telegram or Discord bot to receive messages from external users
-            </p>
+      {/* ── Channels table ── */}
+      <div className="border-border-medium rounded-md border">
+        <div className="bg-background-secondary/40 flex items-center justify-between border-b border-border-medium/50 px-3 py-1.5">
+          <span className="text-[10px] font-semibold tracking-wide uppercase text-muted">
+            Channels
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              className="text-muted hover:text-foreground flex items-center gap-1 text-[10px]"
+              onClick={() => {
+                setLoading(true);
+                loadChannels();
+              }}
+            >
+              <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+            </button>
+            <button
+              type="button"
+              className="text-muted hover:text-foreground flex items-center gap-1 text-[10px]"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="h-3 w-3" />
+              Add
+            </button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setIsCreateOpen(true)} className="mt-2 gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            Add Channel
-          </Button>
         </div>
-      ) : (
-        <div className="space-y-2">
-          {channels.map((ch) => (
-            <ChannelItem
-              key={ch.accountId}
-              channel={ch}
-              config={configs.get(ch.accountId)}
-              onConnect={handleConnect}
-              onDisconnect={handleDisconnect}
-              onRemove={handleRemove}
-              onToggle={handleToggle}
-              expanded={expandedId === ch.accountId}
-              onToggleExpand={() => setExpandedId(expandedId === ch.accountId ? null : ch.accountId)}
-            />
-          ))}
+
+        <div className="text-muted px-3 py-1.5 text-[10px] border-b border-border-medium/50">
+          Connect messaging platforms (Telegram, Discord, Slack, WhatsApp) to route messages into workspace sessions.
         </div>
-      )}
+
+        {error && (
+          <div className="text-error px-3 py-1.5 text-[10px] border-b border-border-medium/50">
+            {error}
+          </div>
+        )}
+
+        {loading && channels.length === 0 ? (
+          <div className="text-muted flex items-center justify-center py-8 text-[11px]">
+            Loading channels...
+          </div>
+        ) : channels.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-8">
+            <MessageSquare className="text-muted h-5 w-5" />
+            <div className="text-center">
+              <p className="text-foreground text-[11px] font-medium">No channels configured</p>
+              <p className="text-muted mt-0.5 text-[10px]">
+                Add a bot to receive messages from external users
+              </p>
+            </div>
+            <button
+              type="button"
+              className="text-accent hover:text-accent/80 mt-1 flex items-center gap-1 text-[10px]"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="h-3 w-3" />
+              Add Channel
+            </button>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border-medium/50">
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted">Channel</th>
+                <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Account</th>
+                <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Scope</th>
+                <th className="px-2 py-1 text-center text-[10px] font-medium text-muted">Sessions</th>
+                <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Status</th>
+                <th className="px-2 py-1 text-right text-[10px] font-medium text-muted">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border-medium/30">
+              {channels.map((ch) => {
+                const info = PLATFORM_INFO[ch.type];
+                const isExpanded = expandedId === ch.accountId;
+                const isConnected = ch.status === "connected";
+                const isConnecting = ch.status === "connecting";
+
+                return (
+                  <React.Fragment key={ch.accountId}>
+                    <tr
+                      className="hover:bg-background-secondary/30 cursor-pointer transition-colors"
+                      onClick={() => toggleExpand(ch.accountId)}
+                    >
+                      {/* Platform + chevron */}
+                      <td className="px-3 py-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <ChevronRight
+                            className={`h-3 w-3 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                          />
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${info?.color ?? "bg-zinc-500/20 text-zinc-400"}`}
+                          >
+                            {info?.icon ?? "?"}
+                          </span>
+                          <span className="text-foreground text-[11px] font-medium">
+                            {info?.label ?? ch.type}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Account */}
+                      <td className="px-2 py-1.5">
+                        <span className="text-muted text-[10px] font-mono">{ch.accountId}</span>
+                      </td>
+                      {/* Scope */}
+                      <td className="px-2 py-1.5">
+                        <span className="text-muted text-[10px]">{ch.sessionScope}</span>
+                      </td>
+                      {/* Sessions */}
+                      <td className="px-2 py-1.5 text-center">
+                        <span className="text-muted text-[10px]">{ch.sessionCount}</span>
+                      </td>
+                      {/* Status dot + label */}
+                      <td className="px-2 py-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`h-1.5 w-1.5 rounded-full ${STATUS_COLORS[ch.status] ?? STATUS_COLORS.disconnected}`} />
+                          <span className="text-muted text-[10px]">{ch.status}</span>
+                        </div>
+                      </td>
+                      {/* Quick actions */}
+                      <td className="px-2 py-1.5 text-right">
+                        <div className="flex items-center justify-end gap-px">
+                          {isConnected ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="text-muted hover:text-foreground rounded p-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDisconnect(ch.accountId);
+                                  }}
+                                >
+                                  <PowerOff className="h-3 w-3" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-[11px]">Disconnect</TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="text-muted hover:text-foreground rounded p-1 disabled:opacity-30"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleConnect(ch.accountId);
+                                  }}
+                                  disabled={isConnecting}
+                                >
+                                  <Power className="h-3 w-3" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-[11px]">Connect</TooltipContent>
+                            </Tooltip>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-muted hover:text-red-400 rounded p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemove(ch.accountId);
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-[11px]">Remove</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded ? renderExpandedRow(ch) : null}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Create dialog */}
       <ChannelCreateDialog isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreated={loadChannels} />
