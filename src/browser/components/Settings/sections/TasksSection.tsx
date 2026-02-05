@@ -30,6 +30,11 @@ import {
 } from "@/common/types/tasks";
 import { THINKING_LEVELS, type ThinkingLevel } from "@/common/types/thinking";
 import { enforceThinkingPolicy, getThinkingPolicyForModel } from "@/common/utils/thinking/policy";
+import {
+  ChevronRight,
+  Copy,
+  RotateCcw,
+} from "lucide-react";
 
 const INHERIT = "__inherit__";
 const ALL_THINKING_LEVELS = THINKING_LEVELS;
@@ -107,89 +112,13 @@ function updateAgentDefaultEntry(
   return next;
 }
 
-function renderPolicySummary(agent: AgentDefinitionDescriptor): React.ReactNode {
-  const isCompact = agent.id === "compact";
-
-  const baseDescription = (() => {
-    if (isCompact) {
-      return {
-        title: "Base: compact",
-        note: "Internal no-tools mode.",
-      };
-    }
-
-    if (agent.base) {
-      return {
-        title: `Base: ${agent.base}`,
-        note: "Inherits prompt/tools from base.",
-      };
-    }
-
-    return {
-      title: "Base: (none)",
-      note: "No base agent configured.",
-    };
-  })();
-
-  const pieces: React.ReactNode[] = [
-    <Tooltip key="base-policy">
-      <TooltipTrigger asChild>
-        <span className="cursor-help underline decoration-dotted underline-offset-2">
-          {baseDescription.title.toLowerCase()}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent align="start" className="max-w-80 whitespace-normal">
-        <div className="font-medium">{baseDescription.title}</div>
-        <div className="text-muted mt-2 text-xs">{baseDescription.note}</div>
-      </TooltipContent>
-    </Tooltip>,
-  ];
-
+function getToolsSummary(agent: AgentDefinitionDescriptor): string {
   const toolAdd = agent.tools?.add ?? [];
   const toolRemove = agent.tools?.remove ?? [];
-  const toolRuleCount = toolAdd.length + toolRemove.length;
-
-  if (toolRuleCount > 0 || agent.base) {
-    pieces.push(
-      <Tooltip key="tools">
-        <TooltipTrigger asChild>
-          <span className="cursor-help underline decoration-dotted underline-offset-2">
-            {toolRuleCount > 0 ? `tools: ${toolRuleCount}` : "tools: inherited"}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent align="start" className="max-w-80 whitespace-normal">
-          <div className="font-medium">Tools</div>
-          {toolRuleCount > 0 ? (
-            <ul className="mt-1 space-y-0.5">
-              {toolAdd.map((pattern) => (
-                <li key={`add:${pattern}`}>
-                  <span className="text-green-500">+</span> <code>{pattern}</code>
-                </li>
-              ))}
-              {toolRemove.map((pattern) => (
-                <li key={`remove:${pattern}`}>
-                  <span className="text-red-500">−</span> <code>{pattern}</code>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-muted mt-1 text-xs">Inherited from base.</div>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <>
-      {pieces.map((piece, idx) => (
-        <React.Fragment key={idx}>
-          {idx > 0 ? " • " : null}
-          {piece}
-        </React.Fragment>
-      ))}
-    </>
-  );
+  const count = toolAdd.length + toolRemove.length;
+  if (count > 0) return `${count} rule${count > 1 ? "s" : ""}`;
+  if (agent.base) return "inherited";
+  return "—";
 }
 
 function areTaskSettingsEqual(a: TaskSettings, b: TaskSettings): boolean {
@@ -248,6 +177,8 @@ export function TasksSection() {
   const [loaded, setLoaded] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
@@ -480,8 +411,6 @@ export function TasksSection() {
   const subagents = useMemo(
     () =>
       [...listedAgents]
-        // Keep the sections mutually exclusive: UI agents belong under "UI agents" even if they
-        // can also run as sub-agents.
         .filter((agent) => agent.subagentRunnable && !agent.uiSelectable)
         .sort((a, b) => a.name.localeCompare(b.name)),
     [listedAgents]
@@ -502,195 +431,300 @@ export function TasksSection() {
       .sort((a, b) => a.localeCompare(b));
   }, [agentAiDefaults, listedAgents]);
 
-  const renderAgentDefaults = (agent: AgentDefinitionDescriptor) => {
-    const entry = agentAiDefaults[agent.id];
-    const modelValue = entry?.modelString ?? INHERIT;
-    const thinkingValue = entry?.thinkingLevel ?? INHERIT;
-    const allowedThinkingLevels =
-      modelValue !== INHERIT ? getThinkingPolicyForModel(modelValue) : ALL_THINKING_LEVELS;
-
-    const agentDefinitionPath = getAgentDefinitionPath(agent);
-    const scopeNode = agentDefinitionPath ? (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="hover:text-foreground cursor-copy bg-transparent p-0 underline decoration-dotted underline-offset-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              void copyToClipboard(agentDefinitionPath);
-            }}
-          >
-            {agent.scope}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent align="start" className="max-w-80 whitespace-normal">
-          <div className="font-medium">Agent file</div>
-          <div className="mt-1">
-            <code>{agentDefinitionPath}</code>
-          </div>
-          <div className="text-muted mt-2 text-xs">Click to copy</div>
-        </TooltipContent>
-      </Tooltip>
-    ) : (
-      <span>{agent.scope}</span>
-    );
-
-    return (
-      <div
-        key={agent.id}
-        className="border-border-medium bg-background-secondary rounded-md border p-3"
-      >
-        <div className="flex items-baseline justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-foreground text-sm font-medium">{agent.name}</div>
-            <div className="text-muted text-xs">
-              {agent.id} • {scopeNode} • {renderPolicySummary(agent)}
-              {agent.uiSelectable && agent.subagentRunnable ? (
-                <>
-                  {" "}
-                  •{" "}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="cursor-help underline decoration-dotted underline-offset-2">
-                        sub-agent
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent align="start" className="max-w-80 whitespace-normal">
-                      Can be invoked as a sub-agent.
-                    </TooltipContent>
-                  </Tooltip>
-                </>
-              ) : null}
-            </div>
-
-            {agent.description ? (
-              <div className="text-muted mt-1 text-xs">{agent.description}</div>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="space-y-1">
-            <div className="text-muted text-xs">Model</div>
-            <div className="flex items-center gap-2">
-              <ModelSelector
-                value={modelValue === INHERIT ? "" : modelValue}
-                emptyLabel="Inherit"
-                onChange={(value) => setAgentModel(agent.id, value)}
-                models={models}
-                hiddenModels={hiddenModels}
-              />
-              {modelValue !== INHERIT ? (
-                <button
-                  type="button"
-                  className="text-muted hover:text-foreground text-xs"
-                  onClick={() => setAgentModel(agent.id, INHERIT)}
-                >
-                  Reset
-                </button>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="text-muted text-xs">Reasoning</div>
-            <Select
-              value={thinkingValue}
-              onValueChange={(value) => setAgentThinking(agent.id, value)}
-            >
-              <SelectTrigger className="border-border-medium bg-modal-bg h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={INHERIT}>Inherit</SelectItem>
-                {allowedThinkingLevels.map((level) => (
-                  <SelectItem key={level} value={level}>
-                    {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-    );
+  const toggleAgent = (id: string) => {
+    setExpandedAgent((prev) => (prev === id ? null : id));
   };
 
-  const renderUnknownAgentDefaults = (agentId: string) => {
+  // ── Expanded detail row for an agent ──
+  const renderExpandedRow = (agentId: string, agent?: AgentDefinitionDescriptor) => {
     const entry = agentAiDefaults[agentId];
     const modelValue = entry?.modelString ?? INHERIT;
     const thinkingValue = entry?.thinkingLevel ?? INHERIT;
     const allowedThinkingLevels =
       modelValue !== INHERIT ? getThinkingPolicyForModel(modelValue) : ALL_THINKING_LEVELS;
 
-    return (
-      <div
-        key={agentId}
-        className="border-border-medium bg-background-secondary rounded-md border p-3"
-      >
-        <div className="text-foreground text-sm font-medium">{agentId}</div>
-        <div className="text-muted text-xs">Not discovered in the current workspace</div>
+    const agentDefinitionPath = agent ? getAgentDefinitionPath(agent) : null;
+    const hasOverride = modelValue !== INHERIT || thinkingValue !== INHERIT;
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="space-y-1">
-            <div className="text-muted text-xs">Model</div>
-            <div className="flex items-center gap-2">
-              <ModelSelector
-                value={modelValue === INHERIT ? "" : modelValue}
-                emptyLabel="Inherit"
-                onChange={(value) => setAgentModel(agentId, value)}
-                models={models}
-                hiddenModels={hiddenModels}
-              />
-              {modelValue !== INHERIT ? (
-                <button
-                  type="button"
-                  className="text-muted hover:text-foreground text-xs"
-                  onClick={() => setAgentModel(agentId, INHERIT)}
+    return (
+      <tr key={`${agentId}-detail`}>
+        <td colSpan={6} className="p-0">
+          <div className="bg-background-secondary/20 border-t border-border-medium/50 px-4 py-2.5">
+            <div className="ml-4 space-y-2.5">
+              {/* Model row */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Model</span>
+                <div className="flex items-center gap-2">
+                  <ModelSelector
+                    value={modelValue === INHERIT ? "" : modelValue}
+                    emptyLabel="Inherit"
+                    onChange={(value) => setAgentModel(agentId, value)}
+                    models={models}
+                    hiddenModels={hiddenModels}
+                  />
+                  {modelValue !== INHERIT ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-muted hover:text-foreground"
+                          onClick={() => setAgentModel(agentId, INHERIT)}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="text-[11px]">Reset to inherit</TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Reasoning row */}
+              <div className="flex items-center gap-3">
+                <span className="text-muted w-20 shrink-0 text-[11px]">Reasoning</span>
+                <Select
+                  value={thinkingValue}
+                  onValueChange={(value) => setAgentThinking(agentId, value)}
                 >
-                  Reset
-                </button>
+                  <SelectTrigger className="border-border-medium bg-modal-bg h-6 w-32 text-[11px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={INHERIT} className="text-[11px]">
+                      Inherit
+                    </SelectItem>
+                    {allowedThinkingLevels.map((level) => (
+                      <SelectItem key={level} value={level} className="text-[11px]">
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {thinkingValue !== INHERIT ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-muted hover:text-foreground"
+                        onClick={() => setAgentThinking(agentId, INHERIT)}
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-[11px]">Reset to inherit</TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </div>
+
+              {/* Agent file path */}
+              {agentDefinitionPath ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-muted w-20 shrink-0 text-[11px]">File</span>
+                  <button
+                    type="button"
+                    className="text-muted hover:text-foreground flex items-center gap-1 bg-transparent p-0 text-[11px] font-mono"
+                    onClick={() => void copyToClipboard(agentDefinitionPath)}
+                  >
+                    <code>{agentDefinitionPath}</code>
+                    <Copy className="h-2.5 w-2.5 opacity-50" />
+                  </button>
+                </div>
+              ) : null}
+
+              {/* Tools detail */}
+              {agent && (agent.tools?.add?.length || agent.tools?.remove?.length) ? (
+                <div className="flex items-start gap-3">
+                  <span className="text-muted w-20 shrink-0 text-[11px]">Tools</span>
+                  <div className="flex flex-wrap gap-1">
+                    {(agent.tools?.add ?? []).map((pattern) => (
+                      <span
+                        key={`add:${pattern}`}
+                        className="bg-green-500/10 text-green-400 rounded px-1.5 py-0.5 font-mono text-[10px]"
+                      >
+                        +{pattern}
+                      </span>
+                    ))}
+                    {(agent.tools?.remove ?? []).map((pattern) => (
+                      <span
+                        key={`rm:${pattern}`}
+                        className="bg-red-500/10 text-red-400 rounded px-1.5 py-0.5 font-mono text-[10px]"
+                      >
+                        −{pattern}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Reset all overrides */}
+              {hasOverride ? (
+                <div className="flex items-center gap-3">
+                  <span className="w-20 shrink-0" />
+                  <button
+                    type="button"
+                    className="text-muted hover:text-foreground text-[10px] underline decoration-dotted underline-offset-2"
+                    onClick={() => {
+                      setAgentModel(agentId, INHERIT);
+                      setAgentThinking(agentId, INHERIT);
+                    }}
+                  >
+                    Reset all overrides
+                  </button>
+                </div>
               ) : null}
             </div>
           </div>
-
-          <div className="space-y-1">
-            <div className="text-muted text-xs">Reasoning</div>
-            <Select
-              value={thinkingValue}
-              onValueChange={(value) => setAgentThinking(agentId, value)}
-            >
-              <SelectTrigger className="border-border-medium bg-modal-bg h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={INHERIT}>Inherit</SelectItem>
-                {allowedThinkingLevels.map((level) => (
-                  <SelectItem key={level} value={level}>
-                    {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
+  // ── Table row for a single agent ──
+  const renderAgentRow = (agent: AgentDefinitionDescriptor) => {
+    const entry = agentAiDefaults[agent.id];
+    const modelValue = entry?.modelString ?? INHERIT;
+    const thinkingValue = entry?.thinkingLevel ?? INHERIT;
+    const isExpanded = expandedAgent === agent.id;
+    const hasOverride = modelValue !== INHERIT || thinkingValue !== INHERIT;
+
+    return (
+      <React.Fragment key={agent.id}>
+        <tr
+          className="hover:bg-background-secondary/30 cursor-pointer transition-colors"
+          onClick={() => toggleAgent(agent.id)}
+        >
+          {/* Chevron + Name */}
+          <td className="px-3 py-1.5">
+            <div className="flex items-center gap-1.5">
+              <ChevronRight
+                className={`h-3 w-3 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+              <span className="text-foreground text-[11px] font-medium">{agent.name}</span>
+            </div>
+          </td>
+          {/* Scope */}
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px]">{agent.scope}</span>
+          </td>
+          {/* Base */}
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px] font-mono">{agent.base ?? "—"}</span>
+          </td>
+          {/* Model override */}
+          <td className="px-2 py-1.5">
+            {modelValue !== INHERIT ? (
+              <span className="text-accent text-[10px] font-mono truncate max-w-[120px] block">
+                {modelValue.split(":").pop()}
+              </span>
+            ) : (
+              <span className="text-muted text-[10px]">inherit</span>
+            )}
+          </td>
+          {/* Reasoning override */}
+          <td className="px-2 py-1.5">
+            {thinkingValue !== INHERIT ? (
+              <span className="text-accent text-[10px]">{thinkingValue}</span>
+            ) : (
+              <span className="text-muted text-[10px]">inherit</span>
+            )}
+          </td>
+          {/* Tools */}
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px]">{getToolsSummary(agent)}</span>
+          </td>
+        </tr>
+        {isExpanded ? renderExpandedRow(agent.id, agent) : null}
+      </React.Fragment>
+    );
+  };
+
+  // ── Table row for unknown agent ──
+  const renderUnknownAgentRow = (agentId: string) => {
+    const entry = agentAiDefaults[agentId];
+    const modelValue = entry?.modelString ?? INHERIT;
+    const thinkingValue = entry?.thinkingLevel ?? INHERIT;
+    const isExpanded = expandedAgent === agentId;
+
+    return (
+      <React.Fragment key={agentId}>
+        <tr
+          className="hover:bg-background-secondary/30 cursor-pointer transition-colors"
+          onClick={() => toggleAgent(agentId)}
+        >
+          <td className="px-3 py-1.5">
+            <div className="flex items-center gap-1.5">
+              <ChevronRight
+                className={`h-3 w-3 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+              <span className="text-foreground text-[11px] font-medium">{agentId}</span>
+            </div>
+          </td>
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px] italic">unknown</span>
+          </td>
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px]">—</span>
+          </td>
+          <td className="px-2 py-1.5">
+            {modelValue !== INHERIT ? (
+              <span className="text-accent text-[10px] font-mono truncate max-w-[120px] block">
+                {modelValue.split(":").pop()}
+              </span>
+            ) : (
+              <span className="text-muted text-[10px]">inherit</span>
+            )}
+          </td>
+          <td className="px-2 py-1.5">
+            {thinkingValue !== INHERIT ? (
+              <span className="text-accent text-[10px]">{thinkingValue}</span>
+            ) : (
+              <span className="text-muted text-[10px]">inherit</span>
+            )}
+          </td>
+          <td className="px-2 py-1.5">
+            <span className="text-muted text-[10px]">—</span>
+          </td>
+        </tr>
+        {isExpanded ? renderExpandedRow(agentId) : null}
+      </React.Fragment>
+    );
+  };
+
+  // ── Category separator row ──
+  const renderCategoryHeader = (label: string) => (
+    <tr key={`cat-${label}`} className="bg-background-secondary/40">
+      <td
+        colSpan={6}
+        className="px-3 py-1 text-[10px] font-semibold tracking-wide uppercase text-muted"
+      >
+        {label}
+      </td>
+    </tr>
+  );
+
+  // Determine which categories to show
+  const hasMultipleCategories =
+    [uiAgents.length > 0, subagents.length > 0, internalAgents.length > 0, unknownAgentIds.length > 0]
+      .filter(Boolean).length > 1;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-foreground mb-4 text-sm font-medium">Task Settings</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="text-foreground text-sm">Max Parallel Agent Tasks</div>
-              <div className="text-muted text-xs">
-                Default {TASK_SETTINGS_LIMITS.maxParallelAgentTasks.default}, range{" "}
+    <div className="space-y-4">
+      {/* ── Task Settings card ── */}
+      <div className="border-border-medium rounded-md border">
+        <div className="bg-background-secondary/40 border-b border-border-medium/50 px-3 py-1.5">
+          <span className="text-[10px] font-semibold tracking-wide uppercase text-muted">
+            Task Settings
+          </span>
+        </div>
+        <div className="divide-y divide-border-medium/50">
+          {/* Max Parallel */}
+          <div className="flex items-center justify-between gap-4 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-foreground text-[11px]">Max Parallel Tasks</div>
+              <div className="text-muted text-[10px]">
                 {TASK_SETTINGS_LIMITS.maxParallelAgentTasks.min}–
-                {TASK_SETTINGS_LIMITS.maxParallelAgentTasks.max}
+                {TASK_SETTINGS_LIMITS.maxParallelAgentTasks.max} (default{" "}
+                {TASK_SETTINGS_LIMITS.maxParallelAgentTasks.default})
               </div>
             </div>
             <Input
@@ -701,17 +735,18 @@ export function TasksSection() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setMaxParallelAgentTasks(e.target.value)
               }
-              className="border-border-medium bg-background-secondary h-9 w-28"
+              className="border-border-medium bg-background-secondary h-7 w-20 text-[11px]"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="text-foreground text-sm">Max Task Nesting Depth</div>
-              <div className="text-muted text-xs">
-                Default {TASK_SETTINGS_LIMITS.maxTaskNestingDepth.default}, range{" "}
+          {/* Nesting Depth */}
+          <div className="flex items-center justify-between gap-4 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-foreground text-[11px]">Max Nesting Depth</div>
+              <div className="text-muted text-[10px]">
                 {TASK_SETTINGS_LIMITS.maxTaskNestingDepth.min}–
-                {TASK_SETTINGS_LIMITS.maxTaskNestingDepth.max}
+                {TASK_SETTINGS_LIMITS.maxTaskNestingDepth.max} (default{" "}
+                {TASK_SETTINGS_LIMITS.maxTaskNestingDepth.default})
               </div>
             </div>
             <Input
@@ -722,18 +757,16 @@ export function TasksSection() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setMaxTaskNestingDepth(e.target.value)
               }
-              className="border-border-medium bg-background-secondary h-9 w-28"
+              className="border-border-medium bg-background-secondary h-7 w-20 text-[11px]"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="text-foreground text-sm">
-                Plan: Implement replaces conversation with plan
-              </div>
-              <div className="text-muted text-xs">
-                When enabled, clicking Implement on a plan proposal clears previous messages and
-                shows the plan before switching to Exec.
+          {/* Plan: Implement replaces */}
+          <div className="flex items-center justify-between gap-4 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-foreground text-[11px]">Plan Implement replaces chat</div>
+              <div className="text-muted text-[10px]">
+                Clicking Implement clears history and shows the plan before Exec.
               </div>
             </div>
             <Switch
@@ -744,50 +777,74 @@ export function TasksSection() {
           </div>
         </div>
 
-        {saveError ? <div className="text-danger-light mt-4 text-xs">{saveError}</div> : null}
-      </div>
-
-      <div>
-        <h3 className="text-foreground mb-1 text-sm font-medium">Agent Defaults</h3>
-        <div className="text-muted text-xs">
-          Defaults apply globally. Changing model/reasoning in a workspace creates a workspace
-          override.
-        </div>
-        {agentsLoadFailed ? (
-          <div className="text-danger-light mt-3 text-xs">
-            Failed to load agent definitions for this workspace.
+        {saveError ? (
+          <div className="text-danger-light border-t border-border-medium/50 px-3 py-1.5 text-[10px]">
+            {saveError}
           </div>
         ) : null}
-        {!agentsLoaded ? <div className="text-muted mt-3 text-xs">Loading agents…</div> : null}
       </div>
 
-      {uiAgents.length > 0 ? (
-        <div>
-          <h4 className="text-foreground mb-3 text-sm font-medium">UI agents</h4>
-          <div className="space-y-4">{uiAgents.map(renderAgentDefaults)}</div>
+      {/* ── Agents table ── */}
+      <div className="border-border-medium rounded-md border">
+        <div className="bg-background-secondary/40 flex items-center justify-between border-b border-border-medium/50 px-3 py-1.5">
+          <span className="text-[10px] font-semibold tracking-wide uppercase text-muted">
+            Agents
+          </span>
+          <span className="text-[10px] text-muted">
+            {agentsLoadFailed
+              ? "Failed to load"
+              : !agentsLoaded
+                ? "Loading…"
+                : `${listedAgents.length} agent${listedAgents.length !== 1 ? "s" : ""}`}
+          </span>
         </div>
-      ) : null}
 
-      {subagents.length > 0 ? (
-        <div>
-          <h4 className="text-foreground mb-3 text-sm font-medium">Sub-agents</h4>
-          <div className="space-y-4">{subagents.map(renderAgentDefaults)}</div>
+        <div className="text-muted px-3 py-1.5 text-[10px] border-b border-border-medium/50">
+          Defaults apply globally. Per-agent model/reasoning overrides are set below.
         </div>
-      ) : null}
 
-      {internalAgents.length > 0 ? (
-        <div>
-          <h4 className="text-foreground mb-3 text-sm font-medium">Internal</h4>
-          <div className="space-y-4">{internalAgents.map(renderAgentDefaults)}</div>
-        </div>
-      ) : null}
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border-medium/50">
+              <th className="px-3 py-1 text-left text-[10px] font-medium text-muted">Agent</th>
+              <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Scope</th>
+              <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Base</th>
+              <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Model</th>
+              <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Reasoning</th>
+              <th className="px-2 py-1 text-left text-[10px] font-medium text-muted">Tools</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-medium/30">
+            {uiAgents.length > 0 ? (
+              <>
+                {hasMultipleCategories ? renderCategoryHeader("UI Agents") : null}
+                {uiAgents.map(renderAgentRow)}
+              </>
+            ) : null}
 
-      {unknownAgentIds.length > 0 ? (
-        <div>
-          <h4 className="text-foreground mb-3 text-sm font-medium">Unknown agents</h4>
-          <div className="space-y-4">{unknownAgentIds.map(renderUnknownAgentDefaults)}</div>
-        </div>
-      ) : null}
+            {subagents.length > 0 ? (
+              <>
+                {hasMultipleCategories ? renderCategoryHeader("Sub-agents") : null}
+                {subagents.map(renderAgentRow)}
+              </>
+            ) : null}
+
+            {internalAgents.length > 0 ? (
+              <>
+                {hasMultipleCategories ? renderCategoryHeader("Internal") : null}
+                {internalAgents.map(renderAgentRow)}
+              </>
+            ) : null}
+
+            {unknownAgentIds.length > 0 ? (
+              <>
+                {renderCategoryHeader("Unknown")}
+                {unknownAgentIds.map(renderUnknownAgentRow)}
+              </>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
