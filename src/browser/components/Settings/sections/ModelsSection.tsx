@@ -24,18 +24,17 @@ import {
 } from "@/common/constants/storage";
 import { ModelRow } from "./ModelRow";
 
-// Shared header cell styles
-const headerCellBase = "py-1.5 pr-2 text-[11px] font-medium text-muted";
-
-// Table header component to avoid duplication
-function ModelsTableHeader() {
+// Table header component
+function ModelsTableHeader({ showActions = true }: { showActions?: boolean }) {
   return (
     <thead>
       <tr className="border-border-medium bg-background-secondary/50 border-b">
-        <th className={`${headerCellBase} pl-2 text-left md:pl-3`}>Provider</th>
-        <th className={`${headerCellBase} text-left`}>Model</th>
-        <th className={`${headerCellBase} w-16 text-right md:w-20`}>Context</th>
-        <th className={`${headerCellBase} w-28 text-right md:w-32 md:pr-3`}>Actions</th>
+        <th className="py-1.5 pl-3 pr-2 text-left text-[11px] font-medium text-muted">Provider</th>
+        <th className="py-1.5 pr-2 text-left text-[11px] font-medium text-muted">Model</th>
+        <th className="w-14 py-1.5 pr-2 text-right text-[11px] font-medium text-muted md:w-16">Ctx</th>
+        {showActions && (
+          <th className="w-24 py-1.5 pr-3 text-right text-[11px] font-medium text-muted md:w-28" />
+        )}
       </tr>
     </thead>
   );
@@ -143,7 +142,7 @@ export function ModelsSection() {
     return (
       <div className="flex items-center justify-center gap-2 py-12">
         <Loader2 className="text-muted h-5 w-5 animate-spin" />
-        <span className="text-muted text-sm">Loading settings...</span>
+        <span className="text-muted text-xs">Loading...</span>
       </div>
     );
   }
@@ -173,16 +172,16 @@ export function ModelsSection() {
 
   return (
     <div className="space-y-4">
-      {/* ── Model Defaults ─────────────────────────────────────────────── */}
+      {/* ── Defaults ─────────────────────────────────────────────────────── */}
       <div className="border-border-medium overflow-hidden rounded-md border">
         <div className="border-border-medium bg-background-secondary/50 border-b px-3 py-1.5">
-          <span className="text-muted text-[11px] font-medium">Model Defaults</span>
+          <span className="text-muted text-[11px] font-medium tracking-wide uppercase">Defaults</span>
         </div>
         <div className="divide-border-medium divide-y">
-          <div className="flex items-center gap-4 px-3 py-2">
-            <div className="w-32 shrink-0">
-              <div className="text-muted text-[11px]">Default Model</div>
-              <div className="text-muted-light text-[10px]">New workspaces</div>
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-28 shrink-0">
+              <div className="text-foreground text-[11px]">Default Model</div>
+              <div className="text-muted text-[10px]">New workspaces</div>
             </div>
             <div className="min-w-0 flex-1">
               <SearchableModelSelect
@@ -193,10 +192,10 @@ export function ModelsSection() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-4 px-3 py-2">
-            <div className="w-32 shrink-0">
-              <div className="text-muted text-[11px]">Compaction Model</div>
-              <div className="text-muted-light text-[10px]">History summary</div>
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-28 shrink-0">
+              <div className="text-foreground text-[11px]">Compaction</div>
+              <div className="text-muted text-[10px]">History summary</div>
             </div>
             <div className="min-w-0 flex-1">
               <SearchableModelSelect
@@ -210,127 +209,79 @@ export function ModelsSection() {
         </div>
       </div>
 
-      {/* ── Custom Models ──────────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">Custom Models</div>
-
-        <div className="border-border-medium overflow-hidden rounded-md border">
-          <div className="border-border-medium bg-background-secondary/50 flex flex-wrap items-center gap-1.5 border-b px-2 py-1.5 md:px-3">
-            <Select value={lastProvider} onValueChange={setLastProvider}>
-              <SelectTrigger className="bg-background border-border-medium focus:border-accent h-7 w-auto shrink-0 rounded border px-2 text-xs">
-                <SelectValue placeholder="Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {selectableProviders.map((provider) => (
-                  <SelectItem key={provider} value={provider}>
-                    {PROVIDER_DISPLAY_NAMES[provider]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input
-              type="text"
-              value={newModelId}
-              onChange={(e) => setNewModelId(e.target.value)}
-              placeholder="model-id"
-              className="bg-background border-border-medium focus:border-accent min-w-0 flex-1 rounded border px-2 py-1 font-mono text-xs focus:outline-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void handleAddModel();
-              }}
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleAddModel}
-              disabled={!lastProvider || !newModelId.trim()}
-              className="h-7 shrink-0 gap-1 px-2 text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add
-            </Button>
-          </div>
-          {error && !editing && (
-            <div className="text-error px-2 py-1.5 text-xs md:px-3">{error}</div>
-          )}
+      {/* ── All Models (single unified table) ────────────────────────────── */}
+      <div className="border-border-medium overflow-hidden rounded-md border">
+        {/* Add custom model bar */}
+        <div className="border-border-medium bg-background-secondary/50 flex flex-wrap items-center gap-1.5 border-b px-3 py-1.5">
+          <span className="text-muted mr-auto text-[11px] font-medium tracking-wide uppercase">Models</span>
+          <Select value={lastProvider} onValueChange={setLastProvider}>
+            <SelectTrigger className="bg-background border-border-medium focus:border-accent h-6 w-auto shrink-0 rounded border px-2 text-[11px]">
+              <SelectValue placeholder="Provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {selectableProviders.map((provider) => (
+                <SelectItem key={provider} value={provider}>
+                  {PROVIDER_DISPLAY_NAMES[provider]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <input
+            type="text"
+            value={newModelId}
+            onChange={(e) => setNewModelId(e.target.value)}
+            placeholder="model-id"
+            className="bg-background border-border-medium focus:border-accent w-36 min-w-0 rounded border px-2 py-0.5 font-mono text-[11px] focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleAddModel();
+            }}
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleAddModel}
+            disabled={!lastProvider || !newModelId.trim()}
+            className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </Button>
         </div>
 
-        {customModels.length > 0 && (
-          <div className="border-border-medium overflow-hidden rounded-md border">
-            <table className="w-full">
-              <ModelsTableHeader />
-              <tbody>
-                {customModels.map((model) => {
-                  const isModelEditing =
-                    editing?.provider === model.provider &&
-                    editing?.originalModelId === model.modelId;
-                  return (
-                    <ModelRow
-                      key={model.fullId}
-                      provider={model.provider}
-                      modelId={model.modelId}
-                      fullId={model.fullId}
-                      isCustom={true}
-                      isDefault={defaultModel === model.fullId}
-                      isEditing={isModelEditing}
-                      editValue={isModelEditing ? editing.newModelId : undefined}
-                      editError={isModelEditing ? error : undefined}
-                      saving={false}
-                      hasActiveEdit={editing !== null}
-                      onSetDefault={() => setDefaultModel(model.fullId)}
-                      onStartEdit={() => handleStartEdit(model.provider, model.modelId)}
-                      onSaveEdit={handleSaveEdit}
-                      onCancelEdit={handleCancelEdit}
-                      onEditChange={(value) =>
-                        setEditing((prev) => (prev ? { ...prev, newModelId: value } : null))
-                      }
-                      onRemove={() => handleRemoveModel(model.provider, model.modelId)}
-                      isHiddenFromSelector={hiddenModels.includes(model.fullId)}
-                      onToggleVisibility={() =>
-                        hiddenModels.includes(model.fullId)
-                          ? unhideModel(model.fullId)
-                          : hideModel(model.fullId)
-                      }
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {error && !editing && (
+          <div className="text-error border-border-medium border-b px-3 py-1 text-[11px]">{error}</div>
         )}
-      </div>
 
-      {/* ── Local Models ─────────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">Local Models</div>
-        <div className="border-border-medium rounded-md border p-3">
-          <p className="text-muted text-[11px]">
-            Local model management, cluster status, and device info have moved to the
-            <strong className="text-foreground"> Models</strong> and
-            <strong className="text-foreground"> Cluster</strong> tabs in the right sidebar.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Built-in Models ────────────────────────────────────────────── */}
-      <div className="space-y-2">
-        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">
-          Built-in Models
-        </div>
-        <div className="border-border-medium overflow-hidden rounded-md border">
-          <table className="w-full">
-            <ModelsTableHeader />
-            <tbody>
-              {builtInModels.map((model) => (
+        {/* Table */}
+        <table className="w-full">
+          <ModelsTableHeader />
+          <tbody>
+            {/* Custom models first */}
+            {customModels.map((model) => {
+              const isModelEditing =
+                editing?.provider === model.provider &&
+                editing?.originalModelId === model.modelId;
+              return (
                 <ModelRow
                   key={model.fullId}
                   provider={model.provider}
                   modelId={model.modelId}
                   fullId={model.fullId}
-                  aliases={model.aliases}
-                  isCustom={false}
+                  isCustom={true}
                   isDefault={defaultModel === model.fullId}
-                  isEditing={false}
+                  isEditing={isModelEditing}
+                  editValue={isModelEditing ? editing.newModelId : undefined}
+                  editError={isModelEditing ? error : undefined}
+                  saving={false}
+                  hasActiveEdit={editing !== null}
                   onSetDefault={() => setDefaultModel(model.fullId)}
+                  onStartEdit={() => handleStartEdit(model.provider, model.modelId)}
+                  onSaveEdit={handleSaveEdit}
+                  onCancelEdit={handleCancelEdit}
+                  onEditChange={(value) =>
+                    setEditing((prev) => (prev ? { ...prev, newModelId: value } : null))
+                  }
+                  onRemove={() => handleRemoveModel(model.provider, model.modelId)}
                   isHiddenFromSelector={hiddenModels.includes(model.fullId)}
                   onToggleVisibility={() =>
                     hiddenModels.includes(model.fullId)
@@ -338,10 +289,40 @@ export function ModelsSection() {
                       : hideModel(model.fullId)
                   }
                 />
-              ))}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+
+            {/* Separator between custom and built-in if both exist */}
+            {customModels.length > 0 && builtInModels.length > 0 && (
+              <tr className="border-border-medium border-b">
+                <td colSpan={4} className="bg-background-secondary/30 px-3 py-1">
+                  <span className="text-muted text-[10px] tracking-wide uppercase">Built-in</span>
+                </td>
+              </tr>
+            )}
+
+            {/* Built-in models */}
+            {builtInModels.map((model) => (
+              <ModelRow
+                key={model.fullId}
+                provider={model.provider}
+                modelId={model.modelId}
+                fullId={model.fullId}
+                aliases={model.aliases}
+                isCustom={false}
+                isDefault={defaultModel === model.fullId}
+                isEditing={false}
+                onSetDefault={() => setDefaultModel(model.fullId)}
+                isHiddenFromSelector={hiddenModels.includes(model.fullId)}
+                onToggleVisibility={() =>
+                  hiddenModels.includes(model.fullId)
+                    ? unhideModel(model.fullId)
+                    : hideModel(model.fullId)
+                }
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
