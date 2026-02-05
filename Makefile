@@ -435,6 +435,9 @@ dist-win: build ## Build Windows distributable
 dist-linux: build ## Build Linux distributable
 	@$(BUN_OR_NPX) electron-builder --linux --publish never
 
+release: ## Build all platforms and create GitHub release (patch bump). Use RELEASE_ARGS for options (e.g., --minor, --draft)
+	@./scripts/release.sh $(RELEASE_ARGS)
+
 ## VS Code Extension (delegates to vscode/Makefile)
 
 vscode-ext: ## Build VS Code extension (.vsix)

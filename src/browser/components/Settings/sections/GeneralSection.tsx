@@ -192,17 +192,20 @@ export function GeneralSection() {
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-foreground mb-4 text-sm font-medium">Appearance</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* ── Appearance ──────────────────────────────────────────────────── */}
+      <div className="border-border-medium overflow-hidden rounded-md border">
+        <div className="border-border-medium bg-background-secondary/50 border-b px-3 py-1.5">
+          <span className="text-muted text-[11px] font-medium tracking-wide uppercase">Appearance</span>
+        </div>
+        <div className="divide-border-medium divide-y">
+          <div className="flex items-center justify-between gap-4 px-3 py-2.5">
             <div className="flex-1">
-              <div className="text-foreground text-sm">Theme</div>
-              <div className="text-muted text-xs">Choose your preferred theme</div>
+              <div className="text-foreground text-xs">Theme</div>
+              <div className="text-muted text-[11px]">Choose your preferred theme</div>
             </div>
             <Select value={theme} onValueChange={(value) => setTheme(value as ThemeMode)}>
-              <SelectTrigger className="border-border-medium bg-background-secondary hover:bg-hover h-9 w-auto cursor-pointer rounded-md border px-3 text-sm transition-colors">
+              <SelectTrigger className="border-border-medium bg-background-secondary hover:bg-hover h-7 w-auto cursor-pointer rounded-md border px-2.5 text-xs transition-colors">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -215,36 +218,34 @@ export function GeneralSection() {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 px-3 py-2.5">
             <div className="flex-1">
-              <div className="text-foreground text-sm">Terminal Font</div>
+              <div className="text-foreground text-xs">Terminal Font</div>
               {terminalFontWarning ? (
-                <div className="text-warning text-xs">{terminalFontWarning}</div>
+                <div className="text-warning text-[11px]">{terminalFontWarning}</div>
               ) : null}
-              <div className="text-muted text-xs">Set this to a monospace font you like.</div>
-              <div className="text-muted text-xs">
+              <div className="text-muted text-[11px]">Monospace font for terminal.</div>
+              <div className="text-muted text-[11px]">
                 Preview:{" "}
                 <span className="text-foreground" style={{ fontFamily: terminalFontPreviewFamily }}>
                   {terminalFontPreviewText}
                 </span>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <Input
-                value={terminalFontConfig.fontFamily}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleTerminalFontFamilyChange(e.target.value)
-                }
-                placeholder={DEFAULT_TERMINAL_FONT_CONFIG.fontFamily}
-                className="border-border-medium bg-background-secondary h-9 w-80"
-              />
-            </div>
+            <Input
+              value={terminalFontConfig.fontFamily}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleTerminalFontFamilyChange(e.target.value)
+              }
+              placeholder={DEFAULT_TERMINAL_FONT_CONFIG.fontFamily}
+              className="border-border-medium bg-background-secondary h-7 w-56 text-xs"
+            />
           </div>
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 px-3 py-2.5">
             <div className="flex-1">
-              <div className="text-foreground text-sm">Terminal Font Size</div>
-              <div className="text-muted text-xs">Font size for the integrated terminal</div>
+              <div className="text-foreground text-xs">Terminal Font Size</div>
+              <div className="text-muted text-[11px]">Size in pixels</div>
             </div>
             <Input
               type="number"
@@ -253,73 +254,81 @@ export function GeneralSection() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 handleTerminalFontSizeChange(e.target.value)
               }
-              className="border-border-medium bg-background-secondary h-9 w-28"
+              className="border-border-medium bg-background-secondary h-7 w-20 text-xs"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-foreground text-sm">Editor</div>
-          <div className="text-muted text-xs">Editor to open files in</div>
+      {/* ── Editor ──────────────────────────────────────────────────────── */}
+      <div className="border-border-medium overflow-hidden rounded-md border">
+        <div className="border-border-medium bg-background-secondary/50 border-b px-3 py-1.5">
+          <span className="text-muted text-[11px] font-medium tracking-wide uppercase">Editor</span>
         </div>
-        <Select value={editorConfig.editor} onValueChange={handleEditorChange}>
-          <SelectTrigger className="border-border-medium bg-background-secondary hover:bg-hover h-9 w-auto cursor-pointer rounded-md border px-3 text-sm transition-colors">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EDITOR_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {editorConfig.editor === "custom" && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="divide-border-medium divide-y">
+          <div className="flex items-center justify-between gap-4 px-3 py-2.5">
             <div>
-              <div className="text-foreground text-sm">Custom Command</div>
-              <div className="text-muted text-xs">Command to run (path will be appended)</div>
+              <div className="text-foreground text-xs">Editor</div>
+              <div className="text-muted text-[11px]">Editor to open files in</div>
             </div>
-            <Input
-              value={editorConfig.customCommand ?? ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleCustomCommandChange(e.target.value)
-              }
-              placeholder="e.g., nvim"
-              className="border-border-medium bg-background-secondary h-9 w-40"
-            />
+            <Select value={editorConfig.editor} onValueChange={handleEditorChange}>
+              <SelectTrigger className="border-border-medium bg-background-secondary hover:bg-hover h-7 w-auto cursor-pointer rounded-md border px-2.5 text-xs transition-colors">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EDITOR_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          {isBrowserMode && (
-            <div className="text-warning text-xs">
-              Custom editors are not supported in browser mode. Use VS Code or Cursor instead.
+
+          {editorConfig.editor === "custom" && (
+            <div className="px-3 py-2.5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-foreground text-xs">Custom Command</div>
+                  <div className="text-muted text-[11px]">Command to run (path will be appended)</div>
+                </div>
+                <Input
+                  value={editorConfig.customCommand ?? ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleCustomCommandChange(e.target.value)
+                  }
+                  placeholder="e.g., nvim"
+                  className="border-border-medium bg-background-secondary h-7 w-36 text-xs"
+                />
+              </div>
+              {isBrowserMode && (
+                <div className="text-warning mt-1.5 text-[11px]">
+                  Custom editors are not supported in browser mode. Use VS Code or Cursor instead.
+                </div>
+              )}
+            </div>
+          )}
+
+          {isBrowserMode && sshHostLoaded && (
+            <div className="flex items-center justify-between gap-4 px-3 py-2.5">
+              <div>
+                <div className="text-foreground text-xs">SSH Host</div>
+                <div className="text-muted text-[11px]">
+                  SSH hostname for &apos;Open in Editor&apos; deep links
+                </div>
+              </div>
+              <Input
+                value={sshHost}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleSshHostChange(e.target.value)
+                }
+                placeholder={window.location.hostname}
+                className="border-border-medium bg-background-secondary h-7 w-36 text-xs"
+              />
             </div>
           )}
         </div>
-      )}
-
-      {isBrowserMode && sshHostLoaded && (
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-foreground text-sm">SSH Host</div>
-            <div className="text-muted text-xs">
-              SSH hostname for &apos;Open in Editor&apos; deep links
-            </div>
-          </div>
-          <Input
-            value={sshHost}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              handleSshHostChange(e.target.value)
-            }
-            placeholder={window.location.hostname}
-            className="border-border-medium bg-background-secondary h-9 w-40"
-          />
-        </div>
-      )}
+      </div>
     </div>
   );
 }

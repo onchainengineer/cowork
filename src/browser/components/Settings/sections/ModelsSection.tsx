@@ -25,7 +25,7 @@ import {
 import { ModelRow } from "./ModelRow";
 
 // Shared header cell styles
-const headerCellBase = "py-1.5 pr-2 text-xs font-medium text-muted";
+const headerCellBase = "py-1.5 pr-2 text-[11px] font-medium text-muted";
 
 // Table header component to avoid duplication
 function ModelsTableHeader() {
@@ -175,13 +175,13 @@ export function ModelsSection() {
     <div className="space-y-4">
       {/* ── Model Defaults ─────────────────────────────────────────────── */}
       <div className="border-border-medium overflow-hidden rounded-md border">
-        <div className="border-border-medium bg-background-secondary/50 border-b px-2 py-1.5 md:px-3">
-          <span className="text-muted text-xs font-medium">Model Defaults</span>
+        <div className="border-border-medium bg-background-secondary/50 border-b px-3 py-1.5">
+          <span className="text-muted text-[11px] font-medium">Model Defaults</span>
         </div>
         <div className="divide-border-medium divide-y">
-          <div className="flex items-center gap-4 px-2 py-2 md:px-3">
-            <div className="w-28 shrink-0 md:w-32">
-              <div className="text-muted text-xs">Default Model</div>
+          <div className="flex items-center gap-4 px-3 py-2">
+            <div className="w-32 shrink-0">
+              <div className="text-muted text-[11px]">Default Model</div>
               <div className="text-muted-light text-[10px]">New workspaces</div>
             </div>
             <div className="min-w-0 flex-1">
@@ -193,9 +193,9 @@ export function ModelsSection() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-4 px-2 py-2 md:px-3">
-            <div className="w-28 shrink-0 md:w-32">
-              <div className="text-muted text-xs">Compaction Model</div>
+          <div className="flex items-center gap-4 px-3 py-2">
+            <div className="w-32 shrink-0">
+              <div className="text-muted text-[11px]">Compaction Model</div>
               <div className="text-muted-light text-[10px]">History summary</div>
             </div>
             <div className="min-w-0 flex-1">
@@ -211,8 +211,8 @@ export function ModelsSection() {
       </div>
 
       {/* ── Custom Models ──────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="text-muted text-xs font-medium tracking-wide uppercase">Custom Models</div>
+      <div className="space-y-2">
+        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">Custom Models</div>
 
         <div className="border-border-medium overflow-hidden rounded-md border">
           <div className="border-border-medium bg-background-secondary/50 flex flex-wrap items-center gap-1.5 border-b px-2 py-1.5 md:px-3">
@@ -300,10 +300,10 @@ export function ModelsSection() {
       </div>
 
       {/* ── Local Models ─────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="text-muted text-xs font-medium tracking-wide uppercase">Local Models</div>
+      <div className="space-y-2">
+        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">Local Models</div>
         <div className="border-border-medium rounded-md border p-3">
-          <p className="text-muted text-xs">
+          <p className="text-muted text-[11px]">
             Local model management, cluster status, and device info have moved to the
             <strong className="text-foreground"> Models</strong> and
             <strong className="text-foreground"> Cluster</strong> tabs in the right sidebar.
@@ -312,8 +312,8 @@ export function ModelsSection() {
       </div>
 
       {/* ── Built-in Models ────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="text-muted text-xs font-medium tracking-wide uppercase">
+      <div className="space-y-2">
+        <div className="text-muted text-[11px] font-medium tracking-wide uppercase">
           Built-in Models
         </div>
         <div className="border-border-medium overflow-hidden rounded-md border">

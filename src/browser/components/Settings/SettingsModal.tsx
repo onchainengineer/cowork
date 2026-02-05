@@ -115,18 +115,18 @@ export function SettingsModal() {
     <Dialog open={isOpen} onOpenChange={(open) => !open && close()}>
       <DialogContent
         showCloseButton={false}
-        maxWidth="800px"
+        maxWidth="920px"
         aria-describedby={undefined}
-        className="flex h-[80vh] max-h-[600px] flex-col gap-0 overflow-hidden p-0 md:h-[70vh] md:flex-row"
+        className="flex h-[85vh] max-h-[680px] flex-col gap-0 overflow-hidden p-0 md:h-[75vh] md:flex-row"
       >
         {/* Visually hidden title for accessibility */}
         <VisuallyHidden>
           <DialogTitle>Settings</DialogTitle>
         </VisuallyHidden>
         {/* Sidebar - horizontal tabs on mobile, vertical on desktop */}
-        <div className="border-border-medium flex shrink-0 flex-col border-b md:w-48 md:border-r md:border-b-0">
-          <div className="border-border-medium flex h-12 items-center justify-between border-b px-4 md:justify-start">
-            <span className="text-foreground text-sm font-semibold">Settings</span>
+        <div className="bg-background-secondary/30 flex shrink-0 flex-col border-b border-border-medium md:w-52 md:border-r md:border-b-0">
+          <div className="flex h-11 items-center justify-between border-b border-border-medium px-4 md:justify-start">
+            <span className="text-foreground text-xs font-semibold tracking-wide uppercase">Settings</span>
             {/* Close button in header on mobile only */}
             <Button
               variant="ghost"
@@ -138,15 +138,15 @@ export function SettingsModal() {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <nav className="flex gap-1 overflow-x-auto p-2 md:flex-1 md:flex-col md:overflow-y-auto">
+          <nav className="flex gap-0.5 overflow-x-auto p-1.5 md:flex-1 md:flex-col md:overflow-y-auto">
             {sections.map((section) => (
               <Button
                 key={section.id}
                 variant="ghost"
                 onClick={() => setActiveSection(section.id)}
-                className={`flex h-auto shrink-0 items-center justify-start gap-2 rounded-md px-3 py-2 text-left text-sm whitespace-nowrap md:w-full ${
+                className={`flex h-auto shrink-0 items-center justify-start gap-2.5 rounded-md px-3 py-1.5 text-left text-xs whitespace-nowrap md:w-full ${
                   activeSection === section.id
-                    ? "bg-accent/20 text-accent hover:bg-accent/20 hover:text-accent"
+                    ? "bg-accent/15 text-accent hover:bg-accent/15 hover:text-accent font-medium"
                     : "text-muted hover:bg-hover hover:text-foreground"
                 }`}
               >
@@ -159,7 +159,7 @@ export function SettingsModal() {
 
         {/* Content */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="border-border-medium hidden h-12 items-center justify-between border-b px-6 md:flex">
+          <div className="hidden h-11 items-center justify-between border-b border-border-medium px-6 md:flex">
             <span className="text-foreground text-sm font-medium">{currentSection.label}</span>
             <Button
               variant="ghost"
@@ -171,7 +171,7 @@ export function SettingsModal() {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto p-4 md:px-6 md:py-5">
             <SectionComponent />
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, Check, X, Eye, EyeOff, ExternalLink, Loader2, Zap } from "lucide-react";
+import { Check, X, Eye, EyeOff, ExternalLink, Loader2, Zap, ChevronDown, ChevronRight } from "lucide-react";
 
 import { createEditKeyHandler } from "@/browser/utils/ui/keybinds";
 import { SUPPORTED_PROVIDERS } from "@/common/constants/providers";
@@ -252,309 +252,389 @@ export function ProvidersSection() {
     return !!getFieldValue(provider, field);
   };
 
+  /** Get a short summary of the key/auth method for the table row */
+  const getKeyStatusLabel = (provider: ProviderName): string => {
+    if (provider === "github-copilot" || provider === "github-copilot-direct") return "CLI auth";
+    if (provider === "claude-code") return "CLI auth";
+    if (provider === "ollama") return "No key needed";
+    if (provider === "lattice-inference") return "Local";
+    if (provider === "bedrock") return "AWS creds";
+    const hasKey = isFieldSet(provider, "apiKey", { key: "apiKey", label: "", placeholder: "", type: "secret" });
+    return hasKey ? "sk-...set" : "Not set";
+  };
+
   return (
-    <div className="space-y-2">
-      <p className="text-muted mb-4 text-xs">
+    <div className="space-y-3">
+      <p className="text-muted text-xs">
         Configure API keys and endpoints for AI providers. Keys are stored in{" "}
         <code className="text-accent">~/.unix/providers.jsonc</code>
       </p>
 
-      {SUPPORTED_PROVIDERS.map((provider) => {
-        const isExpanded = expandedProvider === provider;
-        const configured = isConfigured(provider);
-        const fields = getProviderFields(provider);
+      {/* Provider table */}
+      <div className="border-border-medium overflow-hidden rounded-md border">
+        <table className="w-full">
+          <thead>
+            <tr className="border-border-medium bg-background-secondary/50 border-b">
+              <th className="py-1.5 pl-3 pr-2 text-left text-[11px] font-medium text-muted">Provider</th>
+              <th className="py-1.5 pr-2 text-left text-[11px] font-medium text-muted">Status</th>
+              <th className="py-1.5 pr-2 text-left text-[11px] font-medium text-muted">Auth</th>
+              <th className="py-1.5 pr-3 text-right text-[11px] font-medium text-muted">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SUPPORTED_PROVIDERS.map((provider) => {
+              const isExpanded = expandedProvider === provider;
+              const configured = isConfigured(provider);
+              const fields = getProviderFields(provider);
+              const keyUrl = PROVIDER_KEY_URLS[provider];
 
-        return (
-          <div
-            key={provider}
-            className="border-border-medium bg-background-secondary overflow-hidden rounded-md border"
-          >
-            {/* Provider header */}
-            <Button
-              variant="ghost"
-              onClick={() => handleToggleProvider(provider)}
-              className="flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-left"
-            >
-              <div className="flex items-center gap-3">
-                {isExpanded ? (
-                  <ChevronDown className="text-muted h-4 w-4" />
-                ) : (
-                  <ChevronRight className="text-muted h-4 w-4" />
-                )}
-                <ProviderWithIcon
-                  provider={provider}
-                  displayName
-                  className="text-foreground text-sm font-medium"
-                />
-              </div>
-              <div
-                className={`h-2 w-2 rounded-full ${configured ? "bg-green-500" : "bg-border-medium"}`}
-                title={configured ? "Configured" : "Not configured"}
-              />
-            </Button>
-
-            {/* Provider settings */}
-            {isExpanded && (
-              <div className="border-border-medium space-y-3 border-t px-4 py-3">
-                {/* Quick link to get API key */}
-                {PROVIDER_KEY_URLS[provider] && (
-                  <div className="space-y-1">
-                    <a
-                      href={PROVIDER_KEY_URLS[provider]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted hover:text-accent inline-flex items-center gap-1 text-xs transition-colors"
-                    >
-                      Get API Key
-                      <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
-                    {provider === "anthropic" &&
-                      configured &&
-                      config?.[provider]?.apiKeySet === false && (
-                        <div className="text-muted text-xs">
-                          Configured via environment variables.
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                {fields.length === 0 && provider === "github-copilot" && (
-                  <div className="text-muted text-xs">
-                    Auto-configured via GitHub Copilot CLI. Run{" "}
-                    <code className="text-accent">gh copilot auth login</code> to authenticate.
-                  </div>
-                )}
-
-                {fields.length === 0 && provider === "claude-code" && (
-                  <div className="text-muted space-y-1 text-xs">
-                    <div>
-                      Uses your Claude Max/Pro subscription via Claude Code CLI.
-                    </div>
-                    <div>
-                      Install:{" "}
-                      <code className="text-accent">npm install -g @anthropic-ai/claude-code</code>
-                    </div>
-                    <div>
-                      Then authenticate:{" "}
-                      <code className="text-accent">claude auth login</code> or{" "}
-                      <code className="text-accent">claude setup-token</code>
-                    </div>
-                    {configured && (
-                      <div className="text-green-500">
-                        ✓ Claude Code CLI detected — use Test Connection to verify auth.
-                      </div>
-                    )}
-                    {!configured && (
-                      <div className="text-yellow-500">
-                        Claude Code CLI not found in PATH.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {fields.map((fieldConfig) => {
-                  const isEditing =
-                    editingField?.provider === provider && editingField?.field === fieldConfig.key;
-                  const fieldValue = getFieldValue(provider, fieldConfig.key);
-                  const fieldIsSet = isFieldSet(provider, fieldConfig.key, fieldConfig);
-
-                  return (
-                    <div key={fieldConfig.key}>
-                      <label className="text-muted mb-1 block text-xs">
-                        {fieldConfig.label}
-                        {fieldConfig.optional && <span className="text-dim"> (optional)</span>}
-                      </label>
-                      {isEditing ? (
-                        <div className="flex gap-2">
-                          <input
-                            type={
-                              fieldConfig.type === "secret" && !showPassword ? "password" : "text"
-                            }
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            placeholder={fieldConfig.placeholder}
-                            className="bg-modal-bg border-border-medium focus:border-accent flex-1 rounded border px-2 py-1.5 font-mono text-xs focus:outline-none"
-                            autoFocus
-                            onKeyDown={createEditKeyHandler({
-                              onSave: handleSaveEdit,
-                              onCancel: handleCancelEdit,
-                            })}
-                          />
-                          {fieldConfig.type === "secret" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="text-muted hover:text-foreground h-6 w-6"
-                              title={showPassword ? "Hide password" : "Show password"}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleSaveEdit}
-                            className="h-6 w-6 text-green-500 hover:text-green-400"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleCancelEdit}
-                            className="text-muted hover:text-foreground h-6 w-6"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <span className="text-foreground font-mono text-xs">
-                            {fieldConfig.type === "secret"
-                              ? fieldIsSet
-                                ? "••••••••"
-                                : "Not set"
-                              : (fieldValue ?? "Default")}
-                          </span>
-                          <div className="flex gap-2">
-                            {(fieldConfig.type === "text"
-                              ? !!fieldValue
-                              : fieldConfig.type === "secret" && fieldIsSet) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleClearField(provider, fieldConfig.key)}
-                                className="text-muted hover:text-error h-auto px-1 py-0 text-xs"
-                              >
-                                Clear
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleStartEdit(provider, fieldConfig.key, fieldConfig)
-                              }
-                              className="text-accent hover:text-accent-light h-auto px-1 py-0 text-xs"
-                            >
-                              {fieldIsSet || fieldValue ? "Change" : "Set"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Test Connection button — shown for all configured providers */}
-                {configured && provider !== "github-copilot" && (
-                  <div className="border-border-light border-t pt-3">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void handleTestConnection(provider)}
-                        disabled={testingProvider === provider}
-                        className="h-7 gap-1.5 px-3 text-xs"
-                      >
-                        {testingProvider === provider ? (
-                          <>
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Testing...
-                          </>
+              return (
+                <React.Fragment key={provider}>
+                  {/* Main row */}
+                  <tr
+                    className={`border-border-medium group cursor-pointer border-b transition-colors ${
+                      isExpanded
+                        ? "bg-background-secondary/40"
+                        : "hover:bg-background-secondary/30"
+                    }`}
+                    onClick={() => handleToggleProvider(provider)}
+                  >
+                    {/* Provider name + icon */}
+                    <td className="py-2 pl-3 pr-2">
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? (
+                          <ChevronDown className="text-muted h-3 w-3 shrink-0" />
                         ) : (
-                          <>
-                            <Zap className="h-3 w-3" />
-                            Test Connection
-                          </>
+                          <ChevronRight className="text-muted h-3 w-3 shrink-0" />
                         )}
-                      </Button>
-                      {testResult && testResult.provider === provider && (
-                        <span
-                          className={`text-xs ${testResult.success ? "text-green-500" : "text-red-400"}`}
-                        >
-                          {testResult.message}
-                          {testResult.latencyMs != null && testResult.success && (
-                            <span className="text-muted ml-1">({testResult.latencyMs}ms)</span>
-                          )}
+                        <ProviderWithIcon
+                          provider={provider}
+                          displayName
+                          className="text-foreground text-xs font-medium"
+                        />
+                      </div>
+                    </td>
+
+                    {/* Status dot + label */}
+                    <td className="py-2 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className={`h-1.5 w-1.5 rounded-full ${configured ? "bg-green-500" : "bg-border-medium"}`}
+                        />
+                        <span className={`text-[11px] ${configured ? "text-green-500" : "text-muted"}`}>
+                          {configured ? "Connected" : "Not set"}
                         </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    </td>
 
-                {/* OpenAI service tier dropdown */}
-                {provider === "openai" && (
-                  <div className="border-border-light border-t pt-3">
-                    <div className="mb-1 flex items-center gap-1">
-                      <label className="text-muted block text-xs">Service tier</label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpIndicator aria-label="OpenAI service tier help">?</HelpIndicator>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-[260px]">
-                              <div className="font-semibold">OpenAI service tier</div>
-                              <div className="mt-1">
-                                <span className="font-semibold">auto</span>: standard behavior.
+                    {/* Auth method */}
+                    <td className="py-2 pr-2">
+                      <span className="font-mono text-[11px] text-muted">
+                        {getKeyStatusLabel(provider)}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {keyUrl && (
+                          <a
+                            href={keyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted hover:text-accent p-0.5 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                            title="Get API key"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {configured && provider !== "github-copilot" && (
+                          <button
+                            type="button"
+                            className="text-muted hover:text-accent p-0.5 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleTestConnection(provider);
+                            }}
+                            disabled={testingProvider === provider}
+                            title="Test connection"
+                          >
+                            {testingProvider === provider ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Zap className="h-3 w-3" />
+                            )}
+                          </button>
+                        )}
+                        {testResult && testResult.provider === provider && (
+                          <span
+                            className={`text-[10px] font-medium ${testResult.success ? "text-green-500" : "text-red-400"}`}
+                          >
+                            {testResult.success ? "OK" : "Fail"}
+                            {testResult.latencyMs != null && testResult.success && (
+                              <span className="text-muted ml-0.5 font-normal">({testResult.latencyMs}ms)</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Expanded detail row */}
+                  {isExpanded && (
+                    <tr className="border-border-medium border-b">
+                      <td colSpan={4} className="bg-background-secondary/20 px-4 py-3">
+                        <div className="ml-5 space-y-2.5">
+                          {/* Provider-specific help text */}
+                          {provider === "anthropic" &&
+                            configured &&
+                            config?.[provider]?.apiKeySet === false && (
+                              <div className="text-muted text-[11px]">
+                                Configured via environment variables.
                               </div>
-                              <div>
-                                <span className="font-semibold">priority</span>: lower latency,
-                                higher cost.
-                              </div>
-                              <div>
-                                <span className="font-semibold">flex</span>: lower cost, higher
-                                latency.
-                              </div>
+                            )}
+
+                          {fields.length === 0 && provider === "github-copilot" && (
+                            <div className="text-muted text-[11px]">
+                              Auto-configured via GitHub Copilot CLI. Run{" "}
+                              <code className="text-accent">gh copilot auth login</code> to authenticate.
                             </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <Select
-                      value={config?.openai?.serviceTier ?? "auto"}
-                      onValueChange={(next) => {
-                        if (!api) return;
-                        if (
-                          next !== "auto" &&
-                          next !== "default" &&
-                          next !== "flex" &&
-                          next !== "priority"
-                        ) {
-                          return;
-                        }
+                          )}
 
-                        updateOptimistically("openai", { serviceTier: next });
-                        void api.providers.setProviderConfig({
-                          provider: "openai",
-                          keyPath: ["serviceTier"],
-                          value: next,
-                        });
-                      }}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">auto</SelectItem>
-                        <SelectItem value="default">default</SelectItem>
-                        <SelectItem value="flex">flex</SelectItem>
-                        <SelectItem value="priority">priority</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+                          {fields.length === 0 && provider === "claude-code" && (
+                            <div className="text-muted space-y-1 text-[11px]">
+                              <div>
+                                Uses your Claude Max/Pro subscription via Claude Code CLI.
+                              </div>
+                              <div>
+                                Install:{" "}
+                                <code className="text-accent">npm install -g @anthropic-ai/claude-code</code>
+                              </div>
+                              <div>
+                                Authenticate:{" "}
+                                <code className="text-accent">claude auth login</code> or{" "}
+                                <code className="text-accent">claude setup-token</code>
+                              </div>
+                              {configured && (
+                                <div className="text-green-500 font-medium">
+                                  CLI detected and ready.
+                                </div>
+                              )}
+                              {!configured && (
+                                <div className="text-yellow-500">
+                                  CLI not found in PATH.
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Editable fields in a compact grid */}
+                          {fields.length > 0 && (
+                            <div className="space-y-2">
+                              {fields.map((fieldConfig) => {
+                                const isEditing =
+                                  editingField?.provider === provider && editingField?.field === fieldConfig.key;
+                                const fieldValue = getFieldValue(provider, fieldConfig.key);
+                                const fieldIsSet = isFieldSet(provider, fieldConfig.key, fieldConfig);
+
+                                return (
+                                  <div key={fieldConfig.key} className="flex items-center gap-3">
+                                    <label className="text-muted w-24 shrink-0 text-[11px]">
+                                      {fieldConfig.label}
+                                      {fieldConfig.optional && <span className="text-dim"> (opt)</span>}
+                                    </label>
+                                    {isEditing ? (
+                                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                        <input
+                                          type={
+                                            fieldConfig.type === "secret" && !showPassword ? "password" : "text"
+                                          }
+                                          value={editValue}
+                                          onChange={(e) => setEditValue(e.target.value)}
+                                          placeholder={fieldConfig.placeholder}
+                                          className="bg-modal-bg border-border-medium focus:border-accent min-w-0 flex-1 rounded border px-2 py-1 font-mono text-[11px] focus:outline-none"
+                                          autoFocus
+                                          onKeyDown={createEditKeyHandler({
+                                            onSave: handleSaveEdit,
+                                            onCancel: handleCancelEdit,
+                                          })}
+                                        />
+                                        {fieldConfig.type === "secret" && (
+                                          <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="text-muted hover:text-foreground p-0.5"
+                                            title={showPassword ? "Hide" : "Show"}
+                                          >
+                                            {showPassword ? (
+                                              <EyeOff className="h-3 w-3" />
+                                            ) : (
+                                              <Eye className="h-3 w-3" />
+                                            )}
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={handleSaveEdit}
+                                          className="p-0.5 text-green-500 hover:text-green-400"
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={handleCancelEdit}
+                                          className="text-muted hover:text-foreground p-0.5"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex min-w-0 flex-1 items-center justify-between">
+                                        <span className="text-foreground font-mono text-[11px]">
+                                          {fieldConfig.type === "secret"
+                                            ? fieldIsSet
+                                              ? "••••••••"
+                                              : "Not set"
+                                            : (fieldValue ?? "Default")}
+                                        </span>
+                                        <div className="flex gap-1.5">
+                                          {(fieldConfig.type === "text"
+                                            ? !!fieldValue
+                                            : fieldConfig.type === "secret" && fieldIsSet) && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleClearField(provider, fieldConfig.key)}
+                                              className="text-muted hover:text-error text-[10px] transition-colors"
+                                            >
+                                              Clear
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleStartEdit(provider, fieldConfig.key, fieldConfig)
+                                            }
+                                            className="text-accent hover:text-accent-light text-[10px] transition-colors"
+                                          >
+                                            {fieldIsSet || fieldValue ? "Change" : "Set"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Test Connection — inline result */}
+                          {configured && provider !== "github-copilot" && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void handleTestConnection(provider)}
+                                disabled={testingProvider === provider}
+                                className="h-6 gap-1.5 px-2.5 text-[11px]"
+                              >
+                                {testingProvider === provider ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Testing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Zap className="h-3 w-3" />
+                                    Test Connection
+                                  </>
+                                )}
+                              </Button>
+                              {testResult && testResult.provider === provider && (
+                                <span
+                                  className={`text-[11px] ${testResult.success ? "text-green-500" : "text-red-400"}`}
+                                >
+                                  {testResult.message}
+                                  {testResult.latencyMs != null && testResult.success && (
+                                    <span className="text-muted ml-1">({testResult.latencyMs}ms)</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* OpenAI service tier dropdown */}
+                          {provider === "openai" && (
+                            <div className="flex items-center gap-3 pt-1">
+                              <div className="flex items-center gap-1">
+                                <label className="text-muted text-[11px]">Service tier</label>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <HelpIndicator aria-label="OpenAI service tier help">?</HelpIndicator>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="max-w-[260px]">
+                                        <div className="font-semibold">OpenAI service tier</div>
+                                        <div className="mt-1">
+                                          <span className="font-semibold">auto</span>: standard behavior.
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">priority</span>: lower latency,
+                                          higher cost.
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">flex</span>: lower cost, higher
+                                          latency.
+                                        </div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <Select
+                                value={config?.openai?.serviceTier ?? "auto"}
+                                onValueChange={(next) => {
+                                  if (!api) return;
+                                  if (
+                                    next !== "auto" &&
+                                    next !== "default" &&
+                                    next !== "flex" &&
+                                    next !== "priority"
+                                  ) {
+                                    return;
+                                  }
+
+                                  updateOptimistically("openai", { serviceTier: next });
+                                  void api.providers.setProviderConfig({
+                                    provider: "openai",
+                                    keyPath: ["serviceTier"],
+                                    value: next,
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-6 w-28 text-[11px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="auto">auto</SelectItem>
+                                  <SelectItem value="default">default</SelectItem>
+                                  <SelectItem value="flex">flex</SelectItem>
+                                  <SelectItem value="priority">priority</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
